@@ -1,0 +1,7 @@
+{
+  "attribute.name.taverntales_l1b.ranged_damage": "远程伤害",
+  "attribute.name.taverntales_l1b.draw_time": "拉弦时间(秒)",
+  "attribute.name.taverntales_l1b.critical_chance": "暴击率",
+  "attribute.name.taverntales_l1b.critical_damage": "暴击伤害",
+  "attribute.value.taverntales_l1b.seconds": "%s"
+}
