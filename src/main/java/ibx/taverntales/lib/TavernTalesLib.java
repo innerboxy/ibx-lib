@@ -3,6 +3,7 @@ package ibx.taverntales.lib;
 import com.mojang.logging.LogUtils;
 import ibx.taverntales.lib.config.Config;
 import ibx.taverntales.lib.event.DamageHandler;
+import ibx.taverntales.lib.event.HealHandler;
 import ibx.taverntales.lib.registry.AttachmentRegistry;
 import ibx.taverntales.lib.registry.AttributeRegistry;
 import ibx.taverntales.lib.registry.ItemRegistry;
@@ -25,8 +26,9 @@ public class TavernTalesLib {
         AttachmentRegistry.register(modEventBus);
         ItemRegistry.register(modEventBus);
 
-        // GAME 总线：统一的伤害结算。
+        // GAME 总线：统一的伤害与治疗结算。
         DamageHandler.register();
+        HealHandler.register();
         LOGGER.info("{} loaded", MODID);
     }
 }

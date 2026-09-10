@@ -40,7 +40,7 @@ public final class CriticalStrikeApi {
     }
 
     private static double read(LivingEntity attacker, Holder<Attribute> attribute) {
-        // 属性只挂在玩家身上，生物读不到；直接问会经 AttributeSupplier 抛异常，所以先判断。
+        // 属性已挂到所有生物上，这里只防万一：没挂的实体直接问会经 AttributeSupplier 抛异常。
         return attacker.getAttributes().hasAttribute(attribute) ? attacker.getAttributeValue(attribute) : 0.0D;
     }
 }

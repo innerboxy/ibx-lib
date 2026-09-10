@@ -35,8 +35,8 @@ import java.util.function.Predicate;
  * Tt 弩：可复用的弩物品类，数值由构造参数给定。
  *
  * <ul>
- *   <li>命中伤害 = 玩家 ranged_damage（弩天生满装发射），发射瞬间快照到箭上，命中时覆盖原版伤害。</li>
- *   <li>装填时长由玩家 draw_time 属性决定。原版的 {@code getChargeDuration} 是 static 无法重写，
+ *   <li>命中伤害 = 射手 ranged_damage（弩天生满装发射），发射瞬间快照到箭上，命中时覆盖原版伤害。</li>
+ *   <li>装填时长由射手的 draw_time ÷ draw_speed 决定。原版的 {@code getChargeDuration} 是 static 无法重写，
  *       所以重写了调用它的三个入口：{@link #getUseDuration}、{@link #onUseTick}、{@link #releaseUsing}；
  *       发射流程（shoot / performShooting）不动，多重射击等原版机制照旧。</li>
  *   <li>箭速由 {@link #getArrowVelocity} 决定，只管飞行手感，不影响伤害；烟花火箭仍走原版速度。</li>

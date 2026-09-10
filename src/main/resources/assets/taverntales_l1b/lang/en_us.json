@@ -1,7 +1,9 @@
 {
   "attribute.name.taverntales_l1b.ranged_damage": "Ranged Damage",
   "attribute.name.taverntales_l1b.draw_time": "Draw Time(s)",
+  "attribute.name.taverntales_l1b.draw_speed": "Draw Speed",
   "attribute.name.taverntales_l1b.critical_chance": "Critical Chance",
   "attribute.name.taverntales_l1b.critical_damage": "Critical Damage",
+  "attribute.name.taverntales_l1b.heal_efficiency": "Heal Efficiency",
   "attribute.value.taverntales_l1b.seconds": "%s"
 }

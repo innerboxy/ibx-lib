@@ -29,8 +29,8 @@ import java.util.function.Predicate;
  * Tt 弓：可复用的弓物品类，数值由构造参数给定。
  *
  * <ul>
- *   <li>命中伤害 = 玩家 ranged_damage × 蓄力百分比，发射瞬间快照到箭上，命中时覆盖原版伤害。</li>
- *   <li>蓄力百分比线性：已蓄力 tick ÷ 满蓄 tick，满蓄 tick 由玩家 draw_time 属性决定。</li>
+ *   <li>命中伤害 = 射手 ranged_damage × 蓄力百分比，发射瞬间快照到箭上，命中时覆盖原版伤害。</li>
+ *   <li>蓄力百分比线性：已蓄力 tick ÷ 满蓄 tick，满蓄 tick 由射手的 draw_time ÷ draw_speed 决定。</li>
  *   <li>箭速 = {@link #getArrowVelocity} × 蓄力百分比，只管飞行手感，不影响伤害。</li>
  *   <li>低于 {@link #getMinCharge} 不发射、不消耗；只能主手使用。</li>
  * </ul>

@@ -21,7 +21,7 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
  * 其他 mod 用这两个类注册的武器也一并覆盖。谓词名沿用原版（pull / pulling / charged / firework），
  * 模型 JSON 可以照抄原版 bow.json / crossbow.json 的 overrides。</p>
  *
- * <p>弓的 pull 原版写死除以 20 tick，这里改为除以玩家 draw_time 算出的满蓄 tick，
+ * <p>弓的 pull 原版写死除以 20 tick，这里改为除以 draw_time ÷ draw_speed 算出的满蓄 tick，
  * 让三个拉弓阶段跟着自定义拉弓时间走。</p>
  */
 public final class RangedWeaponModelPredicates {

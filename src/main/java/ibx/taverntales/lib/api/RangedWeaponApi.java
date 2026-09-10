@@ -23,11 +23,13 @@ public final class RangedWeaponApi {
     public static final int MIN_FULL_DRAW_TICKS = 1;
 
     /**
-     * 满蓄（弓）/ 装填（弩）所需 tick = draw_time 属性总值 × 20，最少 {@link #MIN_FULL_DRAW_TICKS}。
+     * 满蓄（弓）/ 装填（弩）所需 tick = draw_time ÷ draw_speed × 20，最少 {@link #MIN_FULL_DRAW_TICKS}。
      * 服务端与客户端都可调用（属性已同步）。
      */
     public static int getFullDrawTicks(LivingEntity shooter, ItemStack weapon) {
-        double seconds = readAttribute(shooter, weapon, AttributeRegistry.DRAW_TIME);
+        // draw_speed 下限 0.01，不会除以零；最坏 1024 ÷ 0.01 × 20 ≈ 200 万 tick，int 装得下。
+        double seconds = readAttribute(shooter, weapon, AttributeRegistry.DRAW_TIME)
+                / readAttribute(shooter, weapon, AttributeRegistry.DRAW_SPEED);
         return Math.max(MIN_FULL_DRAW_TICKS, (int) Math.round(seconds * 20.0D));
     }
 
@@ -47,8 +49,9 @@ public final class RangedWeaponApi {
     }
 
     /**
-     * 读属性总值。挂了该属性的实体（玩家）直接读属性——武器在主手时其修饰符已生效；
-     * 没挂的射手（非玩家生物）兜底：属性默认值 + 武器自身的 ADD_VALUE 修饰符。
+     * 读属性总值。本模组的属性挂在所有生物上，正常都直接读属性——武器在主手时其修饰符已生效。
+     * 没挂的实体理论上不存在，这里只防万一：属性默认值 + 武器自身的 ADD_VALUE 修饰符，
+     * 再按属性上下限截断（否则 draw_speed 可能被算成 0 以下）。
      */
     private static double readAttribute(LivingEntity shooter, ItemStack weapon, Holder<Attribute> attribute) {
         if (shooter.getAttributes().hasAttribute(attribute)) {
@@ -60,6 +63,6 @@ public final class RangedWeaponApi {
                 sum[0] += modifier.amount();
             }
         });
-        return sum[0];
+        return attribute.value().sanitizeValue(sum[0]);
     }
 }
