@@ -2,18 +2,21 @@ package ibx.taverntales.lib.api;
 
 import ibx.taverntales.lib.registry.AttachmentRegistry;
 import ibx.taverntales.lib.registry.AttributeRegistry;
+import ibx.taverntales.lib.registry.DataComponentRegistry;
 import net.minecraft.core.Holder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.event.EventHooks;
 
 import java.util.Optional;
 
 /**
- * 远程武器系统的读数入口：满蓄 tick、远程伤害、箭上的伤害快照。
+ * 远程武器系统的读数入口：满蓄 tick、远程伤害、箭上的伤害快照、自动射击。
  * 物品类、命中结算、客户端拉弓动画谓词都从这里取值，保证各处口径一致。
  */
 public final class RangedWeaponApi {
@@ -46,6 +49,48 @@ public final class RangedWeaponApi {
     /** 弹射物上记录的远程伤害；没有（原版弓弩射出的箭）则为空。不会顺手创建默认值。 */
     public static Optional<Float> getAmmoRangedDamage(Entity projectile) {
         return projectile.getExistingData(AttachmentRegistry.AMMO_RANGED_DAMAGE);
+    }
+
+    /** 这把武器是否开了自动射击（{@code auto_fire} 组件为 true）。没有组件视为 false。 */
+    public static boolean isAutoFire(ItemStack weapon) {
+        return weapon.getOrDefault(DataComponentRegistry.AUTO_FIRE.get(), false);
+    }
+
+    /**
+     * 自动射击的每 tick 判定，由弓弩的 {@code onUseTick} 调用：开了自动射击且已到满蓄 tick，
+     * 就当作玩家此刻松开了右键——弓射出、弩装填。之后客户端发现不再使用物品，只要右键还按着，
+     * 原版的按住重复使用逻辑会自动再次拉弓，于是按住即连发；弩装填好后同样由那套逻辑扣扳机。
+     *
+     * <p><b>只对玩家生效</b>：生物的拉弓与射击由 AI 目标自己掌控（拉满后先 stopUsingItem 再射），
+     * 这里替它停用会让它重新拉弓、永远射不出去。</p>
+     *
+     * <p>服务端与客户端都会调用，与手动松手一致：客户端那次只做预测
+     * （弓不射、弩本地先装上），真正的发射与同步由服务端负责。</p>
+     *
+     * <p>这里复刻了 {@code LivingEntity#releaseUsingItem}，但<b>去掉了它末尾的 updatingUsingItem()</b>：
+     * 那一步会再跑一遍 onUseTick、又回到本方法，无限递归直到栈溢出。本方法本身就在 onUseTick 里，
+     * 这一 tick 已经算过了，不需要补。</p>
+     *
+     * @param remainingTicks {@code onUseTick} 收到的剩余使用 tick
+     * @return 是否已释放
+     */
+    public static boolean tickAutoFire(LivingEntity shooter, ItemStack weapon, int remainingTicks) {
+        if (!(shooter instanceof Player player) || !isAutoFire(weapon)) {
+            return false;
+        }
+        int elapsed = weapon.getUseDuration(shooter) - remainingTicks;
+        if (elapsed < getFullDrawTicks(shooter, weapon)) {
+            return false;
+        }
+        if (!EventHooks.onUseItemStop(shooter, weapon, remainingTicks)) {
+            ItemStack copy = weapon.copy();
+            weapon.releaseUsing(shooter.level(), shooter, remainingTicks);
+            if (weapon.isEmpty()) {
+                EventHooks.onPlayerDestroyItem(player, copy, shooter.getUsedItemHand());
+            }
+        }
+        shooter.stopUsingItem();
+        return true;
     }
 
     /**

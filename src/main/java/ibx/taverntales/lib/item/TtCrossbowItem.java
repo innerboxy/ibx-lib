@@ -6,6 +6,7 @@ import ibx.taverntales.lib.item.ranged_weapon.RangedWeaponStats;
 import ibx.taverntales.lib.item.ranged_weapon.RangedWeaponItem;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -20,6 +21,7 @@ import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.ChargedProjectiles;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
@@ -42,6 +44,7 @@ import java.util.function.Predicate;
  *   <li>箭速由 {@link #getArrowVelocity} 决定，只管飞行手感，不影响伤害；烟花火箭仍走原版速度。</li>
  *   <li>装填音效改为按 tick 等值判断，不再用原版那两个所有玩家共用的 Item 级标记字段。</li>
  *   <li>只能主手使用。</li>
+ *   <li>带 {@code auto_fire} 组件时装填完毕自动松手，见 {@link RangedWeaponApi#tickAutoFire}。</li>
  * </ul>
  */
 public class TtCrossbowItem extends CrossbowItem implements RangedWeaponItem {
@@ -154,6 +157,13 @@ public class TtCrossbowItem extends CrossbowItem implements RangedWeaponItem {
         super.performShooting(level, shooter, hand, weapon, actualVelocity, inaccuracy, target);
     }
 
+    @Override
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        // 先加"自动发射"，再让父类补原版的"弹射物：箭"那行。
+        RangedWeaponItem.appendAutoFireTooltip(stack, tooltip);
+        super.appendHoverText(stack, context, tooltip, flag);
+    }
+
     /** 装填音效。原版同名方法是包私有的，子类无法重写，这里另开钩子。 */
     protected ChargingSounds getChargingSoundsFor(ItemStack stack) {
         return EnchantmentHelper.pickHighestLevel(stack, EnchantmentEffectComponents.CROSSBOW_CHARGING_SOUNDS)
@@ -176,18 +186,19 @@ public class TtCrossbowItem extends CrossbowItem implements RangedWeaponItem {
 
     @Override
     public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remainingTicks) {
-        if (level.isClientSide) {
-            return;
+        if (!level.isClientSide) {
+            int fullTicks = RangedWeaponApi.getFullDrawTicks(entity, stack);
+            int elapsed = this.getUseDuration(stack, entity) - remainingTicks;
+            ChargingSounds sounds = this.getChargingSoundsFor(stack);
+            if (elapsed == Mth.ceil(fullTicks * START_SOUND_PERCENT)) {
+                playChargingSound(level, entity, sounds.start(), SoundSource.PLAYERS, 0.5F, 1.0F);
+            }
+            if (elapsed == Mth.ceil(fullTicks * MID_SOUND_PERCENT)) {
+                playChargingSound(level, entity, sounds.mid(), SoundSource.PLAYERS, 0.5F, 1.0F);
+            }
         }
-        int fullTicks = RangedWeaponApi.getFullDrawTicks(entity, stack);
-        int elapsed = this.getUseDuration(stack, entity) - remainingTicks;
-        ChargingSounds sounds = this.getChargingSoundsFor(stack);
-        if (elapsed == Mth.ceil(fullTicks * START_SOUND_PERCENT)) {
-            playChargingSound(level, entity, sounds.start(), SoundSource.PLAYERS, 0.5F, 1.0F);
-        }
-        if (elapsed == Mth.ceil(fullTicks * MID_SOUND_PERCENT)) {
-            playChargingSound(level, entity, sounds.mid(), SoundSource.PLAYERS, 0.5F, 1.0F);
-        }
+        // 装填音效放前面：自动释放会 stopUsingItem，之后 entity 上就读不到这把弩了。
+        RangedWeaponApi.tickAutoFire(entity, stack, remainingTicks);
     }
 
     @Override

@@ -5,5 +5,6 @@
   "attribute.name.taverntales_l1b.critical_chance": "Critical Chance",
   "attribute.name.taverntales_l1b.critical_damage": "Critical Damage",
   "attribute.name.taverntales_l1b.heal_efficiency": "Heal Efficiency",
-  "attribute.value.taverntales_l1b.seconds": "%s"
+  "attribute.value.taverntales_l1b.seconds": "%s",
+  "tooltip.taverntales_l1b.auto_fire": "Auto Fire"
 }

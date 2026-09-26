@@ -4,6 +4,7 @@ import ibx.taverntales.lib.api.CriticalStrikeApi;
 import ibx.taverntales.lib.api.RangedWeaponApi;
 import ibx.taverntales.lib.item.ranged_weapon.RangedWeaponStats;
 import ibx.taverntales.lib.item.ranged_weapon.RangedWeaponItem;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -16,6 +17,7 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
@@ -33,6 +35,7 @@ import java.util.function.Predicate;
  *   <li>蓄力百分比线性：已蓄力 tick ÷ 满蓄 tick，满蓄 tick 由射手的 draw_time ÷ draw_speed 决定。</li>
  *   <li>箭速 = {@link #getArrowVelocity} × 蓄力百分比，只管飞行手感，不影响伤害。</li>
  *   <li>低于 {@link #getMinCharge} 不发射、不消耗；只能主手使用。</li>
+ *   <li>带 {@code auto_fire} 组件时拉满自动射出，见 {@link RangedWeaponApi#tickAutoFire}。</li>
  * </ul>
  * 需要改箭速、门槛、弹药的变种，继承后重写对应的 protected 方法即可。
  */
@@ -129,6 +132,17 @@ public class TtBowItem extends BowItem implements RangedWeaponItem {
             return InteractionResultHolder.fail(player.getItemInHand(hand));
         }
         return super.use(level, player, hand);
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        RangedWeaponItem.appendAutoFireTooltip(stack, tooltip);
+        super.appendHoverText(stack, context, tooltip, flag);
+    }
+
+    @Override
+    public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remainingTicks) {
+        RangedWeaponApi.tickAutoFire(entity, stack, remainingTicks);
     }
 
     @Override

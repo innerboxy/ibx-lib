@@ -6,6 +6,7 @@ import ibx.taverntales.lib.event.DamageHandler;
 import ibx.taverntales.lib.event.HealHandler;
 import ibx.taverntales.lib.registry.AttachmentRegistry;
 import ibx.taverntales.lib.registry.AttributeRegistry;
+import ibx.taverntales.lib.registry.DataComponentRegistry;
 import ibx.taverntales.lib.registry.ItemRegistry;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -24,6 +25,7 @@ public class TavernTalesLib {
         // MOD 总线：注册表、属性挂载、创造标签。
         AttributeRegistry.register(modEventBus);
         AttachmentRegistry.register(modEventBus);
+        DataComponentRegistry.register(modEventBus);
         ItemRegistry.register(modEventBus);
 
         // GAME 总线：统一的伤害与治疗结算。
