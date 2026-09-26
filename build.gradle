@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.141'
+    id 'net.neoforged.moddev' version '2.0.147'
     id 'idea'
 }
 
@@ -23,16 +23,11 @@ base {
     archivesName = "${mod_id}-neoforge-${minecraft_version}"
 }
 
-// Mojang ships Java 21 to end users in 1.21.1, so mods should target Java 21.
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+// Mojang ships Java 25 to end users in 26.1, so mods should target Java 25.
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 neoForge {
     version = project.neo_version
-
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
 
     runs {
         client {
@@ -64,11 +59,12 @@ dependencies {
     // mods.toml 里声明为 optional,装了就联动、没装照常加载;凡是触及它 API 的代码
     // 都必须先用 ModList.get().isLoaded("dummmmmmy") 守门,否则缺席时 NoClassDefFoundError。
     // runtimeOnly 是为了开发运行(runClient)里能直接摆假人打靶,验证远程武器伤害数字。
-    compileOnly "maven.modrinth:mmmmmmmmmmmm:1.21-2.0.12-neoforge"
-    runtimeOnly "maven.modrinth:mmmmmmmmmmmm:1.21-2.0.12-neoforge"
+    // 注意 dummmmmmy_version / moonlight_version 填的是 Modrinth 的【版本 ID】,原因见 gradle.properties。
+    compileOnly "maven.modrinth:mmmmmmmmmmmm:${dummmmmmy_version}"
+    runtimeOnly "maven.modrinth:mmmmmmmmmmmm:${dummmmmmy_version}"
 
     // Moonlight:试验假人的前置,仅开发运行时需要,本模组不直接依赖它的 API。
-    runtimeOnly "maven.modrinth:moonlight:1.21.1-3.0.17"
+    runtimeOnly "maven.modrinth:moonlight:${moonlight_version}"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

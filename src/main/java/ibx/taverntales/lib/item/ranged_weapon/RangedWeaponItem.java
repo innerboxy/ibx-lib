@@ -4,10 +4,9 @@ import ibx.taverntales.lib.TavernTalesLib;
 import ibx.taverntales.lib.api.RangedWeaponApi;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * 本模组远程武器的公共接口。弓、弩各自继承对应的原版类（Java 单继承），
@@ -28,20 +27,9 @@ public interface RangedWeaponItem {
      * 开了自动射击的武器在物品名称正下方加一行金色"自动发射"。
      * 弓弩的 {@code appendHoverText} 都先调这里再调父类，保证这行排在最前。
      */
-    static void appendAutoFireTooltip(ItemStack stack, List<Component> tooltip) {
+    static void appendAutoFireTooltip(ItemStack stack, Consumer<Component> tooltip) {
         if (RangedWeaponApi.isAutoFire(stack)) {
-            tooltip.add(Component.translatable(AUTO_FIRE_TOOLTIP_KEY).withStyle(ChatFormatting.GOLD));
+            tooltip.accept(Component.translatable(AUTO_FIRE_TOOLTIP_KEY).withStyle(ChatFormatting.GOLD));
         }
-    }
-
-    /**
-     * 给"只传耐久"的便捷构造器用的物品属性。
-     *
-     * @param durability 最大耐久；大于 0 才设耐久组件（并自动变为不可堆叠），
-     *                   不大于 0 则不加，得到一把不会损坏的武器。
-     */
-    static Item.Properties properties(int durability) {
-        Item.Properties properties = new Item.Properties();
-        return durability > 0 ? properties.durability(durability) : properties;
     }
 }

@@ -1,17 +1,19 @@
 package ibx.taverntales.lib.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import net.minecraft.world.entity.monster.Pillager;
+import net.minecraft.world.entity.monster.illager.Pillager;
 import net.minecraft.world.entity.monster.piglin.Piglin;
 import net.minecraft.world.item.CrossbowItem;
-import net.minecraft.world.item.ProjectileWeaponItem;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 /**
- * 让掠夺者与疣猪兽认可任意模组弩，而不只是 {@code minecraft:crossbow}。
+ * 让掠夺者与疣猪兽认可任意模组弩，而不只是标签里登记过的弩。
  *
- * <p>两者的原版实现都是 {@code projectileWeapon == Items.CROSSBOW}，逻辑一致，故合并成一个多目标 mixin。</p>
+ * <p>26.1 起这个查询口改名为 {@code canUseNonMeleeWeapon(ItemStack)}，NeoForge 让两者分别查物品标签
+ * {@code neoforge:pillager_usable_crossbows} / {@code neoforge:piglin_usable_crossbows}（默认都是
+ * {@code #c:tools/crossbow}；疣猪兽另外还认带 {@code kinetic_weapon} 组件的武器）。逻辑一致，故合并成一个多目标 mixin。</p>
  *
  * <p><b>疣猪兽这里是真正的卡点</b>：它走 Brain AI，{@code CrossbowAttack} 行为的可用性判断经
  * {@code BehaviorUtils#isWithinAttackRange} 查这个方法，返回 false 就永远不会开始装填；同时
@@ -20,8 +22,8 @@ import org.spongepowered.asm.mixin.injection.At;
  */
 @Mixin({Pillager.class, Piglin.class})
 public class CrossbowMobMixin {
-    @ModifyReturnValue(method = "canFireProjectileWeapon", at = @At("RETURN"))
-    private boolean taverntales_l1b$allowModdedCrossbows(boolean original, ProjectileWeaponItem projectileWeapon) {
-        return original || projectileWeapon instanceof CrossbowItem;
+    @ModifyReturnValue(method = "canUseNonMeleeWeapon", at = @At("RETURN"))
+    private boolean taverntales_l1b$allowModdedCrossbows(boolean original, ItemStack item) {
+        return original || item.getItem() instanceof CrossbowItem;
     }
 }

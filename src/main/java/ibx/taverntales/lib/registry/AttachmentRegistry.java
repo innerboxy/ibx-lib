@@ -23,11 +23,13 @@ public final class AttachmentRegistry {
      * {@link ibx.taverntales.lib.event.DamageHandler} 直接覆盖原版伤害。
      * 原版弓弩射出的箭没有这个数据，完全不受影响。带序列化：箭跨区块加载、插在地上都不丢。
      * 读写请走 {@link ibx.taverntales.lib.api.RangedWeaponApi}。
+     *
+     * <p>26.1 起附加数据只接受 MapCodec（存成一个带字段的对象），所以数值包在 {@code value} 字段里。</p>
      */
     public static final Supplier<AttachmentType<Float>> AMMO_RANGED_DAMAGE =
             ATTACHMENT_TYPES.register("ammo_ranged_damage",
                     () -> AttachmentType.builder(() -> 0.0F)
-                            .serialize(Codec.FLOAT)
+                            .serialize(Codec.FLOAT.fieldOf("value"))
                             .build());
 
     public static void register(IEventBus modEventBus) {

@@ -11,8 +11,8 @@ import net.neoforged.fml.ModList;
  * {@link #isLoaded()}</b>，否则玩家没装这个模组时会 NoClassDefFoundError。</p>
  *
  * <p>假人显示"12 (1.5x)"这种暴击数字，靠的是 {@code TargetDummyEntity.moist(攻击者, 倍率)}
- * 先登记一次暴击：它把记录加进当 tick 的列表，等自己的 {@code hurt()} 里再与伤害来源配对。
- * <b>所以登记必须发生在假人 hurt() 之前</b>。近战由假人自己监听 NeoForge 的暴击事件完成登记，
+ * 先登记一次暴击：它把记录加进当 tick 的列表，等自己的 {@code hurtServer()} 里再与伤害来源配对。
+ * <b>所以登记必须发生在假人 hurtServer() 之前</b>。近战由假人自己监听 NeoForge 的暴击事件完成登记，
  * 不用本类；远程弹射物不经过那个事件，需要本模组在弹射物命中事件里手动登记。</p>
  */
 public final class DummmmmmyCompat {

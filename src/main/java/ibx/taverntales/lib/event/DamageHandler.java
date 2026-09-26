@@ -11,15 +11,14 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.phys.EntityHitResult;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.CriticalHitEvent;
-
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 本模组统一的伤害处理入口。所有伤害相关的结算都写在这里，按 {@link #onIncomingDamage} 里的
@@ -89,7 +88,7 @@ public final class DamageHandler {
         target.level().playSound(null, target.getX(), target.getY(), target.getZ(),
                 SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.0F, 1.0F);
         if (target.level() instanceof ServerLevel serverLevel) {
-            serverLevel.getChunkSource().broadcastAndSend(target,
+            serverLevel.getChunkSource().sendToTrackingPlayersAndSelf(target,
                     new ClientboundAnimatePacket(target, ClientboundAnimatePacket.CRITICAL_HIT));
         }
     }
@@ -98,8 +97,8 @@ public final class DamageHandler {
      * 试验假人联动：命中前先把这次暴击登记给假人，让它把伤害数字显示成"12 (1.5x)"这种暴击样式。
      *
      * <p>近战不用管，假人自己监听 NeoForge 的暴击事件就能识别；远程弹射物不经过那个事件，
-     * 只能由本模组补登记。<b>时机很讲究</b>：假人是在自己的 {@code hurt()} 里把登记记录与伤害来源
-     * 配对的，所以必须赶在 {@code hurt()} 之前——弹射物命中事件正好在原版调用 {@code hurt()} 之前触发。</p>
+     * 只能由本模组补登记。<b>时机很讲究</b>：假人是在自己的 {@code hurtServer()} 里把登记记录与伤害来源
+     * 配对的，所以必须赶在 {@code hurtServer()} 之前——弹射物命中事件正好在原版造成伤害之前触发。</p>
      */
     private static void onProjectileImpact(ProjectileImpactEvent event) {
         if (!DummmmmmyCompat.isLoaded() || !(event.getRayTraceResult() instanceof EntityHitResult hit)) {
@@ -139,7 +138,7 @@ public final class DamageHandler {
     private static void onCriticalHit(CriticalHitEvent event) {
         Player player = event.getEntity();
         boolean critical = event.isVanillaCritical() && Config.ENABLE_VANILLA_CRITICAL.getAsBoolean();
-        if (!critical && !player.level().isClientSide) {
+        if (!critical && !player.level().isClientSide()) {
             critical = CriticalStrikeApi.roll(player);
         }
 

@@ -12,11 +12,11 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -24,13 +24,15 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.ChargedProjectiles;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
+import org.jspecify.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -39,21 +41,26 @@ import java.util.function.Predicate;
  * <ul>
  *   <li>命中伤害 = 射手 ranged_damage（弩天生满装发射），发射瞬间快照到箭上，命中时覆盖原版伤害。</li>
  *   <li>装填时长由射手的 draw_time ÷ draw_speed 决定。原版的 {@code getChargeDuration} 是 static 无法重写，
- *       所以重写了调用它的三个入口：{@link #getUseDuration}、{@link #onUseTick}、{@link #releaseUsing}；
+ *       所以重写了用到它的两个入口：{@link #onUseTick}（装填音效与拉满装填）、{@link #releaseUsing}；
  *       发射流程（shoot / performShooting）不动，多重射击等原版机制照旧。</li>
+ *   <li>同 26.1 原版：拉满的那一刻就在服务端装填，不必松手；松手只是结束这次使用。</li>
  *   <li>箭速由 {@link #getArrowVelocity} 决定，只管飞行手感，不影响伤害；烟花火箭仍走原版速度。</li>
  *   <li>装填音效改为按 tick 等值判断，不再用原版那两个所有玩家共用的 Item 级标记字段。</li>
  *   <li>只能主手使用。</li>
  *   <li>带 {@code auto_fire} 组件时装填完毕自动松手，见 {@link RangedWeaponApi#tickAutoFire}。</li>
  * </ul>
+ *
+ * <p>注册：26.1 起 {@link Item.Properties} 必须先带上物品 id 才能构造物品，请用
+ * {@code DeferredRegister.Items#registerItem} 注册，在工厂里使用传进来的 Properties，
+ * 耐久、稀有度、防火等也设在它上面（原版弩耐久 465，不设则不会损坏），例如
+ * {@code ITEMS.registerItem("my_crossbow", p -> new TtCrossbowItem(p.durability(465), 9.0F, 1.25F))}。
+ * 装填动画的模型写法见 {@link ibx.taverntales.lib.client.RangedWeaponModelProperties}。</p>
  */
 public class TtCrossbowItem extends CrossbowItem implements RangedWeaponItem {
     /** 本类型的基准装填秒数（原版弩 25 tick）。 */
     public static final float BASELINE_DRAW_TIME = 1.25F;
     /** 本类型的基准箭速（原版弩射箭 3.15）。 */
     public static final float BASELINE_ARROW_VELOCITY = 3.15F;
-    /** 原版在装填时长之外多留的使用 tick，作为松手判定的余量。 */
-    private static final int RELEASE_SLACK_TICKS = 3;
     private static final float START_SOUND_PERCENT = 0.2F;
     private static final float MID_SOUND_PERCENT = 0.5F;
     private static final ChargingSounds DEFAULT_SOUNDS = new ChargingSounds(
@@ -65,35 +72,20 @@ public class TtCrossbowItem extends CrossbowItem implements RangedWeaponItem {
     private final Predicate<ItemStack> ammo;
     private final Predicate<ItemStack> heldAmmo;
 
-    /**
-     * 便捷构造：只给耐久、伤害、装填秒数，箭速用基准值。
-     *
-     * @param durability 最大耐久（原版弩是 465）；不大于 0 则不会损坏
-     */
-    public TtCrossbowItem(int durability, float rangedDamage, float drawTime) {
-        this(durability, rangedDamage, drawTime, 0.0F);
-    }
-
-    /**
-     * 便捷构造：耐久、伤害、装填秒数、箭速。要设稀有度、防火等别的物品属性时，
-     * 改用带 {@link Item.Properties} 的那个构造器。
-     *
-     * @param durability    最大耐久（原版弩是 465）；不大于 0 则不会损坏
-     * @param arrowVelocity 发射初速度；不大于 0 则用 {@link #BASELINE_ARROW_VELOCITY}
-     */
-    public TtCrossbowItem(int durability, float rangedDamage, float drawTime, float arrowVelocity) {
-        this(RangedWeaponItem.properties(durability), rangedDamage, drawTime, arrowVelocity);
-    }
-
+    /** 箭速用基准值。 */
     public TtCrossbowItem(Item.Properties properties, float rangedDamage, float drawTime) {
         this(properties, rangedDamage, drawTime, 0.0F);
     }
 
+    /**
+     * @param arrowVelocity 发射初速度；不大于 0 则用 {@link #BASELINE_ARROW_VELOCITY}
+     */
     public TtCrossbowItem(Item.Properties properties, float rangedDamage, float drawTime, float arrowVelocity) {
         this(properties, rangedDamage, drawTime, arrowVelocity, ARROW_ONLY, true);
     }
 
     /**
+     * @param properties     物品属性，必须带物品 id（见类说明的注册方式）
      * @param rangedDamage   远程伤害
      * @param drawTime       装填秒数；不大于 0 则用 {@link #BASELINE_DRAW_TIME}
      * @param arrowVelocity  发射初速度；不大于 0 则用 {@link #BASELINE_ARROW_VELOCITY}。
@@ -158,10 +150,12 @@ public class TtCrossbowItem extends CrossbowItem implements RangedWeaponItem {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        // 先加"自动发射"，再让父类补原版的"弹射物：箭"那行。
+    @SuppressWarnings("deprecation")
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
+                                Consumer<Component> tooltip, TooltipFlag flag) {
+        // 先加"自动发射"；原版的"弹射物：箭"那行由 charged_projectiles 组件自己在后面渲染。
         RangedWeaponItem.appendAutoFireTooltip(stack, tooltip);
-        super.appendHoverText(stack, context, tooltip, flag);
+        super.appendHoverText(stack, context, display, tooltip, flag);
     }
 
     /** 装填音效。原版同名方法是包私有的，子类无法重写，这里另开钩子。 */
@@ -171,22 +165,21 @@ public class TtCrossbowItem extends CrossbowItem implements RangedWeaponItem {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         // 副手禁用：装填与发射都从 use() 进，这里一并挡住，主手装填后挪到副手也射不出去。
         if (hand == InteractionHand.OFF_HAND) {
-            return InteractionResultHolder.fail(player.getItemInHand(hand));
+            return InteractionResult.FAIL;
         }
         return super.use(level, player, hand);
     }
 
-    @Override
-    public int getUseDuration(ItemStack stack, LivingEntity entity) {
-        return RangedWeaponApi.getFullDrawTicks(entity, stack) + RELEASE_SLACK_TICKS;
-    }
-
+    /**
+     * 装填音效与装填都在服务端按已拉弦 tick 判断；拉满那一刻装填（同 26.1 原版）。
+     * 生物的装填 AI 在拉满时调 {@code releaseUsingItem}，原版会为弩再补跑一次本方法，装填同样发生在这里。
+     */
     @Override
     public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remainingTicks) {
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             int fullTicks = RangedWeaponApi.getFullDrawTicks(entity, stack);
             int elapsed = this.getUseDuration(stack, entity) - remainingTicks;
             ChargingSounds sounds = this.getChargingSoundsFor(stack);
@@ -196,19 +189,20 @@ public class TtCrossbowItem extends CrossbowItem implements RangedWeaponItem {
             if (elapsed == Mth.ceil(fullTicks * MID_SOUND_PERCENT)) {
                 playChargingSound(level, entity, sounds.mid(), SoundSource.PLAYERS, 0.5F, 1.0F);
             }
+            if (elapsed >= fullTicks && !isCharged(stack) && tryLoadProjectiles(entity, stack)) {
+                playChargingSound(level, entity, sounds.end(), entity.getSoundSource(),
+                        1.0F, 1.0F / (level.getRandom().nextFloat() * 0.5F + 1.0F) + 0.2F);
+            }
         }
-        // 装填音效放前面：自动释放会 stopUsingItem，之后 entity 上就读不到这把弩了。
+        // 装填放前面：自动释放会 stopUsingItem，之后 entity 上就读不到这把弩了。
         RangedWeaponApi.tickAutoFire(entity, stack, remainingTicks);
     }
 
+    /** 返回值同原版：拉满且已装填才算这次使用成功（原版据此结算 use_cooldown 等组件效果）。装填本身在 {@link #onUseTick}。 */
     @Override
-    public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
+    public boolean releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
         int elapsed = this.getUseDuration(stack, entity) - timeLeft;
-        if (elapsed >= RangedWeaponApi.getFullDrawTicks(entity, stack) && !isCharged(stack)
-                && tryLoadProjectiles(entity, stack)) {
-            playChargingSound(level, entity, this.getChargingSoundsFor(stack).end(), entity.getSoundSource(),
-                    1.0F, 1.0F / (level.getRandom().nextFloat() * 0.5F + 1.0F) + 0.2F);
-        }
+        return elapsed >= RangedWeaponApi.getFullDrawTicks(entity, stack) && isCharged(stack);
     }
 
     @Override
@@ -228,7 +222,7 @@ public class TtCrossbowItem extends CrossbowItem implements RangedWeaponItem {
         if (list.isEmpty()) {
             return false;
         }
-        crossbow.set(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.of(list));
+        crossbow.set(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.ofNonEmpty(list));
         return true;
     }
 

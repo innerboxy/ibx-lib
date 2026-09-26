@@ -10,7 +10,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -19,12 +19,14 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.event.EventHooks;
+import org.jspecify.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -38,6 +40,12 @@ import java.util.function.Predicate;
  *   <li>带 {@code auto_fire} 组件时拉满自动射出，见 {@link RangedWeaponApi#tickAutoFire}。</li>
  * </ul>
  * 需要改箭速、门槛、弹药的变种，继承后重写对应的 protected 方法即可。
+ *
+ * <p>注册：26.1 起 {@link Item.Properties} 必须先带上物品 id 才能构造物品，请用
+ * {@code DeferredRegister.Items#registerItem} 注册，在工厂里使用传进来的 Properties，
+ * 耐久、稀有度、防火等也设在它上面（原版弓耐久 384，不设则不会损坏），例如
+ * {@code ITEMS.registerItem("my_bow", p -> new TtBowItem(p.durability(384), 8.0F, 1.0F))}。
+ * 拉弓动画的模型写法见 {@link ibx.taverntales.lib.client.RangedWeaponModelProperties}。</p>
  */
 public class TtBowItem extends BowItem implements RangedWeaponItem {
     /** 本类型的基准满蓄秒数（原版弓 20 tick）。 */
@@ -50,35 +58,20 @@ public class TtBowItem extends BowItem implements RangedWeaponItem {
     private final RangedWeaponStats stats;
     private final Predicate<ItemStack> ammo;
 
-    /**
-     * 便捷构造：只给耐久、伤害、拉弓秒数，箭速用基准值。
-     *
-     * @param durability 最大耐久（原版弓是 384）；不大于 0 则不会损坏
-     */
-    public TtBowItem(int durability, float rangedDamage, float drawTime) {
-        this(durability, rangedDamage, drawTime, 0.0F);
-    }
-
-    /**
-     * 便捷构造：耐久、伤害、拉弓秒数、箭速。要设稀有度、防火等别的物品属性时，
-     * 改用带 {@link Item.Properties} 的那个构造器。
-     *
-     * @param durability    最大耐久（原版弓是 384）；不大于 0 则不会损坏
-     * @param arrowVelocity 满蓄时的初速度；不大于 0 则用 {@link #BASELINE_ARROW_VELOCITY}
-     */
-    public TtBowItem(int durability, float rangedDamage, float drawTime, float arrowVelocity) {
-        this(RangedWeaponItem.properties(durability), rangedDamage, drawTime, arrowVelocity);
-    }
-
+    /** 箭速用基准值。 */
     public TtBowItem(Item.Properties properties, float rangedDamage, float drawTime) {
         this(properties, rangedDamage, drawTime, 0.0F);
     }
 
+    /**
+     * @param arrowVelocity 满蓄时的初速度；不大于 0 则用 {@link #BASELINE_ARROW_VELOCITY}
+     */
     public TtBowItem(Item.Properties properties, float rangedDamage, float drawTime, float arrowVelocity) {
         this(properties, rangedDamage, drawTime, arrowVelocity, ARROW_ONLY);
     }
 
     /**
+     * @param properties    物品属性，必须带物品 id（见类说明的注册方式）
      * @param rangedDamage  远程伤害（满蓄时）
      * @param drawTime      满蓄秒数；不大于 0 则用 {@link #BASELINE_DRAW_TIME}
      * @param arrowVelocity 满蓄时的初速度；不大于 0 则用 {@link #BASELINE_ARROW_VELOCITY}。
@@ -126,18 +119,20 @@ public class TtBowItem extends BowItem implements RangedWeaponItem {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         // 副手禁用：修饰符只挂主手，副手射击读不到武器数值。
         if (hand == InteractionHand.OFF_HAND) {
-            return InteractionResultHolder.fail(player.getItemInHand(hand));
+            return InteractionResult.FAIL;
         }
         return super.use(level, player, hand);
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+    @SuppressWarnings("deprecation")
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
+                                Consumer<Component> tooltip, TooltipFlag flag) {
         RangedWeaponItem.appendAutoFireTooltip(stack, tooltip);
-        super.appendHoverText(stack, context, tooltip, flag);
+        super.appendHoverText(stack, context, display, tooltip, flag);
     }
 
     @Override
@@ -145,25 +140,26 @@ public class TtBowItem extends BowItem implements RangedWeaponItem {
         RangedWeaponApi.tickAutoFire(entity, stack, remainingTicks);
     }
 
+    /** 返回值同原版：真正射出才算这次使用成功（原版据此结算 use_cooldown 等组件效果）。 */
     @Override
-    public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
+    public boolean releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
         if (!(entity instanceof Player player)) {
-            return;
+            return false;
         }
         ItemStack ammoStack = player.getProjectile(stack);
         if (ammoStack.isEmpty()) {
-            return;
+            return false;
         }
 
         int charge = this.getUseDuration(stack, entity) - timeLeft;
         charge = EventHooks.onArrowLoose(stack, level, player, charge, true);
         if (charge < 0) {
-            return;
+            return false;
         }
 
         float pct = this.getChargePercent(charge, player, stack);
         if (pct < this.getMinCharge(stack)) {
-            return; // 低于门槛：不发射、不消耗
+            return false; // 低于门槛：不发射、不消耗
         }
 
         List<ItemStack> projectiles = draw(stack, ammoStack, player);
@@ -179,11 +175,13 @@ public class TtBowItem extends BowItem implements RangedWeaponItem {
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS,
                 1.0F, 1.0F / (level.getRandom().nextFloat() * 0.4F + 1.2F) + pct * 0.5F);
         player.awardStat(Stats.ITEM_USED.get(this));
+        return true;
     }
 
     /**
      * 原版 {@code ProjectileWeaponItem#shoot} 的复刻，多一个 damage 参数：每支箭生成后写入伤害快照。
      * 原版 createProjectile 没有蓄力参数，所以只能在这一层塞进去；散射、耐久、多重射击结构原样保留。
+     * 生成同原版走 {@link Projectile#spawnProjectile}：火矢等附魔的"弹射物生成"效果是在那里触发的。
      */
     protected void shootWithDamage(ServerLevel level, LivingEntity shooter, InteractionHand hand, ItemStack weapon,
                                    List<ItemStack> projectileItems, float velocity, float inaccuracy, boolean isCrit,
@@ -200,13 +198,14 @@ public class TtBowItem extends BowItem implements RangedWeaponItem {
             }
             float angle = offset + sign * (float) ((i + 1) / 2) * step;
             sign = -sign;
+            int index = i;
 
             Projectile projectile = this.createProjectile(level, shooter, weapon, ammoStack, isCrit);
             RangedWeaponApi.setAmmoRangedDamage(projectile, damage);
-            this.shootProjectile(shooter, projectile, i, velocity, inaccuracy, angle, target);
-            level.addFreshEntity(projectile);
+            Projectile.spawnProjectile(projectile, level, ammoStack,
+                    spawned -> this.shootProjectile(shooter, spawned, index, velocity, inaccuracy, angle, target));
 
-            weapon.hurtAndBreak(this.getDurabilityUse(ammoStack), shooter, LivingEntity.getSlotForHand(hand));
+            weapon.hurtAndBreak(this.getDurabilityUse(ammoStack), shooter, hand.asEquipmentSlot());
             if (weapon.isEmpty()) {
                 break;
             }

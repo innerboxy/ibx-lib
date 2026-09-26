@@ -2,13 +2,12 @@ package ibx.taverntales.lib.attribute;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import net.minecraft.world.item.TooltipFlag;
 import net.neoforged.neoforge.common.extensions.IAttributeExtension;
-
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 远程武器用的属性：自带"基础修饰符 id"，让武器上挂的数值在 tooltip 里渲染成原版剑那样的
@@ -20,9 +19,8 @@ import javax.annotation.Nullable;
  * <p>可选地给数值套一个语言键（例如 {@code "%s秒"}），用于拉弓时间这种带单位的属性。</p>
  */
 public class WeaponAttribute extends RangedAttribute {
-    private final ResourceLocation baseId;
-    @Nullable
-    private final String valueKey;
+    private final Identifier baseId;
+    private final @Nullable String valueKey;
 
     /**
      * @param baseId   基础修饰符 id。武器用这个 id 挂的 ADD_VALUE 修饰符会被当作"武器基础值"显示。
@@ -30,19 +28,19 @@ public class WeaponAttribute extends RangedAttribute {
      *                 只作用于加法修饰符与基础值，百分比修饰符照旧显示百分数。
      */
     public WeaponAttribute(String descriptionId, double defaultValue, double min, double max,
-                           ResourceLocation baseId, @Nullable String valueKey) {
+                           Identifier baseId, @Nullable String valueKey) {
         super(descriptionId, defaultValue, min, max);
         this.baseId = baseId;
         this.valueKey = valueKey;
     }
 
     @Override
-    public ResourceLocation getBaseId() {
+    public Identifier getBaseId() {
         return this.baseId;
     }
 
     @Override
-    public MutableComponent toValueComponent(@Nullable AttributeModifier.Operation op, double value, TooltipFlag flag) {
+    public MutableComponent toValueComponent(AttributeModifier.@Nullable Operation op, double value, TooltipFlag flag) {
         if (this.valueKey != null && IAttributeExtension.isNullOrAddition(op)) {
             return Component.translatable(this.valueKey, IAttributeExtension.FORMAT.format(value));
         }

@@ -3,7 +3,7 @@ package ibx.taverntales.lib.registry;
 import ibx.taverntales.lib.TavernTalesLib;
 import ibx.taverntales.lib.attribute.WeaponAttribute;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -27,12 +27,12 @@ public final class AttributeRegistry {
             DeferredRegister.create(Registries.ATTRIBUTE, TavernTalesLib.MODID);
 
     /** 武器"基础远程伤害"修饰符的 id（对标原版 {@code minecraft:base_attack_damage}）。 */
-    public static final ResourceLocation BASE_RANGED_DAMAGE_ID =
-            ResourceLocation.fromNamespaceAndPath(TavernTalesLib.MODID, "base_ranged_damage");
+    public static final Identifier BASE_RANGED_DAMAGE_ID =
+            Identifier.fromNamespaceAndPath(TavernTalesLib.MODID, "base_ranged_damage");
 
     /** 武器"基础拉弓时间"修饰符的 id。 */
-    public static final ResourceLocation BASE_DRAW_TIME_ID =
-            ResourceLocation.fromNamespaceAndPath(TavernTalesLib.MODID, "base_draw_time");
+    public static final Identifier BASE_DRAW_TIME_ID =
+            Identifier.fromNamespaceAndPath(TavernTalesLib.MODID, "base_draw_time");
 
     /** 拉弓时间数值的语言键（"%s秒"）。 */
     public static final String SECONDS_VALUE_KEY = "attribute.value." + TavernTalesLib.MODID + ".seconds";

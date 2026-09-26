@@ -12,7 +12,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 /**
  * 本模组注册的物品数据组件（Data Component）。
  *
- * <p>物品栈上的数据只能用组件：NeoForge 21.1 的 {@code ItemStack} 不再支持 Data Attachment
+ * <p>物品栈上的数据只能用组件：NeoForge 的 {@code ItemStack}（20.5 起，26.1 仍是如此）不支持 Data Attachment
  * （那套只给实体、方块实体、区块、维度用，见 {@link AttachmentRegistry}）。</p>
  */
 public final class DataComponentRegistry {
