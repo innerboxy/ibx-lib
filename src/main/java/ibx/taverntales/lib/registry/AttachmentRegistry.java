@@ -2,6 +2,7 @@ package ibx.taverntales.lib.registry;
 
 import com.mojang.serialization.Codec;
 import ibx.taverntales.lib.TavernTalesLib;
+import ibx.taverntales.lib.api.ManaStorage;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -30,6 +31,23 @@ public final class AttachmentRegistry {
             ATTACHMENT_TYPES.register("ammo_ranged_damage",
                     () -> AttachmentType.builder(() -> 0.0F)
                             .serialize(Codec.FLOAT.fieldOf("value"))
+                            .build());
+
+    /**
+     * 当前法力值，上限是属性 {@code max_mana}。读写请走 {@link ibx.taverntales.lib.api.ManaApi}，
+     * 每 tick 的回复见 {@link ibx.taverntales.lib.event.ManaHandler}。
+     *
+     * <ul>
+     *   <li>默认 0：新玩家与重生后都从空蓝开始。</li>
+     *   <li>不标 copyOnDeath：死亡重生时不复制（从 0 开始）；从末地返回这类非死亡的重建会原样保留。</li>
+     *   <li>只同步给实体自己：别人看不到你的法力。何时同步由 ManaApi 控制（值是原地修改的）。</li>
+     * </ul>
+     */
+    public static final Supplier<AttachmentType<ManaStorage>> MANA =
+            ATTACHMENT_TYPES.register("mana",
+                    () -> AttachmentType.builder(() -> new ManaStorage())
+                            .serialize(ManaStorage.CODEC)
+                            .sync((holder, player) -> holder == player, ManaStorage.STREAM_CODEC)
                             .build());
 
     public static void register(IEventBus modEventBus) {

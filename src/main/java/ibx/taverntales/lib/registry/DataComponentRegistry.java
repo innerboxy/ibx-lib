@@ -22,9 +22,9 @@ public final class DataComponentRegistry {
             DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, TavernTalesLib.MODID);
 
     /**
-     * 自动射击：为 true 的 Tt 弓弩拉满即自动释放——弓直接射出，弩装填完毕；按住右键就是连发。
+     * 自动射击：为 true 的 Tt 弓弩（以及被接管的原版弓弩）拉满即自动释放——弓直接射出，弩装填完毕；按住右键就是连发。
      * 缺省视为 false，不烤进物品默认组件，只有显式打开的物品栈才带它，例如
-     * {@code /give @s taverntales_l1b:test_bow[taverntales_l1b:auto_fire=true]}。
+     * {@code /give @s minecraft:bow[taverntales_l1b:auto_fire=true]}。
      * 读取走 {@link ibx.taverntales.lib.api.RangedWeaponApi#isAutoFire}，
      * 生效见 {@link ibx.taverntales.lib.api.RangedWeaponApi#tickAutoFire}。
      */

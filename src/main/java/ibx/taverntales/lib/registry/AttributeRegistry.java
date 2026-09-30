@@ -1,6 +1,7 @@
 package ibx.taverntales.lib.registry;
 
 import ibx.taverntales.lib.TavernTalesLib;
+import ibx.taverntales.lib.attribute.UnitAttribute;
 import ibx.taverntales.lib.attribute.WeaponAttribute;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -128,6 +129,53 @@ public final class AttributeRegistry {
                             0.0D,    // 最小值
                             1024.0D  // 最大值
                     ).setSyncable(true));
+
+    /** 每秒数值的语言键（"%s/秒"）。 */
+    public static final String PER_SECOND_VALUE_KEY = "attribute.value." + TavernTalesLib.MODID + ".per_second";
+
+    /**
+     * 最大法力值：当前法力的上限。默认 100，最小 0，最大 1,000,000。
+     * 上限降低时当前法力被截断，上限提高时不自动补满（同原版血量）。
+     * 当前法力存在附加数据里，读写见 {@link ibx.taverntales.lib.api.ManaApi}。
+     */
+    public static final DeferredHolder<Attribute, Attribute> MAX_MANA =
+            ATTRIBUTES.register("max_mana",
+                    () -> new RangedAttribute(
+                            "attribute.name." + TavernTalesLib.MODID + ".max_mana",
+                            100.0D,       // 默认值
+                            0.0D,         // 最小值
+                            1000000.0D    // 最大值
+                    ).setSyncable(true));
+
+    /**
+     * 法力回复效率：每秒回复的法力点数（固定值，不按上限比例）。负数表示持续流失。
+     * 默认 2（空蓝 50 秒回满），最小 -1024，最大 1024。tooltip 数值带"/秒"。
+     * 结算见 {@link ibx.taverntales.lib.event.ManaHandler}。
+     */
+    public static final DeferredHolder<Attribute, Attribute> MANA_REGENERATION =
+            ATTRIBUTES.register("mana_regeneration",
+                    () -> new UnitAttribute(
+                            "attribute.name." + TavernTalesLib.MODID + ".mana_regeneration",
+                            2.0D,     // 默认值
+                            -1024.0D, // 最小值
+                            1024.0D,  // 最大值
+                            PER_SECOND_VALUE_KEY
+                    ).setSyncable(true));
+
+    /**
+     * 法力消耗倍率：实际消耗 = 基础消耗 × 本值。默认 1，最小 0（可以做出免费施法的装备），最大 1024。
+     * 越大越坏，所以 Sentiment 取 NEGATIVE（加值显红、减值显蓝）。
+     * 约定：减耗用 {@code add_multiplied_total}（连乘，永远叠不到 0）；
+     * {@code add_multiplied_base} 的多个减值是相加的，两个 -50% 就成了免费。
+     */
+    public static final DeferredHolder<Attribute, Attribute> MANA_COST_MULTIPLIER =
+            ATTRIBUTES.register("mana_cost_multiplier",
+                    () -> new RangedAttribute(
+                            "attribute.name." + TavernTalesLib.MODID + ".mana_cost_multiplier",
+                            1.0D,    // 默认值
+                            0.0D,    // 最小值
+                            1024.0D  // 最大值
+                    ).setSyncable(true).setSentiment(Attribute.Sentiment.NEGATIVE));
 
     public static void register(IEventBus modEventBus) {
         ATTRIBUTES.register(modEventBus);

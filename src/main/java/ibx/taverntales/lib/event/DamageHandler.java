@@ -8,6 +8,7 @@ import net.minecraft.network.protocol.game.ClientboundAnimatePacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -46,13 +47,14 @@ public final class DamageHandler {
     private static void onIncomingDamage(LivingIncomingDamageEvent event) {
         applyAmmoRangedDamage(event);
         applyCriticalDamage(event);
+        applyAmmoDifficultyScaling(event);
     }
 
     /**
      * 远程武器命中结算：箭上带着发射瞬间写入的远程伤害，就用它覆盖原版伤害。
      *
      * <p>原版伤害 = 箭速 × 基础伤害（向上取整），这里整个丢弃，让伤害与箭速彻底解耦。
-     * 原版弓弩射出的箭没有这个数据，完全不受影响。</p>
+     * 没被接管的弓弩（关掉接管开关的原版弓弩、其他模组的弓弩）射出的箭没有这个数据，完全不受影响。</p>
      */
     private static void applyAmmoRangedDamage(LivingIncomingDamageEvent event) {
         if (event.getSource().getDirectEntity() instanceof AbstractArrow arrow) {
@@ -61,9 +63,29 @@ public final class DamageHandler {
     }
 
     /**
+     * 补回难度缩放：生物射中玩家时，按难度调整本模组的远程伤害（简单约减半、困难 ×1.5）。
+     *
+     * <p>原版在 {@code Player#hurtServer} 里、触发本事件<b>之前</b>就按难度缩放了伤害，
+     * {@link #applyAmmoRangedDamage} 的覆盖会把它一起抹掉，所以在这里对覆盖后的值重新缩放一次。
+     * 用的是同一个缩放函数，由伤害类型自己决定缩不缩（玩家射的箭、打生物都不缩），口径与原版一致。</p>
+     *
+     * <p>放在暴击之后：原版缩放的也是含暴击加成在内的整支箭伤害。</p>
+     */
+    private static void applyAmmoDifficultyScaling(LivingIncomingDamageEvent event) {
+        if (!(event.getEntity() instanceof Player player)
+                || !(event.getSource().getDirectEntity() instanceof AbstractArrow arrow)
+                || RangedWeaponApi.getAmmoRangedDamage(arrow).isEmpty()) {
+            return;
+        }
+        DamageSource source = event.getSource();
+        event.setAmount(Math.max(0.0F, source.type().scaling().getScalingFunction()
+                .scaleDamage(source, player, event.getAmount(), player.level().getDifficulty())));
+    }
+
+    /**
      * 远程暴击：发射时已经掷过骰并把结果记在箭的原版暴击标记上，这里只负责乘倍率。
      *
-     * <p>只处理带本模组远程伤害的箭。原版弓弩射出的暴击箭在
+     * <p>只处理带本模组远程伤害的箭。未被接管的弓弩射出的暴击箭在
      * {@code AbstractArrow#onHitEntity} 里已经加过原版的随机暴击加成，
      * 再乘一次就成了双重结算，所以放过它们。</p>
      */
@@ -115,7 +137,7 @@ public final class DamageHandler {
     /**
      * 是不是一支"本模组射出且暴击了"的箭。
      *
-     * <p>两个条件缺一不可：带本模组的远程伤害（排除原版弓弩，它们的暴击已由原版自己结算），
+     * <p>两个条件缺一不可：带本模组的远程伤害（排除未被接管的弓弩，它们的暴击已由原版自己结算），
      * 且带着发射时掷骰打上的原版暴击标记。</p>
      */
     private static boolean isTtCriticalArrow(@Nullable Entity projectile) {

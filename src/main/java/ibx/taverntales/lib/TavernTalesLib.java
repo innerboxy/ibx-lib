@@ -1,9 +1,13 @@
 package ibx.taverntales.lib;
 
 import com.mojang.logging.LogUtils;
+import ibx.taverntales.lib.command.ManaCommand;
 import ibx.taverntales.lib.config.Config;
+import ibx.taverntales.lib.config.StartupConfig;
 import ibx.taverntales.lib.event.DamageHandler;
 import ibx.taverntales.lib.event.HealHandler;
+import ibx.taverntales.lib.event.ManaHandler;
+import ibx.taverntales.lib.item.ranged_weapon.VanillaRangedWeapons;
 import ibx.taverntales.lib.registry.AttachmentRegistry;
 import ibx.taverntales.lib.registry.AttributeRegistry;
 import ibx.taverntales.lib.registry.DataComponentRegistry;
@@ -21,16 +25,21 @@ public class TavernTalesLib {
 
     public TavernTalesLib(IEventBus modEventBus, ModContainer modContainer) {
         modContainer.registerConfig(ModConfig.Type.SERVER, Config.SPEC);
+        // 启动配置注册即加载，下面的默认组件事件要读它，必须先注册。
+        modContainer.registerConfig(ModConfig.Type.STARTUP, StartupConfig.SPEC);
 
         // MOD 总线：注册表、属性挂载、创造标签。
         AttributeRegistry.register(modEventBus);
         AttachmentRegistry.register(modEventBus);
         DataComponentRegistry.register(modEventBus);
         ItemRegistry.register(modEventBus);
+        modEventBus.addListener(VanillaRangedWeapons::onModifyDefaultComponents);
 
-        // GAME 总线：统一的伤害与治疗结算。
+        // GAME 总线：统一的伤害、治疗与法力结算，以及法力指令。
         DamageHandler.register();
         HealHandler.register();
+        ManaHandler.register();
+        ManaCommand.register();
         LOGGER.info("{} loaded", MODID);
     }
 }

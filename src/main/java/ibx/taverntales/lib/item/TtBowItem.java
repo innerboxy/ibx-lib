@@ -115,7 +115,7 @@ public class TtBowItem extends BowItem implements RangedWeaponItem {
 
     /** 线性蓄力百分比：已蓄力 tick ÷ 满蓄 tick，clamp 到 1。 */
     public float getChargePercent(int chargeTicks, LivingEntity shooter, ItemStack stack) {
-        return Math.min(1.0F, (float) chargeTicks / (float) RangedWeaponApi.getFullDrawTicks(shooter, stack));
+        return RangedWeaponApi.getChargePercent(chargeTicks, shooter, stack);
     }
 
     @Override

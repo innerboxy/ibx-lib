@@ -5,6 +5,15 @@
   "attribute.name.taverntales_l1b.critical_chance": "暴击率",
   "attribute.name.taverntales_l1b.critical_damage": "暴击伤害",
   "attribute.name.taverntales_l1b.heal_efficiency": "回复效率",
+  "attribute.name.taverntales_l1b.max_mana": "最大法力值",
+  "attribute.name.taverntales_l1b.mana_regeneration": "法力回复效率",
+  "attribute.name.taverntales_l1b.mana_cost_multiplier": "法力消耗倍率",
   "attribute.value.taverntales_l1b.seconds": "%s",
+  "attribute.value.taverntales_l1b.per_second": "%s/秒",
+  "commands.taverntales_l1b.mana.get": "%s 的法力：%s / %s",
+  "commands.taverntales_l1b.mana.set": "已将 %s 个实体的法力设为 %s",
+  "commands.taverntales_l1b.mana.add": "已为 %s 个实体增加 %s 点法力",
+  "commands.taverntales_l1b.mana.fill": "已补满 %s 个实体的法力",
+  "commands.taverntales_l1b.mana.no_living": "目标中没有生物",
   "tooltip.taverntales_l1b.auto_fire": "自动发射"
 }

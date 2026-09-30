@@ -1,5 +1,8 @@
 package ibx.taverntales.lib.api;
 
+import ibx.taverntales.lib.item.TtBowItem;
+import ibx.taverntales.lib.item.TtCrossbowItem;
+import ibx.taverntales.lib.item.ranged_weapon.VanillaRangedWeapons;
 import ibx.taverntales.lib.registry.AttachmentRegistry;
 import ibx.taverntales.lib.registry.AttributeRegistry;
 import ibx.taverntales.lib.registry.DataComponentRegistry;
@@ -26,6 +29,19 @@ public final class RangedWeaponApi {
     public static final int MIN_FULL_DRAW_TICKS = 1;
 
     /**
+     * 这把弓是否走本模组的远程系统：{@link TtBowItem}（含子类），或开了接管开关时的原版弓。
+     * 其他模组继承原版的弓不算。生物 AI、生物造箭等 mixin 都用它判断要不要介入。
+     */
+    public static boolean isManagedBow(ItemStack weapon) {
+        return weapon.getItem() instanceof TtBowItem || VanillaRangedWeapons.isManagedBow(weapon);
+    }
+
+    /** 这把弩是否走本模组的远程系统，口径同 {@link #isManagedBow}。 */
+    public static boolean isManagedCrossbow(ItemStack weapon) {
+        return weapon.getItem() instanceof TtCrossbowItem || VanillaRangedWeapons.isManagedCrossbow(weapon);
+    }
+
+    /**
      * 满蓄（弓）/ 装填（弩）所需 tick = draw_time ÷ draw_speed × 20，最少 {@link #MIN_FULL_DRAW_TICKS}。
      * 服务端与客户端都可调用（属性已同步）。
      */
@@ -34,6 +50,11 @@ public final class RangedWeaponApi {
         double seconds = readAttribute(shooter, weapon, AttributeRegistry.DRAW_TIME)
                 / readAttribute(shooter, weapon, AttributeRegistry.DRAW_SPEED);
         return Math.max(MIN_FULL_DRAW_TICKS, (int) Math.round(seconds * 20.0D));
+    }
+
+    /** 弓的线性蓄力百分比：已蓄力 tick ÷ 满蓄 tick，上限 1。 */
+    public static float getChargePercent(int chargeTicks, LivingEntity shooter, ItemStack weapon) {
+        return Math.min(1.0F, (float) chargeTicks / (float) getFullDrawTicks(shooter, weapon));
     }
 
     /** 射手当前的远程伤害（ranged_damage 属性总值）。 */
@@ -46,7 +67,7 @@ public final class RangedWeaponApi {
         projectile.setData(AttachmentRegistry.AMMO_RANGED_DAMAGE, damage);
     }
 
-    /** 弹射物上记录的远程伤害；没有（原版弓弩射出的箭）则为空。不会顺手创建默认值。 */
+    /** 弹射物上记录的远程伤害；没有（未被接管的弓弩射出的箭）则为空。不会顺手创建默认值。 */
     public static Optional<Float> getAmmoRangedDamage(Entity projectile) {
         return projectile.getExistingData(AttachmentRegistry.AMMO_RANGED_DAMAGE);
     }

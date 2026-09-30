@@ -5,13 +5,16 @@ import ibx.taverntales.lib.TavernTalesLib;
 import ibx.taverntales.lib.api.RangedWeaponApi;
 import ibx.taverntales.lib.item.TtBowItem;
 import ibx.taverntales.lib.item.TtCrossbowItem;
+import ibx.taverntales.lib.item.ranged_weapon.VanillaRangedWeapons;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemModelProperty;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.ItemOwner;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.client.event.RegisterRangeSelectItemModelPropertyEvent;
 import org.jspecify.annotations.Nullable;
 
@@ -29,9 +32,13 @@ import org.jspecify.annotations.Nullable;
  *   <li>弓：照抄原版 {@code items/bow.json}，把 {@code "property": "minecraft:use_duration"} 与
  *       {@code "scale": 0.05} 换成 {@code "property": "taverntales_l1b:pull"}，阈值 0.65 / 0.9 不变。</li>
  *   <li>弩：可直接照抄原版 {@code items/crossbow.json}。原版的 {@code minecraft:crossbow/pull} 读的是
- *       {@code CrossbowItem.getChargeDuration}，已由 {@link ibx.taverntales.lib.mixin.CrossbowItemMixin}
+ *       {@code CrossbowItem.getChargeDuration}，已由 {@code mixin.CrossbowItemMixin}
  *       对 Tt 弩改成属性时长；想统一写法也可以换成本属性，结果相同。</li>
  * </ul>
+ *
+ * <p>原版弓：本模组的 {@code assets/minecraft/items/bow.json} 按上面的写法覆盖了原版定义，让被接管的原版弓
+ * 也跟着属性走；关掉接管时本属性对原版弓按原版的 20 tick 计算，表现与原版一致。
+ * 原版弩不用覆盖，它的 {@code crossbow/pull} 同样由 {@code mixin.CrossbowItemMixin} 改好了。</p>
  */
 public final class RangedWeaponModelProperties {
     private RangedWeaponModelProperties() {}
@@ -62,8 +69,12 @@ public final class RangedWeaponModelProperties {
             if (idle) {
                 return 0.0F;
             }
-            return (float) (stack.getUseDuration(entity) - entity.getUseItemRemainingTicks())
-                    / (float) RangedWeaponApi.getFullDrawTicks(entity, stack);
+            float ticks = stack.getUseDuration(entity) - entity.getUseItemRemainingTicks();
+            if (stack.is(Items.BOW) && !VanillaRangedWeapons.isEnabled()) {
+                // 原版弓的模型已改用本属性；关掉接管时它没有拉弦时间修饰符，退回原版的 20 tick 刻度。
+                return ticks / (float) BowItem.MAX_DRAW_DURATION;
+            }
+            return ticks / (float) RangedWeaponApi.getFullDrawTicks(entity, stack);
         }
 
         @Override
