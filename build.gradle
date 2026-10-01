@@ -1,99 +1,16 @@
+// 前置库：法力、远程武器、属性等（原 taverntales-l1b）
 plugins {
     id 'java-library'
-    id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.147'
     id 'idea'
+    id 'net.neoforged.moddev'
 }
 
-version = mod_version
-group = mod_group_id
-
-repositories {
-    mavenCentral()
-    maven {
-        name = "Modrinth"
-        url = "https://api.modrinth.com/maven"
-        content { includeGroup "maven.modrinth" }
-    }
-}
-
-base {
-    archivesName = "${mod_id}-neoforge-${minecraft_version}"
-}
-
-// Mojang ships Java 25 to end users in 26.1, so mods should target Java 25.
-java.toolchain.languageVersion = JavaLanguageVersion.of(25)
-
-neoForge {
-    version = project.neo_version
-
-    runs {
-        client {
-            client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        }
-
-        server {
-            server()
-            programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        }
-
-        configureEach {
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-            logLevel = org.slf4j.event.Level.DEBUG
-        }
-    }
-
-    mods {
-        "${mod_id}" {
-            sourceSet(sourceSets.main)
-        }
-    }
-}
+apply from: rootProject.file('gradle/mod-common.gradle')
 
 dependencies {
-    // MmmMmmMmmMmm 试验假人(Modrinth 项目名 mmmmmmmmmmmm,modId dummmmmmy):**非强制依赖**。
-    // mods.toml 里声明为 optional,装了就联动、没装照常加载;凡是触及它 API 的代码
-    // 都必须先用 ModList.get().isLoaded("dummmmmmy") 守门,否则缺席时 NoClassDefFoundError。
-    // runtimeOnly 是为了开发运行(runClient)里能直接摆假人打靶,验证远程武器伤害数字。
-    // 注意 dummmmmmy_version / moonlight_version 填的是 Modrinth 的【版本 ID】,原因见 gradle.properties。
+    // Dummmmmmy (optional)
     compileOnly "maven.modrinth:mmmmmmmmmmmm:${dummmmmmy_version}"
     runtimeOnly "maven.modrinth:mmmmmmmmmmmm:${dummmmmmy_version}"
-
-    // Moonlight:试验假人的前置,仅开发运行时需要,本模组不直接依赖它的 API。
+    // Dummmmmmy 的前置
     runtimeOnly "maven.modrinth:moonlight:${moonlight_version}"
-}
-
-// This block of code expands all declared replace properties in the specified resource targets.
-var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
-    var replaceProperties = [
-            minecraft_version      : minecraft_version,
-            minecraft_version_range: minecraft_version_range,
-            neo_version            : neo_version,
-            loader_version_range   : loader_version_range,
-            mod_id                 : mod_id,
-            mod_name               : mod_name,
-            mod_license            : mod_license,
-            mod_version            : mod_version,
-    ]
-    inputs.properties replaceProperties
-    // expand 默认用平台编码(Windows 为 GBK)读写,不指定会让模板里的中文变乱码
-    filteringCharset = 'UTF-8'
-    expand replaceProperties
-    from "src/main/templates"
-    into "build/generated/sources/modMetadata"
-}
-sourceSets.main.resources.srcDir generateModMetadata
-neoForge.ideSyncTask generateModMetadata
-
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
-}
-
-idea {
-    module {
-        downloadSources = true
-        downloadJavadoc = true
-    }
 }
