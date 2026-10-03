@@ -13,4 +13,7 @@ dependencies {
     runtimeOnly "maven.modrinth:mmmmmmmmmmmm:${dummmmmmy_version}"
     // Dummmmmmy 的前置
     runtimeOnly "maven.modrinth:moonlight:${moonlight_version}"
+    // Curios (optional)
+    compileOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}:api"
+    runtimeOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}"
 }

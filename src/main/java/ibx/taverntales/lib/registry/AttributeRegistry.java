@@ -1,6 +1,7 @@
 package ibx.taverntales.lib.registry;
 
 import ibx.taverntales.lib.TavernTalesLib;
+import ibx.taverntales.lib.attribute.FlagAttribute;
 import ibx.taverntales.lib.attribute.UnitAttribute;
 import ibx.taverntales.lib.attribute.WeaponAttribute;
 import net.minecraft.core.registries.Registries;
@@ -34,6 +35,10 @@ public final class AttributeRegistry {
     /** 武器"基础拉弓时间"修饰符的 id。 */
     public static final Identifier BASE_DRAW_TIME_ID =
             Identifier.fromNamespaceAndPath(TavernTalesLib.MODID, "base_draw_time");
+
+    /** 法器"基础法术强度"修饰符的 id。 */
+    public static final Identifier BASE_SPELL_POWER_ID =
+            Identifier.fromNamespaceAndPath(TavernTalesLib.MODID, "base_spell_power");
 
     /** 拉弓时间数值的语言键（"%s秒"）。 */
     public static final String SECONDS_VALUE_KEY = "attribute.value." + TavernTalesLib.MODID + ".seconds";
@@ -176,6 +181,83 @@ public final class AttributeRegistry {
                             0.0D,    // 最小值
                             1024.0D  // 最大值
                     ).setSyncable(true).setSentiment(Attribute.Sentiment.NEGATIVE));
+
+    /**
+     * 法术强度：法术伤害与治疗的基础值，法术按系数取用（如"160% 法术强度"）。对标 {@link #RANGED_DAMAGE}：
+     * 实体基础值 0，由法器用 {@link #BASE_SPELL_POWER_ID} 挂 ADD_VALUE 修饰符提供，tooltip 显示成深绿合并行。
+     * 默认 0，最小 0，最大 2048。暂无结算逻辑。
+     */
+    public static final DeferredHolder<Attribute, Attribute> SPELL_POWER =
+            ATTRIBUTES.register("spell_power",
+                    () -> new WeaponAttribute(
+                            "attribute.name." + TavernTalesLib.MODID + ".spell_power",
+                            0.0D,    // 默认值
+                            0.0D,    // 最小值
+                            2048.0D, // 最大值
+                            BASE_SPELL_POWER_ID,
+                            null
+                    ).setSyncable(true));
+
+    /**
+     * 法术冷却倍率：实际冷却 = 基础冷却 × 本值。默认 1，最小 0（无冷却），最大 1024。
+     * 越大越坏，所以 Sentiment 取 NEGATIVE。减冷却的约定同 {@link #MANA_COST_MULTIPLIER}：用 {@code add_multiplied_total}。
+     * 暂无结算逻辑。
+     */
+    public static final DeferredHolder<Attribute, Attribute> SPELL_COOLDOWN_RATIO =
+            ATTRIBUTES.register("spell_cooldown_ratio",
+                    () -> new RangedAttribute(
+                            "attribute.name." + TavernTalesLib.MODID + ".spell_cooldown_ratio",
+                            1.0D,    // 默认值
+                            0.0D,    // 最小值
+                            1024.0D  // 最大值
+                    ).setSyncable(true).setSentiment(Attribute.Sentiment.NEGATIVE));
+
+    /**
+     * 施法速率：公式为 {@code 实际吟唱时间 = 法术吟唱时间 ÷ 本值}，口径同 {@link #DRAW_SPEED}。
+     * 默认 1，最小 0.01（防除零），最大 1024。加成建议用 {@code add_multiplied_base}。
+     * 同步到客户端（读条在客户端也要算）。暂无结算逻辑。
+     */
+    public static final DeferredHolder<Attribute, Attribute> SPELL_CAST_SPEED =
+            ATTRIBUTES.register("spell_cast_speed",
+                    () -> new RangedAttribute(
+                            "attribute.name." + TavernTalesLib.MODID + ".spell_cast_speed",
+                            1.0D,    // 默认值
+                            0.01D,   // 最小值
+                            1024.0D  // 最大值
+                    ).setSyncable(true));
+
+    /**
+     * 法术抗性：法术伤害的"护甲点"，套原版护甲公式（{@code CombatRules#getDamageAfterAbsorb}），韧性用原版 {@code armor_toughness}：
+     * {@code 减免比例 = clamp(R − 伤害 ÷ (2 + 韧性 ÷ 4), min(R × 0.2, 20), 20) ÷ 25}，R 为本值。
+     * 最多减 80%（20 点）；超过 20 点不再提高减免上限，但让大伤害更难穿透。
+     * 默认 0，最小 0，最大 2048。装备用 ADD_VALUE 给点数。
+     *
+     * <p>下限必须写成 {@code min(R × 0.2, 20)}：原版护甲最高 30 点不会碰到，本属性超过 100 点后
+     * {@code R × 0.2} 会大于 20，而 {@code Mth.clamp} 在下限大于上限时返回下限，大伤害的减免会超过 80% 乃至 100%。</p>
+     *
+     * <p>暂无结算逻辑。</p>
+     */
+    public static final DeferredHolder<Attribute, Attribute> SPELL_RESISTANCE =
+            ATTRIBUTES.register("spell_resistance",
+                    () -> new RangedAttribute(
+                            "attribute.name." + TavernTalesLib.MODID + ".spell_resistance",
+                            0.0D,    // 默认值
+                            0.0D,    // 最小值
+                            2048.0D  // 最大值
+                    ).setSyncable(true));
+
+    /**
+     * 法术可暴击：开关，总值大于等于 1 时法术会按 {@link #CRITICAL_CHANCE} / {@link #CRITICAL_DAMAGE} 暴击，
+     * 每个目标各掷一次；治疗法术同样适用。默认 0（法术不暴击），范围 0~1。装备挂 ADD_VALUE +1 打开，
+     * tooltip 只显示"法术可暴击"不带数字（见 {@link FlagAttribute}）。同步到客户端（tooltip 与预测要读）。
+     *
+     * <p>暂无结算逻辑。</p>
+     */
+    public static final DeferredHolder<Attribute, Attribute> CAN_SPELL_CRIT =
+            ATTRIBUTES.register("can_spell_crit",
+                    () -> new FlagAttribute(
+                            "attribute.name." + TavernTalesLib.MODID + ".can_spell_crit"
+                    ).setSyncable(true));
 
     public static void register(IEventBus modEventBus) {
         ATTRIBUTES.register(modEventBus);
