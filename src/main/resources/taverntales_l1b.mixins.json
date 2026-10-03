@@ -11,7 +11,9 @@
     "ProjectileUtilMixin",
     "RangedBowAttackGoalMixin"
   ],
-  "client": [],
+  "client": [
+    "GuiHotbarMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

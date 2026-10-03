@@ -9,6 +9,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent;
@@ -230,7 +231,7 @@ public final class AttributeRegistry {
      * 法术抗性：法术伤害的"护甲点"，套原版护甲公式（{@code CombatRules#getDamageAfterAbsorb}），韧性用原版 {@code armor_toughness}：
      * {@code 减免比例 = clamp(R − 伤害 ÷ (2 + 韧性 ÷ 4), min(R × 0.2, 20), 20) ÷ 25}，R 为本值。
      * 最多减 80%（20 点）；超过 20 点不再提高减免上限，但让大伤害更难穿透。
-     * 默认 0，最小 0，最大 2048。装备用 ADD_VALUE 给点数。
+     * 默认 0，最小 0，最大 4096。装备用 ADD_VALUE 给点数。
      *
      * <p>下限必须写成 {@code min(R × 0.2, 20)}：原版护甲最高 30 点不会碰到，本属性超过 100 点后
      * {@code R × 0.2} 会大于 20，而 {@code Mth.clamp} 在下限大于上限时返回下限，大伤害的减免会超过 80% 乃至 100%。</p>
@@ -243,7 +244,7 @@ public final class AttributeRegistry {
                             "attribute.name." + TavernTalesLib.MODID + ".spell_resistance",
                             0.0D,    // 默认值
                             0.0D,    // 最小值
-                            2048.0D  // 最大值
+                            4096.0D  // 最大值
                     ).setSyncable(true));
 
     /**
@@ -262,6 +263,21 @@ public final class AttributeRegistry {
     public static void register(IEventBus modEventBus) {
         ATTRIBUTES.register(modEventBus);
         modEventBus.addListener(AttributeRegistry::attachToLivingEntities);
+        makeAttackDamageSyncable();
+    }
+
+    /**
+     * 让原版的攻击伤害同步到客户端。
+     *
+     * <p>原版只同步护甲、韧性、攻速这类客户端要用的属性，攻击伤害没标同步；而手持物品的属性修饰符只在服务端加
+     * （{@code LivingEntity.detectEquipmentUpdates} 在 {@code !isClientSide()} 里），所以客户端读到的永远是基础值，
+     * HUD 属性行的"力量"拿剑也不变。本模组的远程伤害、法强等属性注册时都标了同步，没有这个问题。</p>
+     *
+     * <p>{@code setSyncable} 只是改个标记：服务端在属性变化时据此决定发不发属性包，变化很少（换武器、药水起落），流量可忽略。
+     * 在模组构造时调用，早于任何实体生成。</p>
+     */
+    private static void makeAttackDamageSyncable() {
+        Attributes.ATTACK_DAMAGE.value().setSyncable(true);
     }
 
     /**
