@@ -166,7 +166,7 @@ public abstract class SpellProjectile extends Projectile {
 
     /**
      * 照原版 {@code ThrowableProjectile.tick} 的顺序：重力 → 阻力 → 追踪 → 沿速度找碰撞 → 移动 → 命中。
-     * 不同的只有阻力（可配、默认不减速）、追踪、寿命和进水熄灭。
+     * 不同的只有阻力（可配、默认不减速）、追踪、寿命和进水熄灭，以及起点已经在目标碰撞箱里时也算打中（见 {@link #findOverlappingEntity}）。
      */
     @Override
     public void tick() {
@@ -180,6 +180,12 @@ public abstract class SpellProjectile extends Projectile {
         }
 
         HitResult result = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
+        if (result.getType() != HitResult.Type.ENTITY) {
+            Entity overlapping = this.findOverlappingEntity();
+            if (overlapping != null) {
+                result = new EntityHitResult(overlapping, this.position());
+            }
+        }
         boolean hit = result.getType() != HitResult.Type.MISS && !EventHooks.onProjectileImpact(this, result);
         this.setPos(hit ? result.getLocation() : this.position().add(this.getDeltaMovement()));
         this.updateRotation();
@@ -235,6 +241,24 @@ public abstract class SpellProjectile extends Projectile {
     }
 
     // ---------------------------------------------------------------- 命中
+
+    /**
+     * 自己的碰撞箱已经碰到的、能打的、最近的实体。原版只找"这一 tick 从外面撞进目标碰撞箱"的：起点已经在箱子里时
+     * （目标走进了弹射物；原版判定边距随飞行 tick 变大，把弹射物圈了进去；追踪急转擦着目标边过），整段路都在箱子里，
+     * 找不到撞入点，弹射物会直接穿过去。
+     */
+    private @Nullable Entity findOverlappingEntity() {
+        Entity nearest = null;
+        double nearestDistance = Double.MAX_VALUE;
+        for (Entity entity : this.level().getEntities(this, this.getBoundingBox(), this::canHitEntity)) {
+            double distance = entity.distanceToSqr(this);
+            if (distance < nearestDistance) {
+                nearest = entity;
+                nearestDistance = distance;
+            }
+        }
+        return nearest;
+    }
 
     /** 不打施法者自己、不重复打同一个目标；友伤保护开着时不打友方（直接穿过去）。 */
     @Override

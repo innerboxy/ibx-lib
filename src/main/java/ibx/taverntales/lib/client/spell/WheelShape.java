@@ -7,16 +7,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 法术轮盘的形状：{@code n} 个三角形围成正 n 边形，每个三角形一格，尖朝中心，第 0 格在正上方、顺时针排；
- * 三角形之间留 {@link #GAP} 像素的透明缝。按 GUI 像素光栅化（画出来是像素画，和原版界面一个精度），结果按（格数, 半径）缓存。
+ * 法术轮盘的形状：{@code n} 个扇形拼成一个圆，每个扇形一格，尖朝中心，第 0 格在正上方、顺时针排；
+ * 扇形之间留 {@link #GAP} 像素的透明缝。按 GUI 像素光栅化（画出来是像素画，和原版界面一个精度），结果按（格数, 半径）缓存。
  *
- * <p>每个三角形自成一格，配色照原版快捷栏（hud/hotbar.png）：黑描边，描边内一圈框（朝上 / 左的亮 {@code #939393}、
+ * <p>每个扇形自成一格，配色照原版快捷栏（hud/hotbar.png）：黑描边，描边内一圈框（朝上 / 左的亮 {@code #939393}、
  * 朝下 / 右的暗 {@code #5D5D5D}），再一圈内沿（上 / 左 {@code #5D5D5D}、下 / 右 {@code #7E7E7E}），格子底是快捷栏格子那种
  * 半透明的 {@code #272505}（不透明度 186）。指向的那一格把框、内沿和再往里一圈换成快捷栏选中框的三圈：
  * 浅 {@code #D5E8D0}、中 {@code #A1B29D}、深 {@code #5F6D5C}，黑描边不变。</p>
  *
- * <p>每层的"深度"用 4 邻接腐蚀算（离格子边界几步），所以斜边也是一像素宽、对角相连的像素线。
- * 外接半径先从小往大试出"刚好放得下"的值（每格的 16×16 图标完整落在格子底色里，不压到任何一圈框，见 {@link #fitRadius}），
+ * <p>每层的"深度"用 4 邻接腐蚀算（离格子边界几步），所以斜边和圆弧也是一像素宽、对角相连的像素线。
+ * 半径先从小往大试出"刚好放得下"的值（每格的 16×16 图标完整落在格子底色里，不压到任何一圈框，见 {@link #fitRadius}），
  * 实际画多大由轮盘按配置的倍数放大（{@code spellWheelScale}），图标仍是 16×16。</p>
  */
 final class WheelShape {
@@ -45,7 +45,7 @@ final class WheelShape {
 
     /** 格数（至少 {@link #MIN_SLOTS}）。 */
     final int slots;
-    /** 外接半径（中心到多边形顶点）。 */
+    /** 圆的半径。 */
     final int radius;
     /** 中心在本形状左上角往右下 {@code half} 像素处；整个形状 {@code size × size}。 */
     final int half;
@@ -69,19 +69,17 @@ final class WheelShape {
     /** 指向第 i 格时盖在上面的选中框色段（不透明）。 */
     final int[][] hoverRuns;
 
-    /** {@code slots} 格（不足 {@link #MIN_SLOTS} 按它算）、外接半径 {@code radius} 的轮盘。 */
+    /** {@code slots} 格（不足 {@link #MIN_SLOTS} 按它算）、半径 {@code radius} 的轮盘。 */
     static WheelShape of(int slots, int radius) {
         int n = Math.max(MIN_SLOTS, slots);
         return CACHE.computeIfAbsent((long) n << 32 | radius, key -> new WheelShape(n, radius));
     }
 
-    /** 图标刚好放得下的最小外接半径（按格数缓存）。 */
+    /** 图标刚好放得下的最小半径（按格数缓存）。 */
     static int fitRadius(int slots) {
         return FIT_RADIUS.computeIfAbsent(Math.max(MIN_SLOTS, slots), n -> {
             for (int radius = MIN_RADIUS; radius < MAX_RADIUS; radius++) {
-                WheelShape shape = of(n, radius);
-                CACHE.remove((long) n << 32 | radius);   // 试出来的中间结果不留
-                if (shape.iconsFit()) {
+                if (new WheelShape(n, radius).iconsFit()) {
                     return radius;
                 }
             }
@@ -115,7 +113,7 @@ final class WheelShape {
             uy[k] = Math.sin(angle);
         }
 
-        // 每个像素中心先按方向分到扇区，再看在不在这一格的外边以内，最后扣掉离两条分界线太近的（缝）
+        // 每个像素中心先按方向分到扇区，再看在不在圆里，最后扣掉离两条分界线太近的（缝）
         this.slotOf = new byte[pixels];
         this.sectorOf = new byte[pixels];
         for (int y = 0; y < this.size; y++) {
@@ -125,12 +123,8 @@ final class WheelShape {
                 double t = Math.atan2(py, px) + Math.PI / 2 + step / 2;
                 t = ((t % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
                 int i = (int) (t / step) % slots;
-                double ex = (ux[i + 1] - ux[i]) * radius;
-                double ey = (uy[i + 1] - uy[i]) * radius;
-                double side = ex * (py - uy[i] * radius) - ey * (px - ux[i] * radius);
-                double centerSide = ex * -uy[i] * radius - ey * -ux[i] * radius;
                 int p = y * this.size + x;
-                boolean inside = side * centerSide >= 0;
+                boolean inside = px * px + py * py <= (double) radius * radius;
                 this.sectorOf[p] = (byte) (inside ? i : -1);
                 boolean inGap = Math.min(rayDistance(px, py, ux[i], uy[i]), rayDistance(px, py, ux[i + 1], uy[i + 1])) < GAP / 2;
                 this.slotOf[p] = (byte) (inside && !inGap ? i : -1);
@@ -154,11 +148,11 @@ final class WheelShape {
         this.right = right;
         this.depth = this.depth();
 
-        // 图标放在扣掉缝之后的三角形的内心：沿这一格的角平分线走 t，离两条（往里收了半个缝的）分界线和外边一样远
+        // 图标放在扣掉缝之后这一格的内切圆圆心：沿角平分线走 t，离两条（往里收了半个缝的）分界线和圆弧一样远
         this.iconX = new int[slots];
         this.iconY = new int[slots];
         double halfAngle = step / 2;
-        double t = (radius * Math.cos(halfAngle) + GAP / 2) / (1 + Math.sin(halfAngle));
+        double t = (radius + GAP / 2) / (1 + Math.sin(halfAngle));
         for (int i = 0; i < slots; i++) {
             double angle = -Math.PI / 2 + i * step;
             this.iconX[i] = (int) Math.round(t * Math.cos(angle) - ICON / 2.0) + this.half;

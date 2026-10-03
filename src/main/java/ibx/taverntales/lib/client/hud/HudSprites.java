@@ -4,8 +4,7 @@ import ibx.taverntales.lib.TavernTalesLib;
 import net.minecraft.resources.Identifier;
 
 /**
- * HUD 用到的 GUI sprite，贴图在 {@code assets/taverntales_l1b/textures/gui/sprites/hud/}。
- * 尺寸和画法见设计稿 gitignores/HUD.md 第三节。
+ * HUD 用到的 GUI sprite，贴图在 {@code assets/taverntales_l1b/textures/gui/sprites/hud/}，尺寸见各组的注释。
  */
 final class HudSprites {
     private HudSprites() {}
@@ -37,6 +36,12 @@ final class HudSprites {
     static final Identifier HUNGER = id("bar/hunger");
     static final Identifier HUNGER_EFFECT = id("bar/hunger_effect");
     static final Identifier SATURATION = id("bar/saturation");
+    // 坐骑条：同饥饿条底板在右，槽只有一段 (3,3) 68×7
+    static final Identifier MOUNT_FRAME = id("bar/mount_frame");
+    static final Identifier MOUNT = id("bar/mount");
+    // 氧气圈：画在生命条框上，同尺寸 180×26；上下两边各 2 像素 + 右端 2 列，左端紧贴底板，按 u 从左截取
+    static final Identifier HEALTH_AIR = id("bar/health_air");
+    static final Identifier HEALTH_DROWN = id("bar/health_drown");
 
     // 9×9 图标
     static final Identifier ICON_ARMOR = id("icon/armor");

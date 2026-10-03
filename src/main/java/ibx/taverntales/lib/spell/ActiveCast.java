@@ -16,7 +16,7 @@ import org.jspecify.annotations.Nullable;
  *   <li>不存盘：下线、换维度、死亡都会结束施法。</li>
  *   <li>同步给自己和周围玩家：法术、来源、开始时刻、读条长度；结束时同步结束原因。
  *       客户端收到时在这里调法术的客户端钩子（{@link Spell#onCastStart} / {@link Spell#onCastEnd}），
- *       吟唱条（阶段 5）也从这里取数据。</li>
+ *       吟唱条也从这里取数据。</li>
  * </ul>
  */
 public final class ActiveCast {

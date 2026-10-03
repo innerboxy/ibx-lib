@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
@@ -36,10 +37,11 @@ import org.jspecify.annotations.Nullable;
 import java.util.Locale;
 
 /**
- * 本模组的 HUD（设计稿 gitignores/HUD.md）：
+ * 本模组的 HUD：
  * <ul>
  *   <li>生命条（左）、饥饿条（右）：橙色底板上放原版图标 + 原版界面配色的条框和凹槽（2 倍精度贴图），代替原版的心形行和鸡腿行；
- *       氧气泡、坐骑血量仍是原版；</li>
+ *       骑着有血量的坐骑时饥饿条换成同样式的坐骑条；</li>
+ *   <li>氧气不再单占一行（原版氧气泡行不画，免得把蓝条顶高），画在生命条的外框上，破泡的声音照原版补上；</li>
  *   <li>快捷栏旁的属性块：两列三行，左列护甲、法抗、韧性，右列力量、远程伤害、法强；平时在快捷栏右侧，
  *       左手习惯时（副手栏和法术框在右边）挪到左侧；</li>
  *   <li>当前法术框：选中的法术画在副手栏外侧（不管副手有没有东西，位置都按副手栏在算），只在手持施法物品时画；</li>
@@ -71,6 +73,11 @@ public final class TavernHud {
     private static final int HUNGER_W = 33;
     private static final int SATURATION_X = 38;
     private static final int SATURATION_W = 33;
+    private static final int MOUNT_TRACK_X = 3;     // 坐骑条的槽：3 ~ 71（底板在右，同饥饿条）
+    private static final int MOUNT_TRACK_W = 68;
+    private static final int AIR_X = 14;            // 氧气圈从底板右缘（14）往右按比例截到 88，右端两列满了才画
+    private static final int AIR_W = 74;
+    private static final int DROWN_FLASH_TICKS = 4; // 氧气耗尽时外框红 / 原色各停几 tick
     private static final int STATS_GAP = 4;         // 属性块离快捷栏右边的距离
     private static final int STATS_COLUMN_GAP = 4;
 
@@ -86,6 +93,8 @@ public final class TavernHud {
     private static final Identifier FOOD_FULL = Identifier.withDefaultNamespace("hud/food_full");
     private static final Identifier FOOD_EMPTY_HUNGER = Identifier.withDefaultNamespace("hud/food_empty_hunger");
     private static final Identifier FOOD_FULL_HUNGER = Identifier.withDefaultNamespace("hud/food_full_hunger");
+    private static final Identifier HEART_VEHICLE_CONTAINER = Identifier.withDefaultNamespace("hud/heart/vehicle_container");
+    private static final Identifier HEART_VEHICLE_FULL = Identifier.withDefaultNamespace("hud/heart/vehicle_full");
 
     private static final int WHITE = 0xFFFFFFFF;
     private static final int LEVEL_GREEN = 0xFF80FF20;
@@ -98,6 +107,8 @@ public final class TavernHud {
 
     private static long ticks;
     private static long manaLastNotFull = Long.MIN_VALUE / 2;
+    /** 上一个响过破泡声的泡位置，同原版 {@code Gui.lastBubblePopSoundPlayed}。 */
+    private static int lastBubblePopSound;
 
     /** 攻击冷却指示器（快捷栏模式）要挪的距离（正往右、负往左），上一帧画属性块时算出，0 表示不挪。 */
     private static int attackIndicatorShift;
@@ -135,13 +146,28 @@ public final class TavernHud {
                 old.render(graphics, deltaTracker);
             }
         });
-        // 鸡腿行 → 饥饿条；骑着有血量的坐骑时同原版不画（原版坐骑血量那层照常画）
+        // 鸡腿行 → 饥饿条；骑着有血量的坐骑时同原版不画，位置让给坐骑条
         event.wrapLayer(VanillaGuiLayers.FOOD_LEVEL, old -> (graphics, deltaTracker) -> {
             if (!isActive()) {
                 old.render(graphics, deltaTracker);
-            } else if (!(Minecraft.getInstance().getCameraEntity() instanceof Player player
-                    && player.getVehicle() instanceof LivingEntity vehicle && vehicle.showVehicleHealth())) {
+            } else if (!(Minecraft.getInstance().getCameraEntity() instanceof Player player && mountWithHealth(player) != null)) {
                 renderFoodBar(graphics);
+            }
+        });
+        // 坐骑心形行 → 坐骑条
+        event.wrapLayer(VanillaGuiLayers.VEHICLE_HEALTH, old -> (graphics, deltaTracker) -> {
+            if (isActive()) {
+                renderMountBar(graphics);
+            } else {
+                old.render(graphics, deltaTracker);
+            }
+        });
+        // 氧气泡行：画在生命条外框上了，这里只照原版放破泡的声音
+        event.wrapLayer(VanillaGuiLayers.AIR_LEVEL, old -> (graphics, deltaTracker) -> {
+            if (!isActive()) {
+                old.render(graphics, deltaTracker);
+            } else if (Minecraft.getInstance().getCameraEntity() instanceof Player player) {
+                playBubblePopSound(player);
             }
         });
         // 护甲图标行：属性块里已经有护甲数字，生效时不画
@@ -150,7 +176,7 @@ public final class TavernHud {
                 old.render(graphics, deltaTracker);
             }
         });
-        // 两条要叠在原版心形 / 饥饿 / 氧气这几行上面，所以放在它们之后，读它们累加好的 leftHeight / rightHeight
+        // 两条要叠在生命 / 饥饿（坐骑）这几行上面，所以放在它们之后，读它们累加好的 leftHeight / rightHeight
         event.registerAbove(VanillaGuiLayers.AIR_LEVEL, BARS_LAYER, (graphics, deltaTracker) -> {
             if (isActive()) {
                 renderBars(graphics, deltaTracker);
@@ -203,7 +229,8 @@ public final class TavernHud {
     /**
      * 生命条：左端橙色底板上放原版心形（先垫空心容器当黑描边），右边原版格子式凹槽；数字写 {@code 10/20}，
      * 有吸收时写 {@code 10(4)/20} 并换黄心。红色画生命、后面接金色画吸收；生命 + 吸收超过最大值时整条按总量缩放。
-     * 中毒 / 凋零 / 冰冻时图标和条一起变色。底边和原版一行 9 高的底边齐平，画完让出条高 + 1。
+     * 中毒 / 凋零 / 冰冻时图标和条一起变色；外框上画氧气（见 {@link #renderAirRing}）。
+     * 底边和原版一行 9 高的底边齐平，画完让出条高 + 1。
      */
     private static void renderHealthBar(GuiGraphicsExtractor graphics) {
         Minecraft mc = Minecraft.getInstance();
@@ -223,6 +250,7 @@ public final class TavernHud {
         int gold = Math.min(HEALTH_TRACK_W - red, Math.round(HEALTH_TRACK_W * absorption / total));
         plateSegment(graphics, healthFill(type), x, y, HEALTH_TRACK_X, HEALTH_TRACK_W, 0, red);
         plateSegment(graphics, HudSprites.HEALTH_ABSORPTION, x, y, HEALTH_TRACK_X, HEALTH_TRACK_W, red, gold);
+        renderAirRing(graphics, player, x, y);
 
         // 同原版：凋零时吸收心也画成凋零心
         Gui.HeartType iconType = absorption > 0 && type != Gui.HeartType.WITHERED ? Gui.HeartType.ABSORBING : type;
@@ -234,6 +262,61 @@ public final class TavernHud {
         centeredOutlined(graphics, mc.font, text, x + HEALTH_TRACK_X + HEALTH_TRACK_W / 2.0F, y + PLATE_TRACK_Y, WHITE,
                 HEALTH_TRACK_W - 2);
         mc.gui.leftHeight += PLATE_H + 1;
+    }
+
+    /**
+     * 氧气画在生命条外框上：上下两边（黑描边那行 + 亮 / 暗沿那行）从底板往右按氧气比例变蓝，满了右端那两列也亮；
+     * 氧气耗尽时整圈红闪。显示条件同原版氧气泡行：眼睛在会淹死的液体里，或氧气没满。
+     */
+    private static void renderAirRing(GuiGraphicsExtractor graphics, Player player, int x, int y) {
+        int max = player.getMaxAirSupply();
+        if (max <= 0) {
+            return;
+        }
+        int air = Mth.clamp(player.getAirSupply(), 0, max);
+        if (air >= max && !isUnderWater(player)) {
+            return;
+        }
+        if (air == 0) {
+            if (ticks / DROWN_FLASH_TICKS % 2 == 0) {
+                blit(graphics, HudSprites.HEALTH_DROWN, x, y, PLATE_W, PLATE_H);
+            }
+            return;
+        }
+        int width = air >= max ? PLATE_W : AIR_X + Math.round(AIR_W * (float) air / max);
+        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, HudSprites.HEALTH_AIR, PLATE_W, PLATE_H, 0, 0, x, y, width, PLATE_H, WHITE);
+    }
+
+    /** 同原版 {@code Gui.extractAirBubbles} 判断是否在水下（眼睛在会淹死的液体里）。 */
+    private static boolean isUnderWater(Player player) {
+        return player.getFluidInteraction().isEyeInFluidMatching(player, (entity, type, height) -> entity.canDrownInFluidType(type));
+    }
+
+    /** 原版氧气泡行每破一个泡响一声，越到后面越响、越尖；那一行不画了，声音照原版的算法补上（按 10 个泡算）。 */
+    private static void playBubblePopSound(Player player) {
+        int max = player.getMaxAirSupply();
+        if (max <= 0) {
+            return;
+        }
+        if (!isUnderWater(player)) {
+            lastBubblePopSound = 0;
+            return;
+        }
+        int air = Mth.clamp(player.getAirSupply(), 0, max);
+        int full = airBubbles(air - 2, max);
+        int popping = airBubbles(air, max);
+        if (popping == full || popping < 1 || popping == lastBubblePopSound) {
+            return;
+        }
+        int empty = 10 - airBubbles(air + (air != 0 ? 1 : 0), max);
+        float volume = 0.5F + 0.1F * Math.max(0, empty - 3 + 1);
+        float pitch = 1.0F + 0.1F * Math.max(0, empty - 5 + 1);
+        player.playSound(SoundEvents.BUBBLE_POP, volume, pitch);
+        lastBubblePopSound = popping;
+    }
+
+    private static int airBubbles(int air, int max) {
+        return Mth.ceil((float) (air * 10) / max);
     }
 
     /**
@@ -314,6 +397,35 @@ public final class TavernHud {
                 WHITE, HUNGER_W - 2);
         centeredOutlined(graphics, mc.font, saturationText, x + SATURATION_X + SATURATION_W / 2.0F, y + PLATE_TRACK_Y,
                 SATURATION_TEXT, SATURATION_W - 2);
+        mc.gui.rightHeight += PLATE_H + 1;
+    }
+
+    /** 骑着的、要显示血量的坐骑；同原版，最大血量折成心数为 0 时不算（饥饿条照常画）。 */
+    private static @Nullable LivingEntity mountWithHealth(Player player) {
+        return player.getVehicle() instanceof LivingEntity vehicle && vehicle.showVehicleHealth()
+                && (int) (vehicle.getMaxHealth() + 0.5F) / 2 > 0 ? vehicle : null;
+    }
+
+    /**
+     * 坐骑条：骑着有血量的坐骑时代替饥饿条，样式同饥饿条（右端底板），底板上放原版坐骑心形（先垫坐骑空心容器当黑描边），
+     * 槽只有一段，数字写 {@code 23/30}。
+     */
+    private static void renderMountBar(GuiGraphicsExtractor graphics) {
+        Minecraft mc = Minecraft.getInstance();
+        if (!(mc.getCameraEntity() instanceof Player player) || !(mountWithHealth(player) instanceof LivingEntity mount)) {
+            return;
+        }
+        int x = graphics.guiWidth() / 2 + 1;
+        int y = graphics.guiHeight() - mc.gui.rightHeight - (PLATE_H - 9);
+        int current = Mth.ceil(mount.getHealth());
+        int max = Mth.ceil(Math.max(mount.getMaxHealth(), current));
+
+        blit(graphics, HudSprites.MOUNT_FRAME, x, y, PLATE_W, PLATE_H);
+        plateSegment(graphics, HudSprites.MOUNT, x, y, MOUNT_TRACK_X, MOUNT_TRACK_W, 0, Math.round(MOUNT_TRACK_W * current / (float) max));
+        blit(graphics, HEART_VEHICLE_CONTAINER, x + 77, y + 2, 9, 9);
+        blit(graphics, HEART_VEHICLE_FULL, x + 77, y + 2, 9, 9);
+        centeredOutlined(graphics, mc.font, current + "/" + max, x + MOUNT_TRACK_X + MOUNT_TRACK_W / 2.0F, y + PLATE_TRACK_Y,
+                WHITE, MOUNT_TRACK_W - 2);
         mc.gui.rightHeight += PLATE_H + 1;
     }
 
@@ -406,7 +518,7 @@ public final class TavernHud {
     // ---------------------------------------------------------------- 吟唱条、蓝条
 
     /**
-     * 按原版的堆叠规则摆在生命条 / 饥饿条（和氧气泡）上方：原版每行 9 高、顶在 {@code H - leftHeight}，画完加 10。
+     * 按原版的堆叠规则摆在生命条 / 饥饿条（坐骑条）上方：原版每行 9 高、顶在 {@code H - leftHeight}，画完加 10。
      * 条 15 高，底边和一行 9 高的底边齐平（顶比一行高 6），画完让出条高 + 1（蓝条再加宝石的 3）。
      */
     private static void renderBars(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
