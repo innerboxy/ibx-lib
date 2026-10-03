@@ -2,6 +2,7 @@ package ibx.taverntales.lib;
 
 import com.mojang.logging.LogUtils;
 import ibx.taverntales.lib.command.ManaCommand;
+import ibx.taverntales.lib.command.SpellCommand;
 import ibx.taverntales.lib.config.Config;
 import ibx.taverntales.lib.config.StartupConfig;
 import ibx.taverntales.lib.event.DamageHandler;
@@ -12,6 +13,8 @@ import ibx.taverntales.lib.registry.AttachmentRegistry;
 import ibx.taverntales.lib.registry.AttributeRegistry;
 import ibx.taverntales.lib.registry.DataComponentRegistry;
 import ibx.taverntales.lib.registry.ItemRegistry;
+import ibx.taverntales.lib.spell.SpellCasting;
+import ibx.taverntales.lib.spell.SpellRegistries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -33,13 +36,16 @@ public class TavernTalesLib {
         AttachmentRegistry.register(modEventBus);
         DataComponentRegistry.register(modEventBus);
         ItemRegistry.register(modEventBus);
+        SpellRegistries.register(modEventBus);
         modEventBus.addListener(VanillaRangedWeapons::onModifyDefaultComponents);
 
-        // GAME 总线：统一的伤害、治疗与法力结算，以及法力指令。
+        // GAME 总线：统一的伤害、治疗、法力与施法结算，以及法力、法术指令。
         DamageHandler.register();
         HealHandler.register();
         ManaHandler.register();
+        SpellCasting.register();
         ManaCommand.register();
+        SpellCommand.register();
         LOGGER.info("{} loaded", MODID);
     }
 }

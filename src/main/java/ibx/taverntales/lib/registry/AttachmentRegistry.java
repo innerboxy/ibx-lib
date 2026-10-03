@@ -4,6 +4,8 @@ import com.mojang.serialization.Codec;
 import ibx.taverntales.lib.TavernTalesLib;
 import ibx.taverntales.lib.api.ManaStorage;
 import ibx.taverntales.lib.api.SpellDamageSnapshot;
+import ibx.taverntales.lib.spell.ActiveCast;
+import ibx.taverntales.lib.spell.SpellCooldowns;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -61,6 +63,27 @@ public final class AttachmentRegistry {
                     () -> AttachmentType.builder(() -> new ManaStorage())
                             .serialize(ManaStorage.CODEC)
                             .sync((holder, player) -> holder == player, ManaStorage.STREAM_CODEC)
+                            .build());
+
+    /**
+     * 正在施的法术。读写请走 {@link ibx.taverntales.lib.spell.SpellCasting}。
+     * 不存盘（下线、换维度、死亡都结束施法）；同步给自己和周围玩家，客户端据此跑法术的客户端钩子、画吟唱条。
+     */
+    public static final Supplier<AttachmentType<ActiveCast>> ACTIVE_CAST =
+            ATTACHMENT_TYPES.register("active_cast",
+                    () -> AttachmentType.builder(() -> new ActiveCast())
+                            .sync(ActiveCast.SYNC_HANDLER)
+                            .build());
+
+    /**
+     * 法术冷却：法术 id → 冷却结束的世界时刻。读写请走 {@link SpellCooldowns} 的静态方法。
+     * 存盘；只同步给实体自己；不标 copyOnDeath（死亡后冷却清零，和法力一致）。
+     */
+    public static final Supplier<AttachmentType<SpellCooldowns>> SPELL_COOLDOWNS =
+            ATTACHMENT_TYPES.register("spell_cooldowns",
+                    () -> AttachmentType.builder(() -> new SpellCooldowns())
+                            .serialize(SpellCooldowns.CODEC)
+                            .sync((holder, player) -> holder == player, SpellCooldowns.STREAM_CODEC)
                             .build());
 
     public static void register(IEventBus modEventBus) {
