@@ -3,6 +3,7 @@ package ibx.taverntales.lib.registry;
 import com.mojang.serialization.Codec;
 import ibx.taverntales.lib.TavernTalesLib;
 import ibx.taverntales.lib.api.ManaStorage;
+import ibx.taverntales.lib.api.SpellDamageSnapshot;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -31,6 +32,18 @@ public final class AttachmentRegistry {
             ATTACHMENT_TYPES.register("ammo_ranged_damage",
                     () -> AttachmentType.builder(() -> 0.0F)
                             .serialize(Codec.FLOAT.fieldOf("value"))
+                            .build());
+
+    /**
+     * 法术弹射物上的伤害快照：施法瞬间算好写上去，命中时由
+     * {@link ibx.taverntales.lib.api.SpellDamageApi#hurtFromProjectile} 结算。任何实体都能带。
+     * 带序列化：跨区块加载、存盘都不丢。不同步：伤害只在服务端结算。
+     * 读写请走 {@link ibx.taverntales.lib.api.SpellDamageApi}（只读已存在的，不要 {@code getData} 顺手创建默认值）。
+     */
+    public static final Supplier<AttachmentType<SpellDamageSnapshot>> SPELL_SNAPSHOT =
+            ATTACHMENT_TYPES.register("spell_snapshot",
+                    () -> AttachmentType.builder(() -> SpellDamageSnapshot.NONE)
+                            .serialize(SpellDamageSnapshot.MAP_CODEC)
                             .build());
 
     /**

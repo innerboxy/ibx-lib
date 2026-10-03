@@ -2,21 +2,26 @@ package ibx.taverntales.lib.event;
 
 import ibx.taverntales.lib.api.CriticalStrikeApi;
 import ibx.taverntales.lib.api.RangedWeaponApi;
+import ibx.taverntales.lib.api.SpellDamageSnapshot;
+import ibx.taverntales.lib.api.SpellDamageSource;
 import ibx.taverntales.lib.compat.DummmmmmyCompat;
 import ibx.taverntales.lib.config.Config;
-import net.minecraft.network.protocol.game.ClientboundAnimatePacket;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
+import ibx.taverntales.lib.registry.AttributeRegistry;
+import ibx.taverntales.lib.registry.TagRegistry;
+import net.minecraft.core.Holder;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.phys.EntityHitResult;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.CriticalHitEvent;
 import org.jspecify.annotations.Nullable;
@@ -33,7 +38,11 @@ import org.jspecify.annotations.Nullable;
  *
  * <p><b>近战暴击走另一个事件</b>：原版在 {@code Player#attack} 里就把暴击算进伤害了，等到
  * 伤害事件已经来不及区分，所以近战由 {@link #onCriticalHit} 处理，远程由
- * {@link #applyCriticalDamage} 处理。两条路的概率与倍率都取自同一套属性。</p>
+ * {@link #applyCriticalDamage} 处理。两条路的概率与倍率都取自同一套属性。
+ * 法术暴击在 {@link ibx.taverntales.lib.api.SpellDamageApi#hurt} 里掷，进本事件时伤害已经乘好了。</p>
+ *
+ * <p><b>命中后的附带效果</b>（法术的点燃、冰冻、吸血）不改伤害量，放在伤害结算完之后的
+ * {@link #onDamagePost}，同样写在本类里。</p>
  */
 public final class DamageHandler {
     private DamageHandler() {}
@@ -42,12 +51,19 @@ public final class DamageHandler {
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, DamageHandler::onIncomingDamage);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, DamageHandler::onCriticalHit);
         NeoForge.EVENT_BUS.addListener(DamageHandler::onProjectileImpact);
+        NeoForge.EVENT_BUS.addListener(DamageHandler::onDamagePost);
     }
 
     private static void onIncomingDamage(LivingIncomingDamageEvent event) {
         applyAmmoRangedDamage(event);
         applyCriticalDamage(event);
         applyAmmoDifficultyScaling(event);
+        applySpellResistance(event);
+    }
+
+    /** 伤害结算完之后（所有减免都做完、已扣血）：只放命中后的附带效果，不再改伤害量。 */
+    private static void onDamagePost(LivingDamageEvent.Post event) {
+        applySpellHitEffects(event);
     }
 
     /**
@@ -95,24 +111,65 @@ public final class DamageHandler {
         }
         if (event.getSource().getEntity() instanceof LivingEntity shooter) {
             event.setAmount(event.getAmount() * CriticalStrikeApi.getMultiplier(shooter));
-            spawnCriticalEffects(event.getEntity());
+            CriticalStrikeApi.spawnEffects(event.getEntity());
         }
     }
 
     /**
-     * 远程暴击命中时补上原版近战暴击的那套表现：暴击粒子 + 暴击音效。
+     * 法术抗性：伤害类型在 {@code #taverntales_l1b:is_spell} 里时，按原版护甲公式减免（法术伤害本身不吃护甲）。
      *
-     * <p>原版近战在 {@code Player#attack} 里做同样两件事，只是位置取的是玩家自己；
-     * 远程射手可能在几十格外，所以这里都放在被击中的目标身上。粒子沿用原版的动画包
-     * （{@code CRITICAL_HIT}），客户端收到后自己生成跟踪粒子发射器，和近战完全一致。</p>
+     * <p>公式同 {@code CombatRules#getDamageAfterAbsorb}，法术抗性当护甲点、韧性用原版 {@code armor_toughness}：
+     * {@code 减免比例 = clamp(R − 伤害 ÷ (2 + 韧性 ÷ 4), min(R × 0.2, 20), 20) ÷ 25}，最多减 80%。
+     * <b>下限必须是 {@code min(R × 0.2, 20)}</b>：法术抗性上限远超原版护甲的 30，R 超过 100 后 {@code R × 0.2} 大于 20，
+     * 而 {@code Mth.clamp} 在下限大于上限时返回下限，减免会超过 80% 乃至 100%（伤害变负）。</p>
+     *
+     * <p>放在最后：符合"先基础、再倍率、最后减免"。按标签而不是 {@code instanceof SpellDamageSource} 判断，
+     * 别的模组的魔法伤害进了标签也一起减免。原版在本事件之前就做完了难度缩放，这里不覆盖伤害值，不用补。</p>
      */
-    private static void spawnCriticalEffects(LivingEntity target) {
-        target.level().playSound(null, target.getX(), target.getY(), target.getZ(),
-                SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.0F, 1.0F);
-        if (target.level() instanceof ServerLevel serverLevel) {
-            serverLevel.getChunkSource().sendToTrackingPlayersAndSelf(target,
-                    new ClientboundAnimatePacket(target, ClientboundAnimatePacket.CRITICAL_HIT));
+    private static void applySpellResistance(LivingIncomingDamageEvent event) {
+        if (!event.getSource().is(TagRegistry.IS_SPELL)) {
+            return;
         }
+        LivingEntity target = event.getEntity();
+        float resistance = (float) readAttribute(target, AttributeRegistry.SPELL_RESISTANCE);
+        if (resistance <= 0.0F) {
+            return;
+        }
+        float damage = event.getAmount();
+        float toughness = (float) readAttribute(target, Attributes.ARMOR_TOUGHNESS);
+        float effective = Mth.clamp(resistance - damage / (2.0F + toughness / 4.0F),
+                Math.min(resistance * 0.2F, 20.0F), 20.0F);
+        event.setAmount(damage * (1.0F - effective / 25.0F));
+    }
+
+    /**
+     * 法术命中后的附带效果：点燃、冰冻、吸血，参数来自快照。只认本模组的 {@link SpellDamageSource}。
+     *
+     * <p>放在伤害结算完之后：吸血按实际造成的伤害（所有减免之后、含被伤害吸收挡掉的部分）算；
+     * 冰冻 tick 不在细雪里时每 tick 减 2，所以加两倍，让持续时间大致等于快照里写的 tick 数。</p>
+     */
+    private static void applySpellHitEffects(LivingDamageEvent.Post event) {
+        if (!(event.getSource() instanceof SpellDamageSource source)) {
+            return;
+        }
+        SpellDamageSnapshot snapshot = source.snapshot();
+        LivingEntity target = event.getEntity();
+        if (snapshot.fireTicks() > 0) {
+            target.igniteForTicks(snapshot.fireTicks());
+        }
+        if (snapshot.freezeTicks() > 0 && target.canFreeze()) {
+            target.setTicksFrozen(target.getTicksFrozen() + snapshot.freezeTicks() * 2);
+        }
+        if (snapshot.lifesteal() > 0.0F && source.getEntity() instanceof LivingEntity caster && caster.isAlive()) {
+            caster.heal(snapshot.lifesteal() * event.getInflictedDamage());
+        }
+    }
+
+    /** 本模组的属性挂在所有生物上，这里只防万一：没挂的实体按属性默认值算。 */
+    private static double readAttribute(LivingEntity entity, Holder<Attribute> attribute) {
+        return entity.getAttributes().hasAttribute(attribute)
+                ? entity.getAttributeValue(attribute)
+                : attribute.value().getDefaultValue();
     }
 
     /**

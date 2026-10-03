@@ -18,6 +18,11 @@ TODO: mod description.
 [[mixins]]
     config="${mod_id}.mixins.json"
 
+# 试验假人联动：法术伤害数字的专属颜色。只在装了假人时加载，没装不会因找不到目标类而报错。
+[[mixins]]
+    config="${mod_id}.dummmmmmy.mixins.json"
+    requiredMods=["dummmmmmy"]
+
 [[dependencies."${mod_id}"]] #optional
     modId="neoforge" #mandatory
     type="required" #mandatory
