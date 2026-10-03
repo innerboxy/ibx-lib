@@ -3,7 +3,7 @@ package ibx.taverntales.lib.config;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
- * 本模组的客户端配置（{@code config/taverntales_l1b-client.toml}），只影响本机的显示，不同步。
+ * 本模组的客户端配置（{@code config/taverntales_l1b-client.toml}），只影响本机的显示和操作，不同步。
  *
  * <p>都是每帧现读，游戏里改了立即生效。配置还没加载时（极早期）按默认值算。</p>
  */
@@ -32,6 +32,18 @@ public final class ClientConfig {
                     "屏幕放不下时自动缩小，但不会小于 1。")
             .defineInRange("spellWheelScale", 2.3D, 1.0D, 4.0D);
 
+    public static final ModConfigSpec.BooleanValue TOGGLE_CAST_SPELL = BUILDER
+            .comment("吟唱法术的右键操作，游戏里在 选项 → 控制 里改。",
+                    "true  = 切换：按一下右键开始，读完自动放出，读条中再按一下取消；",
+                    "false = 按住：按住右键读条，松开取消。")
+            .define("toggleCastSpell", true);
+
+    public static final ModConfigSpec.BooleanValue TOGGLE_CHANNEL_SPELL = BUILDER
+            .comment("引导法术的右键操作，游戏里在 选项 → 控制 里改。",
+                    "true  = 切换：按一下右键开始，蓝耗尽或再按一下结束；",
+                    "false = 按住：按住右键持续引导，松开结束。")
+            .define("toggleChannelSpell", false);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     public static boolean vanillaHud() {
@@ -48,5 +60,10 @@ public final class ClientConfig {
 
     public static boolean alwaysShowManaBar() {
         return SPEC.isLoaded() && ALWAYS_SHOW_MANA_BAR.get();
+    }
+
+    /** 开关类配置的当前值，没加载时取默认值。 */
+    public static boolean get(ModConfigSpec.BooleanValue value) {
+        return SPEC.isLoaded() ? value.get() : value.getDefault();
     }
 }

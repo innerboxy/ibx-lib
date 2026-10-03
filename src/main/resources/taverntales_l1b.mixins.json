@@ -14,7 +14,9 @@
     "RangedBowAttackGoalMixin"
   ],
   "client": [
-    "GuiHotbarMixin"
+    "ControlsScreenMixin",
+    "GuiHotbarMixin",
+    "MinecraftMixin"
   ],
   "injectors": {
     "defaultRequire": 1

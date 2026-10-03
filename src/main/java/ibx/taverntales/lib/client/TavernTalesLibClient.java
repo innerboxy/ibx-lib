@@ -2,6 +2,7 @@ package ibx.taverntales.lib.client;
 
 import ibx.taverntales.lib.TavernTalesLib;
 import ibx.taverntales.lib.client.hud.TavernHud;
+import ibx.taverntales.lib.client.spell.SpellCastInput;
 import ibx.taverntales.lib.client.spell.SpellIcons;
 import ibx.taverntales.lib.client.spell.SpellItemTooltip;
 import ibx.taverntales.lib.client.spell.SpellWheel;
@@ -36,6 +37,9 @@ public final class TavernTalesLibClient {
         NeoForge.EVENT_BUS.addListener(SpellWheel::onClientTick);
         NeoForge.EVENT_BUS.addListener(SpellWheel::onMouseButton);
         NeoForge.EVENT_BUS.addListener(SpellWheel::onMouseScroll);
+        // 右键施法的切换模式（吟唱、引导可以按一下开始、再按一下结束），开关在 选项 → 控制
+        NeoForge.EVENT_BUS.addListener(SpellCastInput::onUseItemStart);
+        NeoForge.EVENT_BUS.addListener(SpellCastInput::onClientTick);
         // 法术容器的物品提示：名字下面列出提供的法术
         NeoForge.EVENT_BUS.addListener(SpellItemTooltip::onItemTooltip);
     }
