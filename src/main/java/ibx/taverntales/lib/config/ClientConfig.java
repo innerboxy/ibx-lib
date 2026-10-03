@@ -27,6 +27,11 @@ public final class ClientConfig {
                     "false = 蓝不满时显示，回满 3 秒后淡出；true = 一直显示。")
             .define("alwaysShowManaBar", false);
 
+    public static final ModConfigSpec.DoubleValue SPELL_WHEEL_SCALE = BUILDER
+            .comment("法术轮盘的大小倍数，以\"刚好放得下 16×16 图标\"为 1。",
+                    "屏幕放不下时自动缩小，但不会小于 1。")
+            .defineInRange("spellWheelScale", 2.3D, 1.0D, 4.0D);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     public static boolean vanillaHud() {
@@ -35,6 +40,10 @@ public final class ClientConfig {
 
     public static boolean showStatsRow() {
         return !SPEC.isLoaded() || SHOW_STATS_ROW.get();
+    }
+
+    public static double spellWheelScale() {
+        return SPEC.isLoaded() ? SPELL_WHEEL_SCALE.get() : SPELL_WHEEL_SCALE.getDefault();
     }
 
     public static boolean alwaysShowManaBar() {

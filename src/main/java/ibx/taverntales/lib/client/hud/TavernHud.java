@@ -2,8 +2,12 @@ package ibx.taverntales.lib.client.hud;
 
 import ibx.taverntales.lib.TavernTalesLib;
 import ibx.taverntales.lib.api.ManaApi;
+import ibx.taverntales.lib.client.spell.SpellIcons;
 import ibx.taverntales.lib.config.ClientConfig;
 import ibx.taverntales.lib.registry.AttributeRegistry;
+import ibx.taverntales.lib.registry.TagRegistry;
+import ibx.taverntales.lib.spell.SpellCasting;
+import ibx.taverntales.lib.spell.SpellEntry;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -18,6 +22,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
@@ -35,13 +40,16 @@ import java.util.Locale;
  * <ul>
  *   <li>生命条（左）、饥饿条（右）：橙色底板上放原版图标 + 原版界面配色的条框和凹槽（2 倍精度贴图），代替原版的心形行和鸡腿行；
  *       氧气泡、坐骑血量仍是原版；</li>
- *   <li>快捷栏右侧的属性块：两列三行，左列护甲、法抗、韧性，右列力量、远程伤害、法强；</li>
+ *   <li>快捷栏旁的属性块：两列三行，左列护甲、法抗、韧性，右列力量、远程伤害、法强；平时在快捷栏右侧，
+ *       左手习惯时（副手栏和法术框在右边）挪到左侧；</li>
+ *   <li>当前法术框：选中的法术画在副手栏外侧（不管副手有没有东西，位置都按副手栏在算），只在手持施法物品时画；</li>
  *   <li>吟唱条（左）和蓝条（右），按原版的堆叠规则叠在生命条 / 饥饿条上方；</li>
  *   <li>等级数字挪到经验条正中；原版护甲图标行隐藏（护甲数字已在属性块里）。</li>
  * </ul>
  *
  * <p>原版层都是包住而不是删掉：本 HUD 不生效时（切回原版、创造 / 旁观、隐藏 GUI）原样调用，配置能在游戏里随时切换。
- * 攻击冷却指示器（快捷栏模式）给属性块让位的挪动在 {@code mixin.GuiHotbarMixin}。</p>
+ * 攻击冷却指示器（快捷栏模式）给属性块让位的挪动在 {@code mixin.GuiHotbarMixin}。
+ * 当前法术框是功能不是装饰，不受 {@link #isActive()} 管：除旁观外都画，切回原版 HUD 也画。</p>
  */
 public final class TavernHud {
     private TavernHud() {}
@@ -69,6 +77,9 @@ public final class TavernHud {
     private static final Identifier BARS_LAYER = Identifier.fromNamespaceAndPath(TavernTalesLib.MODID, "cast_and_mana_bars");
     private static final Identifier STATS_LAYER = Identifier.fromNamespaceAndPath(TavernTalesLib.MODID, "stats");
     private static final Identifier LEVEL_LAYER = Identifier.fromNamespaceAndPath(TavernTalesLib.MODID, "experience_level_on_bar");
+    private static final Identifier SPELL_LAYER = Identifier.fromNamespaceAndPath(TavernTalesLib.MODID, "selected_spell");
+    private static final Identifier OFFHAND_LEFT = Identifier.withDefaultNamespace("hud/hotbar_offhand_left");
+    private static final Identifier OFFHAND_RIGHT = Identifier.withDefaultNamespace("hud/hotbar_offhand_right");
     private static final Identifier ATTACK_INDICATOR_BACKGROUND = Identifier.withDefaultNamespace("hud/hotbar_attack_indicator_background");
     private static final Identifier ATTACK_INDICATOR_PROGRESS = Identifier.withDefaultNamespace("hud/hotbar_attack_indicator_progress");
     private static final Identifier FOOD_EMPTY = Identifier.withDefaultNamespace("hud/food_empty");
@@ -88,7 +99,7 @@ public final class TavernHud {
     private static long ticks;
     private static long manaLastNotFull = Long.MIN_VALUE / 2;
 
-    /** 攻击冷却指示器（快捷栏模式）要往右挪的距离，上一帧画属性块时算出，0 表示不挪。 */
+    /** 攻击冷却指示器（快捷栏模式）要挪的距离（正往右、负往左），上一帧画属性块时算出，0 表示不挪。 */
     private static int attackIndicatorShift;
 
     /** HUD 自己的 tick 计数（暂停时不走），淡出、读条都按它算。 */
@@ -107,12 +118,12 @@ public final class TavernHud {
     }
 
     /**
-     * 原版快捷栏层里的一张贴图要往右挪多少，见 {@code mixin.GuiHotbarMixin}：只挪画在快捷栏右侧的攻击冷却指示器
-     * （快捷栏模式），让到属性块外面；副手栏、快捷栏本身都不动。左手习惯时指示器在左侧，不用挪。
+     * 原版快捷栏层里的一张贴图要横着挪多少，见 {@code mixin.GuiHotbarMixin}：只挪攻击冷却指示器（快捷栏模式），
+     * 让到属性块外面——平时它和属性块都在快捷栏右侧，左手习惯时都在左侧；副手栏、快捷栏本身都不动。
      */
     public static int hotbarSpriteShift(Identifier sprite, int x, int guiWidth) {
         boolean indicator = sprite.equals(ATTACK_INDICATOR_BACKGROUND) || sprite.equals(ATTACK_INDICATOR_PROGRESS);
-        return indicator && x >= guiWidth / 2 + 91 && isActive() ? attackIndicatorShift : 0;
+        return indicator && isActive() ? attackIndicatorShift : 0;
     }
 
     public static void onRegisterGuiLayers(RegisterGuiLayersEvent event) {
@@ -148,12 +159,24 @@ public final class TavernHud {
         event.registerAbove(VanillaGuiLayers.HOTBAR, STATS_LAYER, (graphics, deltaTracker) -> {
             attackIndicatorShift = 0;
             if (isActive() && ClientConfig.showStatsRow() && Minecraft.getInstance().getCameraEntity() instanceof Player player) {
-                int width = renderStats(graphics, Minecraft.getInstance().font, player,
-                        graphics.guiWidth() / 2 + 91 + STATS_GAP, graphics.guiHeight() - 30);
-                // 原版指示器在快捷栏右边 6 像素处，挪到属性块右边再空 4 像素
-                attackIndicatorShift = STATS_GAP + width + 4 - 6;
+                Font font = Minecraft.getInstance().font;
+                String[][] texts = statTexts(player);
+                int width = statsWidth(font, texts);
+                int cx = graphics.guiWidth() / 2;
+                if (player.getMainArm() == HumanoidArm.LEFT) {
+                    // 左手习惯：副手栏和法术框占了右边，属性块挪到快捷栏左边；
+                    // 原版指示器在快捷栏左边 22 像素处，挪到属性块左边再空 4 像素
+                    int x = cx - 91 - STATS_GAP - width;
+                    renderStats(graphics, font, texts, x, graphics.guiHeight() - 30);
+                    attackIndicatorShift = (x - 4 - 18) - (cx - 91 - 22);
+                } else {
+                    // 原版指示器在快捷栏右边 6 像素处，挪到属性块右边再空 4 像素
+                    renderStats(graphics, font, texts, cx + 91 + STATS_GAP, graphics.guiHeight() - 30);
+                    attackIndicatorShift = STATS_GAP + width + 4 - 6;
+                }
             }
         });
+        event.registerAbove(VanillaGuiLayers.HOTBAR, SPELL_LAYER, (graphics, deltaTracker) -> renderSelectedSpell(graphics));
         // 等级数字压在经验条正中，要画在经验条填充之后，所以原版那层不画，另起一层放在 CONTEXTUAL_INFO_BAR 上面
         event.wrapLayer(VanillaGuiLayers.EXPERIENCE_LEVEL, old -> (graphics, deltaTracker) -> {
             if (!isActive()) {
@@ -172,6 +195,7 @@ public final class TavernHud {
         if (mc.level != null && !mc.isPaused()) {
             ticks++;
         }
+        CastBar.tick(mc.player);
     }
 
     // ---------------------------------------------------------------- 生命条、饥饿条
@@ -293,34 +317,74 @@ public final class TavernHud {
         mc.gui.rightHeight += PLATE_H + 1;
     }
 
-    // ---------------------------------------------------------------- 属性（快捷栏右侧）
+    // ---------------------------------------------------------------- 属性（快捷栏旁）
 
-    /** 快捷栏右侧的属性块：两列三行，左列护甲类、右列伤害类，图标对齐。返回块宽。 */
-    private static int renderStats(GuiGraphicsExtractor graphics, Font font, Player player, int x, int y) {
-        int defense = renderStatColumn(graphics, font, x, y,
-                new Identifier[]{HudSprites.ICON_ARMOR, HudSprites.ICON_SPELL_RESISTANCE, HudSprites.ICON_TOUGHNESS},
-                new String[]{
-                        format(attribute(player, Attributes.ARMOR)),
+    private static final Identifier[][] STAT_ICONS = {
+            {HudSprites.ICON_ARMOR, HudSprites.ICON_SPELL_RESISTANCE, HudSprites.ICON_TOUGHNESS},
+            {HudSprites.ICON_ATTACK_DAMAGE, HudSprites.ICON_RANGED_DAMAGE, HudSprites.ICON_SPELL_POWER}};
+
+    /** 两列三行的数字：左列护甲类、右列伤害类。 */
+    private static String[][] statTexts(Player player) {
+        return new String[][]{
+                {format(attribute(player, Attributes.ARMOR)),
                         format(attribute(player, AttributeRegistry.SPELL_RESISTANCE)),
-                        format(attribute(player, Attributes.ARMOR_TOUGHNESS))});
-        int damage = renderStatColumn(graphics, font, x + defense + STATS_COLUMN_GAP, y,
-                new Identifier[]{HudSprites.ICON_ATTACK_DAMAGE, HudSprites.ICON_RANGED_DAMAGE, HudSprites.ICON_SPELL_POWER},
-                new String[]{
-                        format(attribute(player, Attributes.ATTACK_DAMAGE)),
+                        format(attribute(player, Attributes.ARMOR_TOUGHNESS))},
+                {format(attribute(player, Attributes.ATTACK_DAMAGE)),
                         format(attribute(player, AttributeRegistry.RANGED_DAMAGE)),
-                        format(attribute(player, AttributeRegistry.SPELL_POWER))});
-        return defense + STATS_COLUMN_GAP + damage;
+                        format(attribute(player, AttributeRegistry.SPELL_POWER))}};
     }
 
-    /** 一列三行图标 + 数字，行距 10。列宽按最宽的数字算（至少两位数宽，个位数时右边那列不会贴过来）。 */
-    private static int renderStatColumn(GuiGraphicsExtractor graphics, Font font, int x, int y, Identifier[] icons, String[] texts) {
+    /** 块宽：两列加列间距（左手习惯时块的右边要对齐快捷栏，得先量出宽度）。 */
+    private static int statsWidth(Font font, String[][] texts) {
+        return columnWidth(font, texts[0]) + STATS_COLUMN_GAP + columnWidth(font, texts[1]);
+    }
+
+    /** 列宽 = 图标 11 + 最宽的数字（至少两位数宽，个位数时右边那列不会贴过来）。 */
+    private static int columnWidth(Font font, String[] texts) {
         int textWidth = font.width("00");
-        for (int i = 0; i < icons.length; i++) {
-            blit(graphics, icons[i], x, y + i * 10, 9, 9);
-            graphics.text(font, texts[i], x + 11, y + i * 10 + 1, WHITE, true);
-            textWidth = Math.max(textWidth, font.width(texts[i]));
+        for (String text : texts) {
+            textWidth = Math.max(textWidth, font.width(text));
         }
         return 11 + textWidth;
+    }
+
+    /** 属性块：两列三行，图标对齐，行距 10。 */
+    private static void renderStats(GuiGraphicsExtractor graphics, Font font, String[][] texts, int x, int y) {
+        for (int column = 0; column < 2; column++) {
+            for (int row = 0; row < 3; row++) {
+                blit(graphics, STAT_ICONS[column][row], x, y + row * 10, 9, 9);
+                graphics.text(font, texts[column][row], x + 11, y + row * 10 + 1, WHITE, true);
+            }
+            x += columnWidth(font, texts[column]) + STATS_COLUMN_GAP;
+        }
+    }
+
+    // ---------------------------------------------------------------- 当前法术（副手栏外侧）
+
+    /**
+     * 选中的法术画在副手栏外侧，框用原版副手栏的贴图，图标带冷却遮罩、法力不足变灰。
+     * 位置按"副手栏在"算，副手空着时那一格空着，拿起 / 放下东西时法术框不跳；左手习惯时副手栏在右边，法术框跟着到右边外侧。
+     * 只在手持施法物品（{@code #can_cast_spell}，任一只手）时画；旁观、隐藏 GUI、身上没有法术时不画。
+     */
+    private static void renderSelectedSpell(GuiGraphicsExtractor graphics) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.options.hideGui || !(mc.getCameraEntity() instanceof Player player) || player.isSpectator()) {
+            return;
+        }
+        if (!player.getMainHandItem().is(TagRegistry.CAN_CAST_SPELL) && !player.getOffhandItem().is(TagRegistry.CAN_CAST_SPELL)) {
+            return;
+        }
+        SpellEntry entry = SpellCasting.getSelectedSpell(player);
+        if (entry == null) {
+            return;
+        }
+        int cx = graphics.guiWidth() / 2;
+        boolean offhandLeft = player.getMainArm() == HumanoidArm.RIGHT;
+        // 原版副手栏贴图 29×24：格子 22 宽，另 7 像素是和快捷栏之间的空隙（左副手栏空隙在右，右副手栏在左）
+        int x = offhandLeft ? cx - 91 - 29 - 29 : cx + 91 + 29;
+        blit(graphics, offhandLeft ? OFFHAND_LEFT : OFFHAND_RIGHT, x, graphics.guiHeight() - 23, 29, 24);
+        SpellIcons.draw(graphics, player, entry.value(), x + (offhandLeft ? 3 : 10), graphics.guiHeight() - 19,
+                ManaApi.canAfford(player, entry.value().manaCost()));
     }
 
     private static double attribute(Player player, Holder<Attribute> attribute) {

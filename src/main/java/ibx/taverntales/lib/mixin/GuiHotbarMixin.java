@@ -11,11 +11,12 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 /**
- * 本模组的 HUD 把六个属性放在快捷栏右侧，原版画在那里的攻击冷却指示器（快捷栏模式）要往右让到属性块外面。
+ * 本模组的 HUD 把六个属性放在快捷栏旁边（平时右侧，左手习惯时左侧），原版画在同一侧的攻击冷却指示器（快捷栏模式）
+ * 要让到属性块外面。
  *
  * <p>指示器在原版 {@code HOTBAR} 层的 {@code extractItemHotbar} 里画，NeoForge 只能整层替换，
  * 所以这里包住该方法里的两种贴图调用，挪多少由 {@link TavernHud#hotbarSpriteShift} 决定：
- * 只挪右侧的指示器，副手栏、快捷栏本身都不动；切回原版 HUD 或创造模式时一律不挪。</p>
+ * 只挪指示器，副手栏、快捷栏本身都不动；切回原版 HUD 或创造模式时一律不挪。</p>
  */
 @Mixin(Gui.class)
 public abstract class GuiHotbarMixin {

@@ -32,6 +32,10 @@ public final class CastContext {
     int effects;
     float charge = 1.0F;
     @Nullable Component failure;
+    /** 由"放当前选中"发起（{@link SpellCasting#castSelected}）：提供它的装备被卸下时要取消。只在服务端有意义。 */
+    boolean fromSelection;
+    /** 由右键施法物品发起并挂着原版"使用物品"：松手结算、物品离手取消、结束时停用。只在服务端有意义。 */
+    boolean heldByUse;
     private @Nullable Object data;
 
     CastContext(LivingEntity caster, Spell spell, CastSource source, ItemStack triggerItem, ItemStack sourceItem,

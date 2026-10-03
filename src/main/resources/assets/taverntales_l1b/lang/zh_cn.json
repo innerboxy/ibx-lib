@@ -37,5 +37,20 @@
   "message.taverntales_l1b.cast.on_cooldown": "冷却中：%s 秒",
   "message.taverntales_l1b.cast.not_enough_mana": "法力不足",
   "message.taverntales_l1b.cast.no_spell": "没有可施放的法术",
-  "tooltip.taverntales_l1b.auto_fire": "自动发射"
+  "message.taverntales_l1b.cast.selection_fallback": "选中的法术已不可用，改为 %s",
+  "key.taverntales_l1b.spell_wheel": "法术轮盘",
+  "key.category.taverntales_l1b.spells": "法术",
+  "gui.taverntales_l1b.spell_tooltip.mana_cost": "耗蓝 %s",
+  "gui.taverntales_l1b.spell_tooltip.mana_cost_per": "耗蓝 %s / 次",
+  "gui.taverntales_l1b.spell_tooltip.cooldown": "冷却 %s 秒",
+  "gui.taverntales_l1b.spell_tooltip.instant": "瞬发",
+  "gui.taverntales_l1b.spell_tooltip.cast": "吟唱 %s 秒",
+  "gui.taverntales_l1b.spell_tooltip.charge": "蓄力 %s 秒",
+  "gui.taverntales_l1b.spell_tooltip.channel": "引导，每 %s 秒生效一次",
+  "subtitles.taverntales_l1b.spell_wheel.open": "法术轮盘：打开",
+  "subtitles.taverntales_l1b.spell_wheel.select": "法术轮盘：选中",
+  "subtitles.taverntales_l1b.spell_wheel.close": "法术轮盘：关闭",
+  "subtitles.taverntales_l1b.spell.cast_fail": "施法失败",
+  "tooltip.taverntales_l1b.auto_fire": "自动发射",
+  "tooltip.taverntales_l1b.spells": "法术："
 }

@@ -1,0 +1,40 @@
+{
+  "spell_wheel.open": {
+    "subtitle": "subtitles.taverntales_l1b.spell_wheel.open",
+    "sounds": [
+      {
+        "name": "minecraft:item.book.page_turn",
+        "type": "event"
+      }
+    ]
+  },
+  "spell_wheel.select": {
+    "subtitle": "subtitles.taverntales_l1b.spell_wheel.select",
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event"
+      }
+    ]
+  },
+  "spell_wheel.close": {
+    "subtitle": "subtitles.taverntales_l1b.spell_wheel.close",
+    "sounds": [
+      {
+        "name": "minecraft:item.book.put",
+        "type": "event",
+        "volume": 0.6
+      }
+    ]
+  },
+  "spell.cast_fail": {
+    "subtitle": "subtitles.taverntales_l1b.spell.cast_fail",
+    "sounds": [
+      {
+        "name": "minecraft:block.dispenser.fail",
+        "type": "event",
+        "volume": 0.5
+      }
+    ]
+  }
+}

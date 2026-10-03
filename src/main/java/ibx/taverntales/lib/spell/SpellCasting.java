@@ -1,12 +1,23 @@
 package ibx.taverntales.lib.spell;
 
+import ibx.taverntales.lib.TavernTalesLib;
 import ibx.taverntales.lib.api.ManaApi;
 import ibx.taverntales.lib.api.event.SpellCastEvent;
+import ibx.taverntales.lib.api.event.SpellListEvent;
+import ibx.taverntales.lib.compat.CuriosCompat;
 import ibx.taverntales.lib.registry.AttachmentRegistry;
 import ibx.taverntales.lib.registry.AttributeRegistry;
+import ibx.taverntales.lib.registry.SoundRegistry;
 import ibx.taverntales.lib.registry.TagRegistry;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.player.Player;
@@ -15,11 +26,20 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
+import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import org.jspecify.annotations.Nullable;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.WeakHashMap;
+import java.util.function.Consumer;
 
 /**
  * 施法的唯一入口。施法者是玩家、生物都一样：{@code SpellCasting.cast(caster, spell)}。
@@ -41,11 +61,18 @@ import java.text.DecimalFormat;
  * </table>
  *
  * <p>所有结算只在服务端；客户端调用 {@link #cast} 只做判断（预测用），不改任何数据。</p>
+ *
+ * <p>玩家这一侧（{@link #getSpells}、选中、{@link #castSelected}）：法术来自身上的物品，右键手持
+ * {@code #taverntales_l1b:can_cast_spell} 物品放当前选中的法术，并挂上原版"使用物品"——按住读条、松手结束。</p>
  */
 public final class SpellCasting {
     private SpellCasting() {}
 
     private static final DecimalFormat SECONDS = new DecimalFormat("0.0");
+    private static final EquipmentSlot[] ARMOR_ORDER = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
+    /** 按住右键时原版每 4 tick 重试一次使用物品，失败提示音只在一串连续失败的第一次响。 */
+    private static final int FAIL_SOUND_GAP = 6;
+    private static final Map<Player, Long> LAST_FAIL = new WeakHashMap<>();
 
     public static void register() {
         NeoForge.EVENT_BUS.addListener(SpellCasting::onEntityTick);
@@ -53,6 +80,12 @@ public final class SpellCasting {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, SpellCasting::onIncomingDamage);
         NeoForge.EVENT_BUS.addListener(SpellCasting::onDeath);
         NeoForge.EVENT_BUS.addListener(SpellCasting::onLeaveLevel);
+        NeoForge.EVENT_BUS.addListener(SpellCasting::onRightClickItem);
+        NeoForge.EVENT_BUS.addListener(SpellCasting::onUseItemStop);
+        NeoForge.EVENT_BUS.addListener(SpellCasting::onEquipmentChange);
+        if (CuriosCompat.isLoaded()) {
+            CuriosCompat.onCurioChange(SpellCasting::checkSpellStillAvailable);
+        }
     }
 
     // ---------------------------------------------------------------- 数值
@@ -162,6 +195,11 @@ public final class SpellCasting {
      * 只在服务端生效；没在施法时什么也不做。
      */
     public static void stopCasting(LivingEntity caster) {
+        stop(caster, true);
+    }
+
+    /** @param stopUsing 结束后要不要停掉施法物品的"使用"；松手事件里已经在停用，传 false。 */
+    private static void stop(LivingEntity caster, boolean stopUsing) {
         if (caster.level().isClientSide()) {
             return;
         }
@@ -173,13 +211,13 @@ public final class SpellCasting {
         if (ctx.spell().castType() == CastType.CHARGE) {
             ctx.charge = Math.min(1.0F, (float) ctx.elapsed() / ctx.castTicks());
             if (ctx.charge < ctx.spell().minCharge()) {
-                end(caster, active, CastEndReason.CANCELLED);
+                end(caster, active, CastEndReason.CANCELLED, stopUsing);
             } else {
-                end(caster, active, fire(ctx) ? CastEndReason.COMPLETED : CastEndReason.OUT_OF_MANA);
+                end(caster, active, fire(ctx) ? CastEndReason.COMPLETED : CastEndReason.OUT_OF_MANA, stopUsing);
             }
             return;
         }
-        end(caster, active, CastEndReason.CANCELLED);
+        end(caster, active, CastEndReason.CANCELLED, stopUsing);
     }
 
     /**
@@ -194,6 +232,134 @@ public final class SpellCasting {
         if (active != null && active.current != null) {
             end(caster, active, reason);
         }
+    }
+
+    // ---------------------------------------------------------------- 玩家的法术列表与选中
+
+    /**
+     * 玩家现在能放的法术。扫身上所有容器（{@link SpellContainer}），顺序固定：
+     * <b>主手 → 副手 → 饰品栏（装了 Curios 才扫，按其槽位顺序）→ 头 → 胸 → 腿 → 脚</b>；同一法术只列第一次出现，
+     * 每条带提供它的物品。最后发 {@link SpellListEvent}，监听可以增删。
+     *
+     * <p>两端都能调：客户端画轮盘、HUD，服务端校验选中、施法。玩家本身没有"学会"的数据，卸下装备法术就没了。</p>
+     */
+    public static List<SpellEntry> getSpells(Player player) {
+        List<SpellEntry> spells = new ArrayList<>();
+        Consumer<ItemStack> collect = stack -> {
+            for (Holder<Spell> spell : SpellContainer.spellsOf(stack)) {
+                if (spells.stream().noneMatch(entry -> entry.value() == spell.value())) {
+                    spells.add(new SpellEntry(spell, stack));
+                }
+            }
+        };
+        collect.accept(player.getMainHandItem());
+        collect.accept(player.getOffhandItem());
+        if (CuriosCompat.isLoaded()) {
+            CuriosCompat.forEachCurio(player, collect);
+        }
+        for (EquipmentSlot slot : ARMOR_ORDER) {
+            collect.accept(player.getItemBySlot(slot));
+        }
+        return NeoForge.EVENT_BUS.post(new SpellListEvent(player, spells)).getSpells();
+    }
+
+    /** 选中的法术 id，不校验还在不在列表里；没选过为 null。两端都能问（只同步给本人）。 */
+    public static @Nullable Identifier getSelectedId(Player player) {
+        SelectedSpell selected = player.getExistingDataOrNull(AttachmentRegistry.SELECTED_SPELL);
+        return selected == null ? null : selected.spell();
+    }
+
+    /** 当前会放的那一条：选中的还在列表里就是它，否则列表第一个；身上没有法术为 null。两端都能调。 */
+    public static @Nullable SpellEntry getSelectedSpell(Player player) {
+        return resolveSelected(player, getSpells(player));
+    }
+
+    /** 同上，用已经算好的列表（{@link #getSpells}），避免一帧里扫两遍。 */
+    public static @Nullable SpellEntry resolveSelected(Player player, List<SpellEntry> spells) {
+        if (spells.isEmpty()) {
+            return null;
+        }
+        Identifier selected = getSelectedId(player);
+        for (SpellEntry entry : spells) {
+            if (Objects.equals(entry.value().id(), selected)) {
+                return entry;
+            }
+        }
+        return spells.getFirst();
+    }
+
+    /**
+     * 改选：{@code spell} 在该玩家的列表里才写入（自动同步给本人），返回是否成功。只在服务端生效。
+     * 轮盘的选中包（{@code SelectSpellPayload}）走这里；不在列表里时把服务端的值重发一遍，纠正客户端先改的那份。
+     */
+    public static boolean select(Player player, Identifier spell) {
+        if (player.level().isClientSide()) {
+            return false;
+        }
+        if (getSpells(player).stream().anyMatch(entry -> spell.equals(entry.value().id()))) {
+            player.setData(AttachmentRegistry.SELECTED_SPELL, new SelectedSpell(spell));
+            return true;
+        }
+        player.syncData(AttachmentRegistry.SELECTED_SPELL);
+        return false;
+    }
+
+    /**
+     * 放当前选中的法术，来源 {@link CastSource#ITEM}：触发物品是 {@code hand} 上的物品，来源物品是提供这个法术的容器。
+     * 选中的已经不在列表里（装备卸了）就回退到列表第一个并提示；身上没有法术返回 {@link CastResult#NO_SPELL}。
+     * 右键施法物品时由 lib 自己调，施法物品不用写任何代码。客户端调用只做判断。
+     */
+    public static CastResult castSelected(Player player, InteractionHand hand) {
+        List<SpellEntry> spells = getSpells(player);
+        SpellEntry entry = resolveSelected(player, spells);
+        if (entry == null) {
+            return fail(player, CastResult.NO_SPELL, null);
+        }
+        if (!player.level().isClientSide()) {
+            Identifier selected = getSelectedId(player);
+            Identifier actual = entry.value().id();
+            if (actual != null && !actual.equals(selected)) {
+                player.setData(AttachmentRegistry.SELECTED_SPELL, new SelectedSpell(actual));
+                if (selected != null) {
+                    player.sendOverlayMessage(Component.translatable(
+                            "message." + TavernTalesLib.MODID + ".cast.selection_fallback", entry.value().getName()));
+                }
+            }
+        }
+        CastResult result = cast(player, entry.value(), CastSource.ITEM, player.getItemInHand(hand), entry.sourceItem());
+        CastContext ctx = getCurrentCast(player);
+        if (result.isSuccess() && ctx != null && !player.level().isClientSide()) {
+            ctx.fromSelection = true;
+        }
+        return result;
+    }
+
+    /**
+     * 右键施法物品放出法术后的收尾：成功且不是瞬发时挂上原版"使用物品"——按住读条、松手结束、物品离手取消、结束时自动停用——
+     * 返回 {@code CONSUME}；瞬发成功返回 {@code SUCCESS}（挥手）；失败返回 {@code FAIL}。
+     *
+     * <p>两端都调：客户端那次只判断（{@code spell} 用来看是不是瞬发），同步挂上使用物品（手臂姿势、减速）。
+     * 使用时长由 mixin 统一给施法物品 72000。</p>
+     */
+    private static InteractionResult holdCast(Player player, InteractionHand hand, Spell spell, CastResult result) {
+        if (!result.isSuccess()) {
+            return InteractionResult.FAIL;
+        }
+        boolean held;
+        if (player.level().isClientSide()) {
+            held = spell.castType() != CastType.INSTANT;
+        } else {
+            CastContext ctx = getCurrentCast(player);
+            held = ctx != null;
+            if (held) {
+                ctx.heldByUse = true;
+            }
+        }
+        if (held) {
+            player.startUsingItem(hand);
+            return InteractionResult.CONSUME;
+        }
+        return InteractionResult.SUCCESS;
     }
 
     // ---------------------------------------------------------------- 内部流程
@@ -243,6 +409,14 @@ public final class SpellCasting {
      * 生效过就进冷却、消耗卷轴，最后调结束钩子。
      */
     private static void end(LivingEntity caster, ActiveCast active, CastEndReason reason) {
+        end(caster, active, reason, true);
+    }
+
+    /**
+     * @param stopUsing 右键施法物品放出的，结束后停掉原版"使用物品"（吟唱到点、蓝尽、被打断时手放下来）。
+     *                  松手事件里原版正在停用，传 false：在那里再停一次会让 NeoForge 误报"物品被用坏了"。
+     */
+    private static void end(LivingEntity caster, ActiveCast active, CastEndReason reason, boolean stopUsing) {
         CastContext ctx = active.current;
         if (ctx == null) {
             return;
@@ -257,14 +431,26 @@ public final class SpellCasting {
                 ctx.sourceItem().consume(1, caster);
             }
         }
+        if (stopUsing && ctx.heldByUse && caster.isUsingItem()) {
+            caster.stopUsingItem();
+        }
         caster.syncData(AttachmentRegistry.ACTIVE_CAST);
         ctx.spell().onCastEnd(ctx, reason);
     }
 
-    /** 失败：玩家在 action bar 看到原因（{@code message} 为空时用结果自带的提示）。 */
+    /**
+     * 失败：玩家在 action bar 看到原因（{@code message} 为空时用结果自带的提示），并听到失败提示音。
+     * 按住右键时原版每 4 tick 重试一次，提示音只在一串连续失败的第一次响。只在服务端。
+     */
     private static CastResult fail(LivingEntity caster, CastResult result, @Nullable Component message) {
-        if (caster instanceof Player player) {
+        if (caster instanceof ServerPlayer player) {
             player.sendOverlayMessage(message != null ? message : Component.translatable(result.messageKey()));
+            long now = player.level().getGameTime();
+            Long last = LAST_FAIL.put(player, now);
+            if (last == null || now - last > FAIL_SOUND_GAP) {
+                player.connection.send(new ClientboundSoundPacket(SoundRegistry.CAST_FAIL, SoundSource.PLAYERS,
+                        player.getX(), player.getY(), player.getZ(), 1.0F, 1.0F, player.getRandom().nextLong()));
+            }
         }
         return result;
     }
@@ -287,6 +473,11 @@ public final class SpellCasting {
             return;
         }
         if (caster.isDeadOrDying()) {
+            return;
+        }
+        // 右键放出的：原版因为换了物品、打开容器等停用了物品（不经过松手事件），当作取消，同弓切走不放箭
+        if (ctx.heldByUse && !caster.isUsingItem()) {
+            end(caster, active, CastEndReason.CANCELLED, false);
             return;
         }
         switch (spell.castType()) {
@@ -334,6 +525,53 @@ public final class SpellCasting {
     private static void onLeaveLevel(EntityLeaveLevelEvent event) {
         if (!event.getLevel().isClientSide() && event.getEntity() instanceof LivingEntity living) {
             cancelCasting(living, CastEndReason.CANCELLED);
+        }
+    }
+
+    /**
+     * 右键手持 {@code #can_cast_spell} 物品 = 放当前选中的法术，不走物品自己的 {@code use}。两端都会触发：
+     * 客户端那次只做判断，用来同步挂上"使用物品"（手臂姿势、减速）；瞬发不挂，只挥手。
+     */
+    private static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        if (!event.getItemStack().is(TagRegistry.CAN_CAST_SPELL)) {
+            return;
+        }
+        Player player = event.getEntity();
+        InteractionHand hand = event.getHand();
+        event.setCanceled(true);
+        CastResult result = castSelected(player, hand);
+        SpellEntry entry = result.isSuccess() ? getSelectedSpell(player) : null;
+        event.setCancellationResult(entry == null ? InteractionResult.FAIL : holdCast(player, hand, entry.value(), result));
+    }
+
+    /**
+     * 松手：挂着使用物品的施法（{@link #holdCast}）在这里结束，蓄力在这里结算。
+     * 这时物品自己的 {@code releaseUsing} 不再调用（弓进了标签也不会顺手射箭）；施法物品标签里的物品两端都这样处理。
+     */
+    private static void onUseItemStop(LivingEntityUseItemEvent.Stop event) {
+        CastContext ctx = getCurrentCast(event.getEntity());
+        boolean held = ctx != null && ctx.heldByUse;   // 只有服务端知道
+        if (held || event.getItem().is(TagRegistry.CAN_CAST_SPELL)) {
+            event.setCanceled(true);
+        }
+        if (held) {
+            stop(event.getEntity(), false);
+        }
+    }
+
+    private static void onEquipmentChange(LivingEquipmentChangeEvent event) {
+        checkSpellStillAvailable(event.getEntity());
+    }
+
+    /** 提供正在放的法术的装备、饰品被卸下了：列表里没有这个法术就取消（引导生效过的照常进冷却）。只看"放当前选中"放出的。 */
+    private static void checkSpellStillAvailable(LivingEntity entity) {
+        if (!(entity instanceof Player player) || player.level().isClientSide()) {
+            return;
+        }
+        CastContext ctx = getCurrentCast(player);
+        if (ctx != null && ctx.fromSelection
+                && getSpells(player).stream().noneMatch(entry -> entry.value() == ctx.spell())) {
+            cancelCasting(player, CastEndReason.CANCELLED);
         }
     }
 

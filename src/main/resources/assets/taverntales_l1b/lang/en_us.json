@@ -37,5 +37,20 @@
   "message.taverntales_l1b.cast.on_cooldown": "On cooldown: %ss",
   "message.taverntales_l1b.cast.not_enough_mana": "Not enough mana",
   "message.taverntales_l1b.cast.no_spell": "No spell to cast",
-  "tooltip.taverntales_l1b.auto_fire": "Auto Fire"
+  "message.taverntales_l1b.cast.selection_fallback": "Selected spell is no longer available, switched to %s",
+  "key.taverntales_l1b.spell_wheel": "Spell Wheel",
+  "key.category.taverntales_l1b.spells": "Spells",
+  "gui.taverntales_l1b.spell_tooltip.mana_cost": "Mana cost %s",
+  "gui.taverntales_l1b.spell_tooltip.mana_cost_per": "Mana cost %s each time",
+  "gui.taverntales_l1b.spell_tooltip.cooldown": "Cooldown %ss",
+  "gui.taverntales_l1b.spell_tooltip.instant": "Instant",
+  "gui.taverntales_l1b.spell_tooltip.cast": "Cast time %ss",
+  "gui.taverntales_l1b.spell_tooltip.charge": "Charge time %ss",
+  "gui.taverntales_l1b.spell_tooltip.channel": "Channeled, takes effect every %ss",
+  "subtitles.taverntales_l1b.spell_wheel.open": "Spell wheel opens",
+  "subtitles.taverntales_l1b.spell_wheel.select": "Spell selected",
+  "subtitles.taverntales_l1b.spell_wheel.close": "Spell wheel closes",
+  "subtitles.taverntales_l1b.spell.cast_fail": "Spell fails",
+  "tooltip.taverntales_l1b.auto_fire": "Auto Fire",
+  "tooltip.taverntales_l1b.spells": "Spells:"
 }

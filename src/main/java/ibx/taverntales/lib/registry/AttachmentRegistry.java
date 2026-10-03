@@ -5,6 +5,7 @@ import ibx.taverntales.lib.TavernTalesLib;
 import ibx.taverntales.lib.api.ManaStorage;
 import ibx.taverntales.lib.api.SpellDamageSnapshot;
 import ibx.taverntales.lib.spell.ActiveCast;
+import ibx.taverntales.lib.spell.SelectedSpell;
 import ibx.taverntales.lib.spell.SpellCooldowns;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
@@ -84,6 +85,18 @@ public final class AttachmentRegistry {
                     () -> AttachmentType.builder(() -> new SpellCooldowns())
                             .serialize(SpellCooldowns.CODEC)
                             .sync((holder, player) -> holder == player, SpellCooldowns.STREAM_CODEC)
+                            .build());
+
+    /**
+     * 玩家当前选中的法术 id。读写请走 {@link ibx.taverntales.lib.spell.SpellCasting}（改选只有轮盘的选中包一条路）。
+     * 存盘；只同步给自己；死亡后保留（选择是玩家的偏好，不是状态）。
+     */
+    public static final Supplier<AttachmentType<SelectedSpell>> SELECTED_SPELL =
+            ATTACHMENT_TYPES.register("selected_spell",
+                    () -> AttachmentType.builder(() -> SelectedSpell.NONE)
+                            .serialize(SelectedSpell.CODEC)
+                            .sync((holder, player) -> holder == player, SelectedSpell.STREAM_CODEC)
+                            .copyOnDeath()
                             .build());
 
     public static void register(IEventBus modEventBus) {

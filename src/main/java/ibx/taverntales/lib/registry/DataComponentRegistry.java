@@ -2,12 +2,17 @@ package ibx.taverntales.lib.registry;
 
 import com.mojang.serialization.Codec;
 import ibx.taverntales.lib.TavernTalesLib;
+import ibx.taverntales.lib.spell.Spell;
+import ibx.taverntales.lib.spell.SpellRegistries;
+import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.List;
 
 /**
  * 本模组注册的物品数据组件（Data Component）。
@@ -31,6 +36,17 @@ public final class DataComponentRegistry {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> AUTO_FIRE =
             DATA_COMPONENTS.registerComponentType("auto_fire",
                     builder -> builder.persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL));
+
+    /**
+     * 物品提供的法术（法典、卷轴、法杖、护甲、饰品……），按轮盘里的顺序。带它的物品就是法术容器，
+     * 见 {@link ibx.taverntales.lib.spell.SpellContainer}；玩家能放的法术是身上所有容器的并集。
+     * 存的是法术 id，例如 {@code /give @s minecraft:book[taverntales_l1b:spells=["taverntales_2me:fireball"]]}。
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<Holder<Spell>>>> SPELLS =
+            DATA_COMPONENTS.registerComponentType("spells",
+                    builder -> builder.persistent(SpellRegistries.SPELL.holderByNameCodec().listOf())
+                            .networkSynchronized(ByteBufCodecs.idMapper(SpellRegistries.SPELL.asHolderIdMap()).apply(ByteBufCodecs.list()))
+                            .cacheEncoding());
 
     public static void register(IEventBus modEventBus) {
         DATA_COMPONENTS.register(modEventBus);

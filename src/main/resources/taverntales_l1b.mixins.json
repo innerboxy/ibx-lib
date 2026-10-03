@@ -8,6 +8,7 @@
     "BowItemMixin",
     "CrossbowItemMixin",
     "CrossbowMobMixin",
+    "ItemStackMixin",
     "LivingEntityAccessor",
     "ProjectileUtilMixin",
     "RangedBowAttackGoalMixin"

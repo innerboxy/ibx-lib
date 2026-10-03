@@ -1,8 +1,10 @@
 package ibx.taverntales.lib.client;
 
 import ibx.taverntales.lib.TavernTalesLib;
-import ibx.taverntales.lib.client.hud.HudPreviewCommand;
 import ibx.taverntales.lib.client.hud.TavernHud;
+import ibx.taverntales.lib.client.spell.SpellIcons;
+import ibx.taverntales.lib.client.spell.SpellItemTooltip;
+import ibx.taverntales.lib.client.spell.SpellWheel;
 import ibx.taverntales.lib.config.ClientConfig;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
@@ -24,11 +26,17 @@ public final class TavernTalesLibClient {
         // 最低优先级：等其他模组先注册完自己的客户端扩展，再给剩下的 Tt 弩补上，避免重复注册报错。
         modEventBus.addListener(EventPriority.LOWEST, CrossbowArmPose::onRegisterClientExtensions);
 
-        // HUD：快捷栏右侧的属性块、吟唱条、蓝条、经验条正中的等级数字；隐藏原版护甲行
+        // HUD：快捷栏旁的属性块、副手栏外侧的当前法术、吟唱条、蓝条、经验条正中的等级数字；隐藏原版护甲行
         modEventBus.addListener(TavernHud::onRegisterGuiLayers);
         NeoForge.EVENT_BUS.addListener(TavernHud::onClientTick);
-        // 吟唱条预览指令，法术系统接上以后删掉
-        NeoForge.EVENT_BUS.addListener(HudPreviewCommand::onRegisterClientCommands);
-        NeoForge.EVENT_BUS.addListener(HudPreviewCommand::onClientTick);
+        // 法术轮盘：按住轮盘键弹出、左键点选；法术图标资源重载时重新找
+        modEventBus.addListener(SpellWheel::onRegisterKeyMappings);
+        modEventBus.addListener(SpellWheel::onRegisterGuiLayers);
+        modEventBus.addListener(SpellIcons::onAddReloadListeners);
+        NeoForge.EVENT_BUS.addListener(SpellWheel::onClientTick);
+        NeoForge.EVENT_BUS.addListener(SpellWheel::onMouseButton);
+        NeoForge.EVENT_BUS.addListener(SpellWheel::onMouseScroll);
+        // 法术容器的物品提示：名字下面列出提供的法术
+        NeoForge.EVENT_BUS.addListener(SpellItemTooltip::onItemTooltip);
     }
 }
