@@ -10,6 +10,7 @@ import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
 import top.theillusivec4.curios.api.type.inventory.IDynamicStackHandler;
 
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * Curios 饰品栏联动（modId {@code curios}）。本模组对它是<b>非强制依赖</b>。
@@ -42,6 +43,13 @@ public final class CuriosCompat {
                 }
             }
         });
+    }
+
+    /** 饰品栏里有没有满足条件的物品（跳过空格）。两端都能用，同 {@link #forEachCurio}。 */
+    public static boolean anyCurio(LivingEntity entity, Predicate<ItemStack> condition) {
+        boolean[] found = {false};
+        forEachCurio(entity, stack -> found[0] |= condition.test(stack));
+        return found[0];
     }
 
     /** 饰品换了（只在服务端触发）：{@code listener} 拿到穿戴者。 */

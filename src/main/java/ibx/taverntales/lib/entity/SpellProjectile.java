@@ -15,11 +15,14 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -76,6 +79,10 @@ public abstract class SpellProjectile extends Projectile implements GeoEntity {
     private static final byte IMPACT_EVENT = 3;
     /** 追踪只看前方这个角度以内（cos 60°）。 */
     private static final double HOMING_CONE = 0.5;
+    /** 出发点在眼睛下方多少格。 */
+    private static final double SPAWN_DROP = 0.25;
+    /** 找准星指着的地方最远看多少格。 */
+    private static final double AIM_RANGE = 64.0;
 
     private int age;
     private int pierced;
@@ -90,23 +97,76 @@ public abstract class SpellProjectile extends Projectile implements GeoEntity {
     }
 
     /**
-     * 法术里用：从施法者眼睛稍下方出发，主人是施法者，伤害快照存到弹射物上。之后调 {@link #shootFromCaster} 或 {@code shoot}，
-     * 再 {@code addFreshEntity}。只在服务端用。
+     * 法术里用：从施法者下巴出发（见 {@link #spawnPoint}；施法者实现了 {@link SpellOrigin} 就从它给的地方出发），
+     * 主人是施法者，伤害快照存到弹射物上。之后调 {@link #shootFromCaster} 或 {@code shoot}，再 {@code addFreshEntity}。只在服务端用。
      */
     protected SpellProjectile(EntityType<? extends SpellProjectile> type, LivingEntity caster, SpellDamageSnapshot snapshot) {
         this(type, caster.level());
         this.setOwner(caster);
-        this.setPos(caster.getX(), caster.getEyeY() - 0.1, caster.getZ());
+        Vec3 start = caster instanceof SpellOrigin origin ? origin.getSpellOrigin() : spawnPoint(caster);
+        this.setPos(start.x, start.y - this.getBbHeight() / 2.0, start.z);
         SpellDamageApi.setProjectileSnapshot(this, snapshot);
     }
 
-    /** 沿主人的视线发射：{@code speed} 格 / tick，{@code inaccuracy} 同原版（0 为绝对准，弓满弦是 1）。没有主人时什么也不做。 */
+    /**
+     * 弹射物中心的默认出发点：施法者身体中线上、眼睛下方 {@value #SPAWN_DROP} 格（下巴），第一人称里从屏幕下方飞出，不挡准星。
+     * 矮小的施法者按眼高的一半收小，出发点不会低过脚下。
+     */
+    private static Vec3 spawnPoint(LivingEntity caster) {
+        return new Vec3(caster.getX(), caster.getEyeY() - Math.min(SPAWN_DROP, caster.getEyeHeight() / 2.0), caster.getZ());
+    }
+
+    /**
+     * 朝主人准星指着的地方发射：{@code speed} 格 / tick，{@code inaccuracy} 同原版（0 为绝对准，弓满弦是 1）。
+     * 出发点不在眼睛上，所以不是顺着视线平行飞，而是斜着对准准星，远近都打在准星上（见 {@link #aimPoint}）。
+     * 生物没有准星：有攻击目标时瞄目标身体正中，带重力的弹射物再把瞄准点抬高一截抵消下坠（见 {@link #liftForGravity}）；
+     * 没有目标时照样按视线。主人自己的速度照原版叠上去。没有主人时什么也不做。
+     */
     public SpellProjectile shootFromCaster(float speed, float inaccuracy) {
         Entity owner = this.getOwner();
         if (owner != null) {
-            this.shootFromRotation(owner, owner.getXRot(), owner.getYRot(), 0.0F, speed, inaccuracy);
+            Vec3 from = this.getBoundingBox().getCenter();
+            LivingEntity target = owner instanceof Mob mob ? mob.getTarget() : null;
+            Vec3 point = target != null ? this.liftForGravity(target.getBoundingBox().getCenter(), from, speed) : this.aimPoint(owner);
+            Vec3 aim = point.subtract(from);
+            this.shoot(aim.x, aim.y, aim.z, speed, inaccuracy);
+            Vec3 movement = owner.getKnownMovement();
+            this.setDeltaMovement(this.getDeltaMovement().add(movement.x, owner.onGround() ? 0.0 : movement.y, movement.z));
         }
         return this;
+    }
+
+    /** 准星指着的地方：视线 {@value #AIM_RANGE} 格内先碰到的方块或生物；什么也没指着时是视线上 {@value #AIM_RANGE} 格远的那一点。 */
+    private Vec3 aimPoint(Entity owner) {
+        Vec3 eye = owner.getEyePosition();
+        Vec3 end = eye.add(owner.getViewVector(1.0F).scale(AIM_RANGE));
+        HitResult block = this.level().clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, owner));
+        Vec3 reach = block.getType() == HitResult.Type.MISS ? end : block.getLocation();
+        AABB area = owner.getBoundingBox().expandTowards(reach.subtract(eye)).inflate(1.0);
+        EntityHitResult entity = ProjectileUtil.getEntityHitResult(owner, eye, reach, area,
+                target -> target != this && !target.isSpectator() && target.isPickable(), eye.distanceToSqr(reach));
+        return entity != null ? entity.getLocation() : reach;
+    }
+
+    /**
+     * 带重力时把瞄准点抬高下坠的那么多：飞到目标要 t tick（算上空气阻力），下坠约 ½·g·t²。只算到一阶，
+     * 远处、仰角大时略有偏差，配上散布够用；最多抬到 45°（够不着的目标不往天上瞄）。没有重力时原样返回。
+     */
+    private Vec3 liftForGravity(Vec3 target, Vec3 from, float speed) {
+        double gravity = this.getGravity();
+        if (gravity <= 0.0 || speed <= 0.0F) {
+            return target;
+        }
+        double distance = target.distanceTo(from);
+        double ticks = distance / speed;
+        double drag = this.getDrag();
+        if (drag < 1.0) {
+            // 每 tick 速度乘 drag：n tick 走 speed·(1 - dragⁿ)/(1 - drag)，反解 n；够不着时按能走的最远算
+            double left = Math.max(0.1, 1.0 - distance * (1.0 - drag) / speed);
+            ticks = Math.log(left) / Math.log(drag);
+        }
+        double horizontal = Math.sqrt((target.x - from.x) * (target.x - from.x) + (target.z - from.z) * (target.z - from.z));
+        return target.add(0.0, Math.min(0.5 * gravity * ticks * ticks, Math.max(1.0, horizontal)), 0.0);
     }
 
     // ---------------------------------------------------------------- 参数（子类重写）

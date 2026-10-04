@@ -27,7 +27,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * 法术范围效果的基类：留在原地一段时间、持续作用于范围里的生物——火墙、毒云、治疗圈都继承它，只写自己不一样的部分。
- * 和 {@link SpellProjectile} 是兄弟：一个飞、一个留在原地，伤害都来自施法瞬间存下的快照。
+ * 和 {@link SpellProjectile}、{@link SpellBeam} 是兄弟：一个飞、一个留在原地、一个跟着施法者的视线转，伤害都来自施法瞬间存下的快照。
  *
  * <p><b>形状</b>是个竖着的圆柱：中心在实体位置，水平半径 {@link #getRadius()}（同步给客户端，可随时间变化），
  * 高 {@link #getHeight()}，从实体位置往上算。生物的脚（位置）在圆里、碰撞箱和圆柱有重叠就算在范围里。</p>
