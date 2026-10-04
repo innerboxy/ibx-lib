@@ -11,7 +11,8 @@
     "ItemStackMixin",
     "LivingEntityAccessor",
     "ProjectileUtilMixin",
-    "RangedBowAttackGoalMixin"
+    "RangedBowAttackGoalMixin",
+    "TagLoaderMixin"
   ],
   "client": [
     "ControlsScreenMixin",

@@ -50,6 +50,7 @@ import java.util.function.Consumer;
  *   <li>读条由框架推进（{@link ActiveCast} + 每 tick 的 {@link #onEntityTick}），生物 AI 不用自己计时，
  *       只要 {@link #isCasting} / {@link #stopCasting}。</li>
  *   <li>扣蓝、冷却、卷轴消耗按 {@link CastSource} 结算；生效过至少一次才进冷却、才消耗卷轴。</li>
+ *   <li>扣了蓝，施法物品（右键的那件）有耐久就跟着掉，见 {@link #MANA_PER_DURABILITY}。</li>
  * </ul>
  *
  * <table>
@@ -68,6 +69,12 @@ import java.util.function.Consumer;
 public final class SpellCasting {
     private SpellCasting() {}
 
+    /**
+     * 施法物品的耐久换算：每扣这么多蓝掉 1 点耐久，按每次实际扣掉的蓝量（已乘法力消耗倍率、经过法力事件）算，四舍五入。
+     * 零头留在 {@link CastContext} 里给同一次施法的下一跳，引导法术每跳扣得少也不会多扣或白嫖。
+     * 用光就碎，同原版工具（耐久魔咒照常生效）；创造模式不扣蓝，也就不掉耐久。
+     */
+    public static final float MANA_PER_DURABILITY = 4.0F;
     private static final DecimalFormat SECONDS = new DecimalFormat("0.0");
     private static final EquipmentSlot[] ARMOR_ORDER = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
     /** 按住右键时原版每 4 tick 重试一次使用物品，失败提示音只在一串连续失败的第一次响。 */
@@ -395,7 +402,35 @@ public final class SpellCasting {
     }
 
     private static boolean pay(CastContext ctx) {
-        return !ctx.source().consumesMana() || ManaApi.tryConsume(ctx.caster(), ctx.manaCost);
+        if (!ctx.source().consumesMana()) {
+            return true;
+        }
+        float before = ManaApi.getMana(ctx.caster());
+        if (!ManaApi.tryConsume(ctx.caster(), ctx.manaCost)) {
+            return false;
+        }
+        wearTriggerItem(ctx, before - ManaApi.getMana(ctx.caster()));
+        return true;
+    }
+
+    /** 施法物品按这次实际扣掉的蓝量掉耐久（{@link #MANA_PER_DURABILITY}）。物品已经不在手上就不扣。 */
+    private static void wearTriggerItem(CastContext ctx, float spentMana) {
+        ItemStack stack = ctx.triggerItem();
+        if (spentMana <= 0.0F || !stack.isDamageableItem()) {
+            return;
+        }
+        ctx.pendingWear += spentMana / MANA_PER_DURABILITY;
+        int wear = (int) Math.floor(ctx.pendingWear + 0.5F);
+        if (wear <= 0) {
+            return;
+        }
+        ctx.pendingWear -= wear;
+        LivingEntity caster = ctx.caster();
+        EquipmentSlot slot = caster.getMainHandItem() == stack ? EquipmentSlot.MAINHAND
+                : caster.getOffhandItem() == stack ? EquipmentSlot.OFFHAND : null;
+        if (slot != null) {
+            stack.hurtAndBreak(wear, caster, slot);
+        }
     }
 
     private static void effect(CastContext ctx) {

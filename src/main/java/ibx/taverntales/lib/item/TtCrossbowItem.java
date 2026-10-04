@@ -48,6 +48,7 @@ import java.util.function.Predicate;
  *   <li>装填音效改为按 tick 等值判断，不再用原版那两个所有玩家共用的 Item 级标记字段。</li>
  *   <li>只能主手使用。</li>
  *   <li>带 {@code auto_fire} 组件时装填完毕自动松手，见 {@link RangedWeaponApi#tickAutoFire}。</li>
+ *   <li>自动进 {@code #c:tools}、{@code #c:tools/ranged_weapon}、{@code #c:tools/crossbow}（见 {@link ibx.taverntales.lib.registry.AutoItemTags}）。</li>
  * </ul>
  *
  * <p>注册：26.1 起 {@link Item.Properties} 必须先带上物品 id 才能构造物品，请用

@@ -31,6 +31,8 @@ public final class CastContext {
     /** 已生效次数：引导每次生效加一；大于 0 才进冷却、才消耗卷轴。 */
     int effects;
     float charge = 1.0F;
+    /** 还没扣的耐久零头：施法物品按蓝量掉耐久时四舍五入剩下的，留给同一次施法的下一跳（引导）。 */
+    float pendingWear;
     @Nullable Component failure;
     /** 由"放当前选中"发起（{@link SpellCasting#castSelected}）：提供它的装备被卸下时要取消。只在服务端有意义。 */
     boolean fromSelection;
@@ -65,12 +67,12 @@ public final class CastContext {
         return this.source;
     }
 
-    /** 右键的那件施法物品；生物、指令施法时为空。 */
+    /** 右键的那件施法物品，施法按蓝量掉耐久的就是它；生物、指令施法时为空。 */
     public ItemStack triggerItem() {
         return this.triggerItem;
     }
 
-    /** 提供这个法术的物品（卷轴消耗、法杖耐久靠它）；没有时为空。 */
+    /** 提供这个法术的物品（卷轴消耗靠它）；没有时为空。 */
     public ItemStack sourceItem() {
         return this.sourceItem;
     }
