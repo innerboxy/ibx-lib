@@ -26,8 +26,8 @@ import net.minecraft.world.phys.Vec3;
  * }</pre>
  *
  * <ul>
- *   <li>起点、终点每帧从实体问（{@link SpellBeam#getStart} / {@link SpellBeam#getEnd}）：起点贴着施法者的眼睛插值，
- *       长度是服务端同步的，所以跟视线走、不抖；</li>
+ *   <li>起点、终点每帧从实体问（{@link SpellBeam#getStart} / {@link SpellBeam#getEnd}）：本机玩家的在本地按胸口和准星算、跟手，
+ *       别人的、生物的用服务端同步的两端插值；</li>
  *   <li>方管的四个面绕射线固定（不朝镜头转），从任何角度看粗细都一样，施法者第一人称看也是一个小方口；</li>
  *   <li>剔除按整条射线的包围盒算，不然起点出了屏幕整条就不画了；</li>
  *   <li>{@code fullBright} 为 true 时自发光（半透明发光的渲染类型，不吃光照）。</li>
