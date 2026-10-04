@@ -1,5 +1,6 @@
 package ibx.taverntales.lib.spell;
 
+import ibx.taverntales.lib.api.event.SpellCastStateEvent;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -7,6 +8,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.attachment.AttachmentSyncHandler;
 import net.neoforged.neoforge.attachment.IAttachmentHolder;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -16,7 +18,7 @@ import org.jspecify.annotations.Nullable;
  *   <li>不存盘：下线、换维度、死亡都会结束施法。</li>
  *   <li>同步给自己和周围玩家：法术、来源、开始时刻、读条长度；结束时同步结束原因。
  *       客户端收到时在这里调法术的客户端钩子（{@link Spell#onCastStart} / {@link Spell#onCastEnd}），
- *       吟唱条也从这里取数据。</li>
+ *       再发 {@link SpellCastStateEvent}（施法动作靠它）；吟唱条也从这里取数据。</li>
  * </ul>
  */
 public final class ActiveCast {
@@ -73,11 +75,13 @@ public final class ActiveCast {
                     if (old != null) {
                         value.current = null;
                         old.spell().onCastEnd(old, CastEndReason.CANCELLED);
+                        NeoForge.EVENT_BUS.post(new SpellCastStateEvent.End(caster, old, CastEndReason.CANCELLED));
                     }
                     CastContext ctx = new CastContext(caster, spell, source, ItemStack.EMPTY, ItemStack.EMPTY, startTick, castTicks);
                     value.current = ctx;
                     value.lastEnd = null;
                     spell.onCastStart(ctx);
+                    NeoForge.EVENT_BUS.post(new SpellCastStateEvent.Start(caster, ctx));
                 }
             } else {
                 CastEndReason reason = buf.readBoolean() ? buf.readEnum(CastEndReason.class) : null;
@@ -85,7 +89,9 @@ public final class ActiveCast {
                 value.current = null;
                 value.lastEnd = reason;
                 if (old != null) {
-                    old.spell().onCastEnd(old, reason != null ? reason : CastEndReason.CANCELLED);
+                    CastEndReason r = reason != null ? reason : CastEndReason.CANCELLED;
+                    old.spell().onCastEnd(old, r);
+                    NeoForge.EVENT_BUS.post(new SpellCastStateEvent.End(caster, old, r));
                 }
             }
             return value;

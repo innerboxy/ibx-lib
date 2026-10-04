@@ -1,7 +1,9 @@
 package ibx.taverntales.lib.item.magic_weapon;
 
+import ibx.taverntales.lib.TavernTalesLib;
 import ibx.taverntales.lib.registry.AttributeRegistry;
 import ibx.taverntales.lib.registry.DataComponentRegistry;
+import ibx.taverntales.lib.spell.CastType;
 import ibx.taverntales.lib.spell.Spell;
 import ibx.taverntales.lib.spell.SpellContainer;
 import ibx.taverntales.lib.spell.SpellRegistries;
@@ -22,7 +24,7 @@ import java.util.List;
 
 /**
  * Tt 法器：所有施法物品的基类，数值由构造参数给定。按法器种类分子类（{@link ibx.taverntales.lib.item.TtTomeItem} 法典、{@link ibx.taverntales.lib.item.TtStaffItem} 法杖……），
- * 施法动作这类随种类变化的东西写在子类里。
+ * 随种类变化的东西（比如专属施法动作，重写 {@link #castAnimation}）写在子类里。
  *
  * <ul>
  *   <li>有耐久（必填）：施法时按实际扣掉的蓝量掉耐久，用光就碎，同原版工具（见 {@link ibx.taverntales.lib.spell.SpellCasting#MANA_PER_DURABILITY}）。</li>
@@ -31,6 +33,7 @@ import java.util.List;
  *   <li>不可堆叠（有耐久的物品都是）。</li>
  *   <li>自带法术按 id 给，不填为空。物品栈带 {@code spells} 组件时以组件为准（指令、战利品可以覆盖，给空列表就是没有法术）。
  *       id 查不到的跳过，所以可以写别的子模组的法术而不依赖它。</li>
+ *   <li>施法动作见 {@link #castAnimation}，法术自己指定了动作时以法术为准。</li>
  *   <li>自动进 {@code #taverntales_l1b:can_cast_spell}、{@code #c:tools}、{@code #c:tools/magic_weapon}，子类再进各自的
  *       {@code #c:tools/tome}、{@code #c:tools/staff}（见 {@link ibx.taverntales.lib.registry.AutoItemTags}），data 里不用再写。</li>
  * </ul>
@@ -42,6 +45,10 @@ import java.util.List;
 public class TtMagicWeaponItem extends Item implements SpellContainer {
     /** 施法时移速倍率的基准值（原版使用物品默认 0.2，太慢）。 */
     public static final float BASELINE_CAST_MOVE_SPEED = 0.5F;
+    /** 默认施法动作（法典的），见 {@link #defaultCastAnimation}。动画在 lib 的 {@code player_animations/}。 */
+    private static final Identifier CAST_INSTANT = Identifier.fromNamespaceAndPath(TavernTalesLib.MODID, "tome.cast_instant");
+    private static final Identifier CAST_HOLD = Identifier.fromNamespaceAndPath(TavernTalesLib.MODID, "tome.cast_hold");
+    private static final Identifier CAST_CHANNEL = Identifier.fromNamespaceAndPath(TavernTalesLib.MODID, "tome.cast_channel");
 
     private final float spellPower;
     private final List<Identifier> defaultSpellIds;
@@ -86,6 +93,26 @@ public class TtMagicWeaponItem extends Item implements SpellContainer {
 
     public float spellPower() {
         return this.spellPower;
+    }
+
+    /**
+     * 默认施法动作，按施法类型分：瞬发放一遍（施法手前伸、另一只手往后摆一点）；吟唱循环（另一只手画圈）；
+     * 引导、蓄力共用一段循环。动作都按右手施法做，左手施法时整段镜像。不是 Tt 法器的施法物品也用它。
+     */
+    public static Identifier defaultCastAnimation(CastType type) {
+        return switch (type) {
+            case INSTANT -> CAST_INSTANT;
+            case CAST -> CAST_HOLD;
+            case CHANNEL, CHARGE -> CAST_CHANNEL;
+        };
+    }
+
+    /**
+     * 这件法器施法时放的动作，默认 {@link #defaultCastAnimation}。特殊的法器可以重写，按施法类型换动作。
+     * 法术自己指定了动作（{@link Spell#castAnimation}）时以法术为准。
+     */
+    public Identifier castAnimation(CastType type) {
+        return defaultCastAnimation(type);
     }
 
     @Override

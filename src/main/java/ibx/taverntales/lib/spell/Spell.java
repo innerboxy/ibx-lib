@@ -81,6 +81,14 @@ public abstract class Spell {
         return this.properties.interruptible;
     }
 
+    /**
+     * 法术专属的施法动作（玩家动画 id，动画文件放 {@code assets/<命名空间>/player_animations/}）；没写为 null，
+     * 放手上法器的默认动作，见 {@link ibx.taverntales.lib.item.magic_weapon.TtMagicWeaponItem#castAnimation}。
+     */
+    public @Nullable Identifier castAnimation() {
+        return this.properties.castAnimation;
+    }
+
     // ---------- 身份 ----------
 
     /** 注册 id；注册前为 null。 */
@@ -142,7 +150,7 @@ public abstract class Spell {
     }
 
     /**
-     * 法术的数值，只在注册行里用。默认：不耗蓝、无冷却、瞬发、引导 10 tick 一次、最低蓄力 10%、可被打断。
+     * 法术的数值，只在注册行里用。默认：不耗蓝、无冷却、瞬发、引导 10 tick 一次、最低蓄力 10%、可被打断、按法器放默认施法动作。
      */
     public static final class Properties {
         float manaCost;
@@ -152,6 +160,7 @@ public abstract class Spell {
         int tickInterval = 10;
         float minCharge = 0.1F;
         boolean interruptible = true;
+        @Nullable Identifier castAnimation;
 
         private Properties() {}
 
@@ -200,6 +209,15 @@ public abstract class Spell {
         /** 吟唱中受击是否打断；不可打断的大招关掉。 */
         public Properties interruptible(boolean interruptible) {
             this.interruptible = interruptible;
+            return this;
+        }
+
+        /**
+         * 专属施法动作，盖过法器的默认动作。动画自己定循环：只放一遍的放完就停；循环的放到施法结束再淡出（至少放 0.6 秒）。
+         * 只写一个动画，所有法器都用它；左手施法时自动镜像。
+         */
+        public Properties castAnimation(Identifier animation) {
+            this.castAnimation = animation;
             return this;
         }
     }

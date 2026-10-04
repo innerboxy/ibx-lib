@@ -46,6 +46,13 @@ TODO: mod description.
     side="BOTH"
 
 [[dependencies."${mod_id}"]]
+    modId="player_animation_library"
+    type="required"
+    versionRange="[1.2.6,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies."${mod_id}"]]
     modId="dummmmmmy"
     type="optional"
     versionRange="*"

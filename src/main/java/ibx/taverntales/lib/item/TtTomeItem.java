@@ -7,7 +7,7 @@ import net.minecraft.world.item.Item;
 import java.util.List;
 
 /**
- * Tt 法典：法典类法器。数值、法术、施法资格都在 {@link TtMagicWeaponItem} 里，法典自己的施法动作写在这里。
+ * Tt 法典：法典类法器。数值、法术、施法资格、施法动作都在 {@link TtMagicWeaponItem} 里，法典特有的写在这里。
  * 参数含义和注册方式见 {@link TtMagicWeaponItem}。
  */
 public class TtTomeItem extends TtMagicWeaponItem {

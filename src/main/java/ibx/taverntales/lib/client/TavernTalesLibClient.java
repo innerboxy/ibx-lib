@@ -2,6 +2,8 @@ package ibx.taverntales.lib.client;
 
 import ibx.taverntales.lib.TavernTalesLib;
 import ibx.taverntales.lib.client.hud.TavernHud;
+import ibx.taverntales.lib.client.spell.CastAnimations;
+import ibx.taverntales.lib.client.spell.IsCastingProperty;
 import ibx.taverntales.lib.client.spell.SpellCastInput;
 import ibx.taverntales.lib.client.spell.SpellIcons;
 import ibx.taverntales.lib.client.spell.SpellItemTooltip;
@@ -42,5 +44,8 @@ public final class TavernTalesLibClient {
         NeoForge.EVENT_BUS.addListener(SpellCastInput::onClientTick);
         // 法术容器的物品提示：名字下面列出提供的法术
         NeoForge.EVENT_BUS.addListener(SpellItemTooltip::onItemTooltip);
+        // 玩家施法动作（Player Animation Library），以及法典施法时翻开用的物品模型条件 taverntales_l1b:casting
+        CastAnimations.register();
+        modEventBus.addListener(IsCastingProperty::onRegister);
     }
 }
