@@ -5,18 +5,13 @@ import ibx.taverntales.lib.registry.TagRegistry;
 import ibx.taverntales.lib.spell.SpellCasting;
 import ibx.taverntales.lib.spell.SpellEntry;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.OptionInstance;
-import net.minecraft.client.Options;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
 
-import java.util.Arrays;
-
 /**
- * 右键施法的「切换」操作：吟唱、引导法术可以在 选项 → 控制 里各自改成按一下右键开始、再按一下结束，不用一直按住。
+ * 右键施法的「切换」操作：吟唱、引导法术可以在 选项 → 控制 里（{@link SpellControlOptions}）各自改成按一下右键开始、
+ * 再按一下结束，不用一直按住。
  * 吟唱默认切换、引导默认按住；蓄力始终按住，松手才放出。
  *
  * <p>只改客户端什么时候松手：原版每 tick 看右键没按着就停用物品（发松手包给服务端），切换模式下这一步跳过
@@ -31,9 +26,6 @@ import java.util.Arrays;
  */
 public final class SpellCastInput {
     private SpellCastInput() {}
-
-    private static final Component TOGGLE = Component.translatable("options.key.toggle");
-    private static final Component HOLD = Component.translatable("options.key.hold");
 
     /** 右键开始后最多等多久服务端的读条同步过来（2 秒，留足延迟）。 */
     private static final int START_GRACE_TICKS = 40;
@@ -98,30 +90,5 @@ public final class SpellCastInput {
             toggled = false;
             mc.gameMode.releaseUsingItem(player);
         }
-    }
-
-    /** 控制设置页的选项：插在原版「使用：切换 / 按住」后面，正好凑成一行（{@code mixin.ControlsScreenMixin}）。 */
-    public static OptionInstance<?>[] addControlOptions(Options options, OptionInstance<?>[] vanilla) {
-        int at = Arrays.asList(vanilla).indexOf(options.toggleUse()) + 1;
-        if (at == 0) {
-            at = vanilla.length;
-        }
-        OptionInstance<?>[] all = new OptionInstance<?>[vanilla.length + 2];
-        System.arraycopy(vanilla, 0, all, 0, at);
-        all[at] = option("options.taverntales_l1b.toggle_cast_spell", ClientConfig.TOGGLE_CAST_SPELL);
-        all[at + 1] = option("options.taverntales_l1b.toggle_channel_spell", ClientConfig.TOGGLE_CHANNEL_SPELL);
-        System.arraycopy(vanilla, at, all, at + 2, vanilla.length - at);
-        return all;
-    }
-
-    /** 「切换 / 按住」开关，值存在客户端配置里（每次打开设置页现读，改了立即写回文件）。 */
-    private static OptionInstance<Boolean> option(String key, ModConfigSpec.BooleanValue value) {
-        return new OptionInstance<>(key, OptionInstance.cachedConstantTooltip(Component.translatable(key + ".tooltip")),
-                (caption, on) -> on ? TOGGLE : HOLD, OptionInstance.BOOLEAN_VALUES, ClientConfig.get(value), on -> {
-                    if (ClientConfig.SPEC.isLoaded()) {
-                        value.set(on);
-                        value.save();
-                    }
-                });
     }
 }

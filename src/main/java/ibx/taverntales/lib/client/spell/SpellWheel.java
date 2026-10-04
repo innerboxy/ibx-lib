@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import ibx.taverntales.lib.TavernTalesLib;
 import ibx.taverntales.lib.api.ManaApi;
+import ibx.taverntales.lib.client.UiPalette;
 import ibx.taverntales.lib.config.ClientConfig;
 import ibx.taverntales.lib.network.SelectSpellPayload;
 import ibx.taverntales.lib.registry.AttachmentRegistry;
@@ -47,13 +48,15 @@ import java.util.List;
 /**
  * 法术轮盘：<b>按住</b>轮盘键（默认 R，可改）弹出，格子就是 {@link SpellCasting#getSpells} 的结果；
  * <b>鼠标左键点</b>一格选中（发 {@link SelectSpellPayload}），松开轮盘键关上。只选不放，放法术是右键施法物品。
+ * 选项 → 控制 里设成「可以不点击」（默认）时，松开轮盘键也会选中鼠标指着的那格，左键点选照常有效。
+ * 圆心附近一小块不算指着任何格子（框停在当前选中上），指着那里松开、点击都不改。
  *
  * <ul>
  *   <li>不开界面：放出鼠标指针、视角停住，WASD 照常走（同铁魔法）。打开期间鼠标按键和滚轮都被吃掉，不会误攻击、误切快捷栏；
  *       轮盘键自己绑在鼠标键上时放行。</li>
  *   <li>样子见 {@link WheelShape}：几个法术就把圆分成几个扇形，不足 3 个按 3 格画，多出的格子空着、点不了。
- *       指着的那一格画快捷栏选中框；没指着任何格子时框在当前选中的法术上。</li>
- *   <li>轮盘上方写名字，右边是说明框（描述、{@link Spell#getTooltip}、耗蓝 / 冷却 / 读条）。</li>
+ *       指着的那一格画选中框；没指着任何格子时框在当前选中的法术上。配色见 {@link ibx.taverntales.lib.client.UiPalette}。</li>
+ *   <li>轮盘上方写名字，右边是木色样式的说明框（描述、{@link Spell#getTooltip}、耗蓝 / 冷却 / 读条）。</li>
  * </ul>
  */
 public final class SpellWheel {
@@ -70,10 +73,12 @@ public final class SpellWheel {
     private static final int NAME_GAP = 12;          // 名字底到轮盘顶
     private static final int TOOLTIP_GAP = 10;       // 说明框到轮盘边
     private static final int DESCRIPTION_WIDTH = 160;
+    /** 中心这一块（半径的四分之一，至少 8 像素）不算指着任何格子：打开时鼠标在正中，不动就松开轮盘键不会误选。 */
+    private static final int DEAD_ZONE_MIN = 8;
 
     private static boolean open;
     private static List<SpellEntry> spells = List.of();
-    /** 上一帧鼠标指着的格子，-1 为没指着。点击时用它。 */
+    /** 上一帧鼠标指着的格子，-1 为没指着。点击、松开轮盘键选中时用它。 */
     private static int hovered = -1;
 
     public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
@@ -104,6 +109,9 @@ public final class SpellWheel {
             return;
         }
         if (!KEY.isDown()) {
+            if (ClientConfig.get(ClientConfig.WHEEL_SELECT_ON_RELEASE)) {
+                select(mc, false);
+            }
             close(mc, true);
             return;
         }
@@ -157,7 +165,7 @@ public final class SpellWheel {
         }
         event.setCanceled(true);
         if (event.getButton() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-            select(Minecraft.getInstance());
+            select(Minecraft.getInstance(), true);
         }
     }
 
@@ -167,7 +175,12 @@ public final class SpellWheel {
         }
     }
 
-    private static void select(Minecraft mc) {
+    /**
+     * 选中鼠标指着的那格。
+     *
+     * @param click 左键点的：点了就响选中音效（点已经选着的也响）；松开轮盘键选中的只在真的换了法术时响
+     */
+    private static void select(Minecraft mc, boolean click) {
         Player player = mc.player;
         if (player == null || hovered < 0 || hovered >= spells.size()) {
             return;
@@ -176,12 +189,15 @@ public final class SpellWheel {
         if (id == null) {
             return;
         }
-        if (!id.equals(SpellCasting.getSelectedId(player))) {
+        boolean changed = !id.equals(SpellCasting.getSelectedId(player));
+        if (changed) {
             // 本地先改，HUD 立刻换图标；服务端校验不过会把它的值重发回来
             player.setData(AttachmentRegistry.SELECTED_SPELL, new SelectedSpell(id));
             ClientPacketDistributor.sendToServer(new SelectSpellPayload(id));
         }
-        play(mc, SoundRegistry.SPELL_WHEEL_SELECT);
+        if (click || changed) {
+            play(mc, SoundRegistry.SPELL_WHEEL_SELECT);
+        }
     }
 
     // ---------------------------------------------------------------- 绘制
@@ -204,7 +220,10 @@ public final class SpellWheel {
         int oy = cy - shape.half;
 
         Window window = mc.getWindow();
-        int slot = shape.slotAt(mc.mouseHandler.getScaledXPos(window) - cx, mc.mouseHandler.getScaledYPos(window) - cy);
+        double dx = mc.mouseHandler.getScaledXPos(window) - cx;
+        double dy = mc.mouseHandler.getScaledYPos(window) - cy;
+        int deadZone = Math.max(DEAD_ZONE_MIN, radius / 4);
+        int slot = dx * dx + dy * dy < deadZone * deadZone ? -1 : shape.slotAt(dx, dy);
         hovered = slot < spells.size() ? slot : -1;
         SpellEntry selected = SpellCasting.resolveSelected(player, spells);
         int framed = hovered >= 0 ? hovered : spells.indexOf(selected);
@@ -221,14 +240,14 @@ public final class SpellWheel {
             return;
         }
         Font font = mc.font;
-        Component name = shown.value().getName();
-        graphics.text(font, name, cx - font.width(name) / 2, oy + shape.top - NAME_GAP, 0xFFFFFFFF, true);
+        Component name = shown.value().getName().copy().withStyle(ChatFormatting.BOLD);
+        graphics.text(font, name, cx - font.width(name) / 2, oy + shape.top - NAME_GAP, UiPalette.TITLE, true);
 
         List<ClientTooltipComponent> lines = new ArrayList<>();
         for (Component line : tooltip(player, shown.value())) {
             lines.add(ClientTooltipComponent.create(line.getVisualOrderText()));
         }
-        List<FormattedCharSequence> description = font.split(shown.value().getDescription().copy().withStyle(ChatFormatting.GRAY),
+        List<FormattedCharSequence> description = font.split(shown.value().getDescription().copy().withColor(UiPalette.MUTED),
                 DESCRIPTION_WIDTH);
         for (int i = 0; i < description.size(); i++) {
             lines.add(1 + i, ClientTooltipComponent.create(description.get(i)));
@@ -239,34 +258,34 @@ public final class SpellWheel {
             // 右边放不下就放左边；竖直方向居中于轮盘中心
             int tx = x + width + 4 <= screenWidth ? x : Math.max(4, left - width);
             return new Vector2i(tx, Mth.clamp(y - height / 2, 4, Math.max(4, screenHeight - height - 4)));
-        }, null);
+        }, UiPalette.TOOLTIP_STYLE);
     }
 
     /** 说明框：名字、{@link Spell#getTooltip}、耗蓝、冷却、读条，冷却中 / 法力不足时再加一行红字（描述在名字下面另插）。 */
     private static List<Component> tooltip(Player player, Spell spell) {
         List<Component> lines = new ArrayList<>();
-        lines.add(spell.getName());
+        lines.add(spell.getName().copy().withColor(UiPalette.TITLE).withStyle(ChatFormatting.BOLD));
         lines.addAll(spell.getTooltip(player));
         float cost = ManaApi.getActualCost(player, spell.manaCost());
         if (cost > 0.0F) {
             lines.add(Component.translatable(TOOLTIP + (spell.castType() == CastType.CHANNEL ? "mana_cost_per" : "mana_cost"),
-                    SECONDS.format(cost)).withStyle(ChatFormatting.BLUE));
+                    SECONDS.format(cost)).withColor(UiPalette.MANA));
         }
         int cooldown = SpellCasting.getCooldownTicks(player, spell);
         if (cooldown > 0) {
-            lines.add(Component.translatable(TOOLTIP + "cooldown", SECONDS.format(cooldown / 20.0)).withStyle(ChatFormatting.GRAY));
+            lines.add(Component.translatable(TOOLTIP + "cooldown", SECONDS.format(cooldown / 20.0)).withColor(UiPalette.MUTED));
         }
-        lines.add(switch (spell.castType()) {
+        lines.add((switch (spell.castType()) {
             case INSTANT -> Component.translatable(TOOLTIP + "instant");
             case CAST -> Component.translatable(TOOLTIP + "cast", SECONDS.format(SpellCasting.getCastTicks(player, spell) / 20.0));
             case CHARGE -> Component.translatable(TOOLTIP + "charge", SECONDS.format(SpellCasting.getCastTicks(player, spell) / 20.0));
             case CHANNEL -> Component.translatable(TOOLTIP + "channel", SECONDS.format(spell.tickInterval() / 20.0));
-        });
+        }).withColor(UiPalette.BODY));
         int remaining = SpellCooldowns.getRemaining(player, spell);
         if (remaining > 0) {
-            lines.add(Component.translatable(CastResult.ON_COOLDOWN.messageKey(), SECONDS.format(remaining / 20.0)).withStyle(ChatFormatting.RED));
+            lines.add(Component.translatable(CastResult.ON_COOLDOWN.messageKey(), SECONDS.format(remaining / 20.0)).withColor(UiPalette.NEGATIVE));
         } else if (!ManaApi.canAfford(player, spell.manaCost())) {
-            lines.add(Component.translatable(CastResult.NOT_ENOUGH_MANA.messageKey()).withStyle(ChatFormatting.RED));
+            lines.add(Component.translatable(CastResult.NOT_ENOUGH_MANA.messageKey()).withColor(UiPalette.NEGATIVE));
         }
         return lines;
     }

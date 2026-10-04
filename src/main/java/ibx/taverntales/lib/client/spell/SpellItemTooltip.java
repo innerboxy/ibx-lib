@@ -1,10 +1,10 @@
 package ibx.taverntales.lib.client.spell;
 
 import ibx.taverntales.lib.TavernTalesLib;
+import ibx.taverntales.lib.client.UiPalette;
 import ibx.taverntales.lib.registry.DataComponentRegistry;
 import ibx.taverntales.lib.spell.Spell;
 import ibx.taverntales.lib.spell.SpellContainer;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -32,9 +32,9 @@ public final class SpellItemTooltip {
             return;
         }
         List<Component> lines = new ArrayList<>(spells.size() + 1);
-        lines.add(Component.translatable(HEADER).withStyle(ChatFormatting.GRAY));
+        lines.add(Component.translatable(HEADER).withColor(UiPalette.MUTED));
         for (Holder<Spell> spell : spells) {
-            lines.add(Component.literal(" ").append(spell.value().getName()).withStyle(ChatFormatting.LIGHT_PURPLE));
+            lines.add(Component.literal(" ").append(spell.value().getName()).withColor(UiPalette.SPELL));
         }
         List<Component> tooltip = event.getToolTip();
         tooltip.addAll(Math.min(1, tooltip.size()), lines);

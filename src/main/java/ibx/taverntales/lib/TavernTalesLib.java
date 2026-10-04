@@ -13,7 +13,6 @@ import ibx.taverntales.lib.network.LibNetwork;
 import ibx.taverntales.lib.registry.AttachmentRegistry;
 import ibx.taverntales.lib.registry.AttributeRegistry;
 import ibx.taverntales.lib.registry.DataComponentRegistry;
-import ibx.taverntales.lib.registry.ItemRegistry;
 import ibx.taverntales.lib.registry.SoundRegistry;
 import ibx.taverntales.lib.spell.SpellCasting;
 import ibx.taverntales.lib.spell.SpellRegistries;
@@ -33,11 +32,10 @@ public class TavernTalesLib {
         // 启动配置注册即加载，下面的默认组件事件要读它，必须先注册。
         modContainer.registerConfig(ModConfig.Type.STARTUP, StartupConfig.SPEC);
 
-        // MOD 总线：注册表、属性挂载、创造标签、网络包。
+        // MOD 总线：注册表、属性挂载、网络包。
         AttributeRegistry.register(modEventBus);
         AttachmentRegistry.register(modEventBus);
         DataComponentRegistry.register(modEventBus);
-        ItemRegistry.register(modEventBus);
         SpellRegistries.register(modEventBus);
         SoundRegistry.register(modEventBus);
         LibNetwork.register(modEventBus);

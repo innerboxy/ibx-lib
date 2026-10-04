@@ -39,6 +39,13 @@ TODO: mod description.
 
 # MmmMmmMmmMmm(试验假人)非强制依赖:装了就联动,没装本模组照常加载。
 [[dependencies."${mod_id}"]]
+    modId="geckolib"
+    type="required"
+    versionRange="[${geckolib_version},)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies."${mod_id}"]]
     modId="dummmmmmy"
     type="optional"
     versionRange="*"

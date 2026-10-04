@@ -6,15 +6,17 @@ import ibx.taverntales.lib.client.spell.SpellIcons;
 import ibx.taverntales.lib.config.ClientConfig;
 import ibx.taverntales.lib.registry.AttributeRegistry;
 import ibx.taverntales.lib.registry.TagRegistry;
+import ibx.taverntales.lib.spell.CastEndReason;
+import ibx.taverntales.lib.spell.CastType;
 import ibx.taverntales.lib.spell.SpellCasting;
 import ibx.taverntales.lib.spell.SpellEntry;
+import ibx.taverntales.lib.util.AttributeUtil;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
@@ -22,7 +24,6 @@ import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
@@ -438,12 +439,12 @@ public final class TavernHud {
     /** 两列三行的数字：左列护甲类、右列伤害类。 */
     private static String[][] statTexts(Player player) {
         return new String[][]{
-                {format(attribute(player, Attributes.ARMOR)),
-                        format(attribute(player, AttributeRegistry.SPELL_RESISTANCE)),
-                        format(attribute(player, Attributes.ARMOR_TOUGHNESS))},
-                {format(attribute(player, Attributes.ATTACK_DAMAGE)),
-                        format(attribute(player, AttributeRegistry.RANGED_DAMAGE)),
-                        format(attribute(player, AttributeRegistry.SPELL_POWER))}};
+                {format(AttributeUtil.read(player, Attributes.ARMOR)),
+                        format(AttributeUtil.read(player, AttributeRegistry.SPELL_RESISTANCE)),
+                        format(AttributeUtil.read(player, Attributes.ARMOR_TOUGHNESS))},
+                {format(AttributeUtil.read(player, Attributes.ATTACK_DAMAGE)),
+                        format(AttributeUtil.read(player, AttributeRegistry.RANGED_DAMAGE)),
+                        format(AttributeUtil.read(player, AttributeRegistry.SPELL_POWER))}};
     }
 
     /** 块宽：两列加列间距（左手习惯时块的右边要对齐快捷栏，得先量出宽度）。 */
@@ -497,10 +498,6 @@ public final class TavernHud {
         blit(graphics, offhandLeft ? OFFHAND_LEFT : OFFHAND_RIGHT, x, graphics.guiHeight() - 23, 29, 24);
         SpellIcons.draw(graphics, player, entry.value(), x + (offhandLeft ? 3 : 10), graphics.guiHeight() - 19,
                 ManaApi.canAfford(player, entry.value().manaCost()));
-    }
-
-    private static double attribute(Player player, Holder<Attribute> attribute) {
-        return player.getAttributes().hasAttribute(attribute) ? player.getAttributeValue(attribute) : attribute.value().getDefaultValue();
     }
 
     /** ≥ 1000 写成 2.0k，≥ 1 000 000 写成 1.2M；整数写整数，有小数保留一位。 */
@@ -581,7 +578,7 @@ public final class TavernHud {
             drawBar(graphics, font, x, y, fill, CastBar.resultProgress, null, alpha);
             return true;
         }
-        CastBar.Kind kind = CastBar.kind;
+        CastType kind = CastBar.kind;
         if (kind == null) {
             return false;
         }

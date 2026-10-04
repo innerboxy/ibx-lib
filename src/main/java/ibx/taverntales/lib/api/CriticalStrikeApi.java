@@ -1,13 +1,12 @@
 package ibx.taverntales.lib.api;
 
 import ibx.taverntales.lib.registry.AttributeRegistry;
-import net.minecraft.core.Holder;
+import ibx.taverntales.lib.util.AttributeUtil;
 import net.minecraft.network.protocol.game.ClientboundAnimatePacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attribute;
 
 /**
  * 暴击的统一读数与判定入口。近战、远程、法术都从这里取值，保证口径一致。
@@ -18,14 +17,14 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 public final class CriticalStrikeApi {
     private CriticalStrikeApi() {}
 
-    /** 暴击率（0~1 之间是概率，大于等于 1 必定暴击）。没挂该属性的实体返回 0。 */
+    /** 暴击率（0~1 之间是概率，大于等于 1 必定暴击）。没挂该属性的实体按属性默认值算。 */
     public static float getChance(LivingEntity attacker) {
-        return (float) read(attacker, AttributeRegistry.CRITICAL_CHANCE);
+        return (float) AttributeUtil.read(attacker, AttributeRegistry.CRITICAL_CHANCE);
     }
 
-    /** 暴击伤害加成，即公式里的 critical_damage。没挂该属性的实体返回 0。 */
+    /** 暴击伤害加成，即公式里的 critical_damage。没挂该属性的实体按属性默认值算。 */
     public static float getDamageBonus(LivingEntity attacker) {
-        return (float) read(attacker, AttributeRegistry.CRITICAL_DAMAGE);
+        return (float) AttributeUtil.read(attacker, AttributeRegistry.CRITICAL_DAMAGE);
     }
 
     /** 暴击时的伤害倍率，等于 1 + {@link #getDamageBonus}。不暴击时不要用它。 */
@@ -57,10 +56,5 @@ public final class CriticalStrikeApi {
             serverLevel.getChunkSource().sendToTrackingPlayersAndSelf(target,
                     new ClientboundAnimatePacket(target, ClientboundAnimatePacket.CRITICAL_HIT));
         }
-    }
-
-    private static double read(LivingEntity attacker, Holder<Attribute> attribute) {
-        // 属性已挂到所有生物上，这里只防万一：没挂的实体直接问会经 AttributeSupplier 抛异常。
-        return attacker.getAttributes().hasAttribute(attribute) ? attacker.getAttributeValue(attribute) : 0.0D;
     }
 }

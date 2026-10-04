@@ -8,12 +8,11 @@ import ibx.taverntales.lib.compat.DummmmmmyCompat;
 import ibx.taverntales.lib.config.Config;
 import ibx.taverntales.lib.registry.AttributeRegistry;
 import ibx.taverntales.lib.registry.TagRegistry;
-import net.minecraft.core.Holder;
+import ibx.taverntales.lib.util.AttributeUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
@@ -131,12 +130,12 @@ public final class DamageHandler {
             return;
         }
         LivingEntity target = event.getEntity();
-        float resistance = (float) readAttribute(target, AttributeRegistry.SPELL_RESISTANCE);
+        float resistance = (float) AttributeUtil.read(target, AttributeRegistry.SPELL_RESISTANCE);
         if (resistance <= 0.0F) {
             return;
         }
         float damage = event.getAmount();
-        float toughness = (float) readAttribute(target, Attributes.ARMOR_TOUGHNESS);
+        float toughness = (float) AttributeUtil.read(target, Attributes.ARMOR_TOUGHNESS);
         float effective = Mth.clamp(resistance - damage / (2.0F + toughness / 4.0F),
                 Math.min(resistance * 0.2F, 20.0F), 20.0F);
         event.setAmount(damage * (1.0F - effective / 25.0F));
@@ -163,13 +162,6 @@ public final class DamageHandler {
         if (snapshot.lifesteal() > 0.0F && source.getEntity() instanceof LivingEntity caster && caster.isAlive()) {
             caster.heal(snapshot.lifesteal() * event.getInflictedDamage());
         }
-    }
-
-    /** 本模组的属性挂在所有生物上，这里只防万一：没挂的实体按属性默认值算。 */
-    private static double readAttribute(LivingEntity entity, Holder<Attribute> attribute) {
-        return entity.getAttributes().hasAttribute(attribute)
-                ? entity.getAttributeValue(attribute)
-                : attribute.value().getDefaultValue();
     }
 
     /**

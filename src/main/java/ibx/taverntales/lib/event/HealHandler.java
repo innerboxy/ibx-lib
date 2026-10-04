@@ -1,7 +1,7 @@
 package ibx.taverntales.lib.event;
 
 import ibx.taverntales.lib.registry.AttributeRegistry;
-import net.minecraft.world.entity.LivingEntity;
+import ibx.taverntales.lib.util.AttributeUtil;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingHealEvent;
 
@@ -22,10 +22,6 @@ public final class HealHandler {
      * 直接调 {@code setHealth} 的（如不死图腾）不经过，不受影响。</p>
      */
     private static void onHeal(LivingHealEvent event) {
-        LivingEntity entity = event.getEntity();
-        // 属性已挂到所有生物上，这里只防万一：没挂的实体直接问会经 AttributeSupplier 抛异常。
-        if (entity.getAttributes().hasAttribute(AttributeRegistry.HEAL_EFFICIENCY)) {
-            event.setAmount(event.getAmount() * (float) entity.getAttributeValue(AttributeRegistry.HEAL_EFFICIENCY));
-        }
+        event.setAmount(event.getAmount() * (float) AttributeUtil.read(event.getEntity(), AttributeRegistry.HEAL_EFFICIENCY));
     }
 }

@@ -3,10 +3,9 @@ package ibx.taverntales.lib.api;
 import ibx.taverntales.lib.api.event.ManaEvent;
 import ibx.taverntales.lib.registry.AttachmentRegistry;
 import ibx.taverntales.lib.registry.AttributeRegistry;
-import net.minecraft.core.Holder;
+import ibx.taverntales.lib.util.AttributeUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -32,12 +31,12 @@ public final class ManaApi {
 
     /** 法力上限（{@code max_mana} 属性总值）。 */
     public static float getMaxMana(LivingEntity entity) {
-        return (float) readAttribute(entity, AttributeRegistry.MAX_MANA);
+        return (float) AttributeUtil.read(entity, AttributeRegistry.MAX_MANA);
     }
 
     /** 实际消耗 = 基础消耗 × 法力消耗倍率，不小于 0。给 tooltip、界面预览用。 */
     public static float getActualCost(LivingEntity entity, float baseCost) {
-        return Math.max(0.0F, baseCost * (float) readAttribute(entity, AttributeRegistry.MANA_COST_MULTIPLIER));
+        return Math.max(0.0F, baseCost * (float) AttributeUtil.read(entity, AttributeRegistry.MANA_COST_MULTIPLIER));
     }
 
     /** 够不够付这次消耗。创造模式恒为 true。 */
@@ -104,7 +103,7 @@ public final class ManaApi {
      */
     public static void tickRegeneration(LivingEntity entity) {
         ManaStorage storage = storage(entity);
-        float perTick = (float) readAttribute(entity, AttributeRegistry.MANA_REGENERATION) / 20.0F;
+        float perTick = (float) AttributeUtil.read(entity, AttributeRegistry.MANA_REGENERATION) / 20.0F;
         float next = Mth.clamp(storage.mana + perTick, 0.0F, getMaxMana(entity));
         if (next != storage.mana) {
             change(entity, storage, next, false);
@@ -135,12 +134,5 @@ public final class ManaApi {
 
     private static boolean isCreative(LivingEntity entity) {
         return entity instanceof Player player && player.isCreative();
-    }
-
-    /** 本模组的属性挂在所有生物上，这里只防万一：没挂的实体按属性默认值算。 */
-    private static double readAttribute(LivingEntity entity, Holder<Attribute> attribute) {
-        return entity.getAttributes().hasAttribute(attribute)
-                ? entity.getAttributeValue(attribute)
-                : attribute.value().getDefaultValue();
     }
 }

@@ -1,5 +1,6 @@
 package ibx.taverntales.lib.client.spell;
 
+import ibx.taverntales.lib.client.UiPalette;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.ArrayDeque;
@@ -10,10 +11,9 @@ import java.util.Map;
  * 法术轮盘的形状：{@code n} 个扇形拼成一个圆，每个扇形一格，尖朝中心，第 0 格在正上方、顺时针排；
  * 扇形之间留 {@link #GAP} 像素的透明缝。按 GUI 像素光栅化（画出来是像素画，和原版界面一个精度），结果按（格数, 半径）缓存。
  *
- * <p>每个扇形自成一格，配色照原版快捷栏（hud/hotbar.png）：黑描边，描边内一圈框（朝上 / 左的亮 {@code #939393}、
- * 朝下 / 右的暗 {@code #5D5D5D}），再一圈内沿（上 / 左 {@code #5D5D5D}、下 / 右 {@code #7E7E7E}），格子底是快捷栏格子那种
- * 半透明的 {@code #272505}（不透明度 186）。指向的那一格把框、内沿和再往里一圈换成快捷栏选中框的三圈：
- * 浅 {@code #D5E8D0}、中 {@code #A1B29D}、深 {@code #5F6D5C}，黑描边不变。</p>
+ * <p>每个扇形自成一格，分层照原版快捷栏（hud/hotbar.png）的画法、颜色用模组配色（{@link UiPalette} 的 {@code WHEEL_*}，胡桃木）：
+ * 最外一圈描边，描边内一圈框（朝上 / 左亮、朝下 / 右暗），再一圈内沿（明暗和框反过来），格子底半透明。
+ * 指向的那一格把框、内沿和再往里一圈换成选中框的三圈（琥珀：浅、中、深），描边不变。</p>
  *
  * <p>每层的"深度"用 4 邻接腐蚀算（离格子边界几步），所以斜边和圆弧也是一像素宽、对角相连的像素线。
  * 半径先从小往大试出"刚好放得下"的值（每格的 16×16 图标完整落在格子底色里，不压到任何一圈框，见 {@link #fitRadius}），
@@ -22,22 +22,22 @@ import java.util.Map;
 final class WheelShape {
     static final int MIN_SLOTS = 3;
     static final int ICON = 16;
-    /** 三角形之间的缝宽（GUI 像素）：离分界线不到一半的像素不画。 */
+    /** 格子之间的缝宽（GUI 像素）：离分界线不到一半的像素不画。 */
     static final double GAP = 2.0;
     private static final int MIN_RADIUS = 24;
     private static final int MAX_RADIUS = 200;
     /** 图标离格子边界至少这么多层：描边 1 + 指向时的三圈选中框 3，图标都压不到。 */
     private static final int ICON_DEPTH = 5;
 
-    private static final int BLACK = 0xFF000000;
-    private static final int RIM_LIGHT = 0xFF939393;
-    private static final int RIM_DARK = 0xFF5D5D5D;
-    private static final int BEVEL_DARK = 0xFF5D5D5D;
-    private static final int BEVEL_LIGHT = 0xFF7E7E7E;
-    private static final int FILL = 0xBA272505;
-    private static final int SELECT_LIGHT = 0xFFD5E8D0;
-    private static final int SELECT_MID = 0xFFA1B29D;
-    private static final int SELECT_DARK = 0xFF5F6D5C;
+    private static final int OUTLINE = UiPalette.WHEEL_OUTLINE;
+    private static final int RIM_LIGHT = UiPalette.WHEEL_RIM_LIGHT;
+    private static final int RIM_DARK = UiPalette.WHEEL_RIM_DARK;
+    private static final int BEVEL_DARK = UiPalette.WHEEL_BEVEL_DARK;
+    private static final int BEVEL_LIGHT = UiPalette.WHEEL_BEVEL_LIGHT;
+    private static final int FILL = UiPalette.WHEEL_FILL;
+    private static final int SELECT_LIGHT = UiPalette.WHEEL_SELECT_LIGHT;
+    private static final int SELECT_MID = UiPalette.WHEEL_SELECT_MID;
+    private static final int SELECT_DARK = UiPalette.WHEEL_SELECT_DARK;
 
     private static final int[][] NEIGHBORS = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
     private static final Map<Integer, Integer> FIT_RADIUS = new HashMap<>();
@@ -168,7 +168,7 @@ final class WheelShape {
             }
             int d = this.depth[p];
             base[p] = switch (d) {
-                case 1 -> BLACK;
+                case 1 -> OUTLINE;
                 case 2 -> this.facesUpOrLeft(p) ? RIM_LIGHT : RIM_DARK;
                 case 3 -> this.facesUpOrLeft(p) ? BEVEL_DARK : BEVEL_LIGHT;
                 default -> FILL;

@@ -44,6 +44,12 @@ public final class ClientConfig {
                     "false = 按住：按住右键持续引导，松开结束。")
             .define("toggleChannelSpell", false);
 
+    public static final ModConfigSpec.BooleanValue WHEEL_SELECT_ON_RELEASE = BUILDER
+            .comment("法术轮盘怎么选法术，游戏里在 选项 → 控制 里改。",
+                    "true  = 可以不点击：松开轮盘键时选中鼠标指着的那格（指着中间空白不改），轮盘打开时左键点选也照常有效；",
+                    "false = 必须点击：只有左键点一格才选中，松开轮盘键只是关上。")
+            .define("spellWheelSelectOnRelease", true);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     public static boolean vanillaHud() {

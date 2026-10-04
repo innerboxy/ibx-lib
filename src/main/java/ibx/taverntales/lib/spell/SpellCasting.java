@@ -9,6 +9,7 @@ import ibx.taverntales.lib.registry.AttachmentRegistry;
 import ibx.taverntales.lib.registry.AttributeRegistry;
 import ibx.taverntales.lib.registry.SoundRegistry;
 import ibx.taverntales.lib.registry.TagRegistry;
+import ibx.taverntales.lib.util.AttributeUtil;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
@@ -19,7 +20,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.EventPriority;
@@ -96,13 +96,13 @@ public final class SpellCasting {
             return 0;
         }
         // spell_cast_speed 下限 0.01，不会除以零。
-        double ticks = spell.castTime() * 20.0D / readAttribute(caster, AttributeRegistry.SPELL_CAST_SPEED);
+        double ticks = spell.castTime() * 20.0D / AttributeUtil.read(caster, AttributeRegistry.SPELL_CAST_SPEED);
         return Math.max(1, (int) Math.round(ticks));
     }
 
     /** 实际冷却 tick = 冷却 × 20 × {@code spell_cooldown_ratio}。 */
     public static int getCooldownTicks(LivingEntity caster, Spell spell) {
-        double ticks = spell.cooldown() * 20.0D * readAttribute(caster, AttributeRegistry.SPELL_COOLDOWN_RATIO);
+        double ticks = spell.cooldown() * 20.0D * AttributeUtil.read(caster, AttributeRegistry.SPELL_COOLDOWN_RATIO);
         return Math.max(0, (int) Math.round(ticks));
     }
 
@@ -577,12 +577,5 @@ public final class SpellCasting {
 
     private static boolean isCreative(LivingEntity entity) {
         return entity instanceof Player player && player.isCreative();
-    }
-
-    /** 本模组的属性挂在所有生物上，这里只防万一：没挂的实体按属性默认值算。 */
-    private static double readAttribute(LivingEntity entity, Holder<Attribute> attribute) {
-        return entity.getAttributes().hasAttribute(attribute)
-                ? entity.getAttributeValue(attribute)
-                : attribute.value().getDefaultValue();
     }
 }

@@ -21,7 +21,7 @@ public final class TagRegistry {
     /** 不打断吟唱的伤害：中毒、凋零、余火、冻伤、饥饿、溺水、摔落这类持续掉血。 */
     public static final TagKey<DamageType> CAST_IGNORE = damageType("cast_ignore");
 
-    /** 能施法的物品：手持右键释放当前选中的法术。本模组里为空，由法典等模组往里加。 */
+    /** 能施法的物品：手持右键释放当前选中的法术。lib 不带数据文件，内容由 tavern 的 data 往里加。 */
     public static final TagKey<Item> CAN_CAST_SPELL = TagKey.create(Registries.ITEM,
             Identifier.fromNamespaceAndPath(TavernTalesLib.MODID, "can_cast_spell"));
 

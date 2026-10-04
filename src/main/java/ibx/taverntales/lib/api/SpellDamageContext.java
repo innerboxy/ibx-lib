@@ -1,9 +1,8 @@
 package ibx.taverntales.lib.api;
 
 import ibx.taverntales.lib.registry.AttributeRegistry;
-import net.minecraft.core.Holder;
+import ibx.taverntales.lib.util.AttributeUtil;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attribute;
 
 /**
  * 法术伤害公式的输入：施法瞬间从施法者身上读出的数值。
@@ -30,16 +29,9 @@ public record SpellDamageContext(LivingEntity caster, float spellPower, boolean 
     public static SpellDamageContext of(LivingEntity caster) {
         return new SpellDamageContext(
                 caster,
-                (float) readAttribute(caster, AttributeRegistry.SPELL_POWER),
-                readAttribute(caster, AttributeRegistry.CAN_SPELL_CRIT) >= 1.0D,
+                (float) AttributeUtil.read(caster, AttributeRegistry.SPELL_POWER),
+                AttributeUtil.read(caster, AttributeRegistry.CAN_SPELL_CRIT) >= 1.0D,
                 CriticalStrikeApi.getChance(caster),
                 CriticalStrikeApi.getMultiplier(caster));
-    }
-
-    /** 本模组的属性挂在所有生物上，这里只防万一：没挂的实体按属性默认值算。 */
-    private static double readAttribute(LivingEntity entity, Holder<Attribute> attribute) {
-        return entity.getAttributes().hasAttribute(attribute)
-                ? entity.getAttributeValue(attribute)
-                : attribute.value().getDefaultValue();
     }
 }
