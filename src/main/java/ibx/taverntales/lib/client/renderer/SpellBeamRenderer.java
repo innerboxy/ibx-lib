@@ -44,7 +44,9 @@ import java.util.List;
  *   <li>{@code fullBright} 为 true 时自发光：用原版 eyes 渲染类型（半透明、不写深度、不吃光照，各个面一样亮），它剔除背面，
  *       所以每个面正反各画一遍，射线另一侧的面也从里面透出来，和不剔除背面的半透明一样是两层叠着；
  *       false 时用半透明实体渲染类型，吃环境光、各个面按朝向明暗；</li>
- *   <li>剔除按整条射线的包围盒算，不然起点出了屏幕整条就不画了。</li>
+ *   <li>剔除按整条射线的包围盒算，不然起点出了屏幕整条就不画了；</li>
+ *   <li>镜头周围一个球里的那段不画（{@link #CAMERA_CLEARANCE}）：第一人称时起点（胸口）就在镜头下面零点几格，
+ *       抬头时镜头贴着管壁甚至钻进管子里，贴图被放大到半屏、满屏还在往外流，看着就是天空一闪一闪；被射线照脸时终点也贴着镜头。</li>
  * </ul>
  */
 public class SpellBeamRenderer<T extends SpellBeam> extends EntityRenderer<T, SpellBeamRenderer.State> {
@@ -59,9 +61,16 @@ public class SpellBeamRenderer<T extends SpellBeam> extends EntityRenderer<T, Sp
     public record Layer(Identifier texture, float widthScale, float textureLength, float scrollSpeed) {
     }
 
+    /** 镜头周围多大的球里不画（格），再加上最粗那层的半对角线，镜头在管子正中时也碰不到管壁。 */
+    private static final double CAMERA_CLEARANCE = 0.6;
+    /** 挖完剩下比这还短的段就不画了（格）。 */
+    private static final double MIN_SEGMENT = 1.0E-3;
+
     private final List<Layer> layers;
     private final List<RenderType> renderTypes;
     private final boolean fullBright;
+    /** 最粗那一层的粗细比例：剔除和镜头附近挖掉多少都按它算。 */
+    private final float widestScale;
 
     /** 一层，贴图每 1 格重复一次、不流动。 */
     public SpellBeamRenderer(EntityRendererProvider.Context context, Identifier texture, boolean fullBright) {
@@ -92,6 +101,11 @@ public class SpellBeamRenderer<T extends SpellBeam> extends EntityRenderer<T, Sp
                 .map(layer -> fullBright ? RenderTypes.eyes(layer.texture()) : RenderTypes.entityTranslucent(layer.texture()))
                 .toList();
         this.fullBright = fullBright;
+        float widest = 0.0F;
+        for (Layer layer : layers) {
+            widest = Math.max(widest, layer.widthScale());
+        }
+        this.widestScale = widest;
     }
 
     @Override
@@ -102,11 +116,7 @@ public class SpellBeamRenderer<T extends SpellBeam> extends EntityRenderer<T, Sp
     /** 剔除按整条射线算（用最粗那一层）。 */
     @Override
     protected AABB getBoundingBoxForCulling(T entity) {
-        float widest = 0.0F;
-        for (Layer layer : this.layers) {
-            widest = Math.max(widest, layer.widthScale());
-        }
-        return new AABB(entity.getStart(1.0F), entity.getEnd(1.0F)).inflate(entity.getWidth() * widest);
+        return new AABB(entity.getStart(1.0F), entity.getEnd(1.0F)).inflate(entity.getWidth() * this.widestScale);
     }
 
     @Override
@@ -137,6 +147,8 @@ public class SpellBeamRenderer<T extends SpellBeam> extends EntityRenderer<T, Sp
             Vec3 unitU = side.normalize();
             Vec3 unitV = axis.cross(unitU).normalize();
             int light = state.lightCoords;
+            double[] segments = visibleSegments(state.start, axis, length, camera.pos,
+                    CAMERA_CLEARANCE + state.width * this.widestScale * Math.sqrt(0.5));
 
             // poseStack 的原点在实体自己的插值位置，挪到起点
             poseStack.pushPose();
@@ -148,11 +160,16 @@ public class SpellBeamRenderer<T extends SpellBeam> extends EntityRenderer<T, Sp
                 Vec3 v = unitV.scale(half);
                 Vec3[] corners = {u.add(v), u.subtract(v), u.scale(-1.0).subtract(v), v.subtract(u)};
                 float textureLength = Math.max(0.01F, layer.textureLength());
-                float v0 = -state.age * layer.scrollSpeed() / textureLength;
-                float v1 = v0 + (float) length / textureLength;
+                float scroll = -state.age * layer.scrollSpeed() / textureLength;
                 OrderedSubmitNodeCollector target = i == 0 ? collector : collector.order(i);
-                target.submitCustomGeometry(poseStack, this.renderTypes.get(i),
-                        (pose, buffer) -> tube(buffer, pose, light, corners, span, v0, v1, this.fullBright));
+                target.submitCustomGeometry(poseStack, this.renderTypes.get(i), (pose, buffer) -> {
+                    for (int s = 0; s < segments.length; s += 2) {
+                        double from = segments[s];
+                        double to = segments[s + 1];
+                        tube(buffer, pose, light, corners, axis.scale(from), axis.scale(to - from),
+                                scroll + (float) from / textureLength, scroll + (float) to / textureLength, this.fullBright);
+                    }
+                });
             }
             poseStack.popPose();
         }
@@ -160,15 +177,43 @@ public class SpellBeamRenderer<T extends SpellBeam> extends EntityRenderer<T, Sp
     }
 
     /**
-     * 一根方管的四个面。每个面从外面看是逆时针（正面朝外，法线朝外，按面受光时亮面在上）；{@code bothSides} 时再反着画一遍，
-     * 给剔除背面的渲染类型用，射线另一侧的面才能从里面透出来。
+     * 射线上要画的几段，按离起点的距离成对给出 {@code [from0, to0, from1, to1, ...]}：整条减去镜头周围半径 {@code clearance} 的球。
+     * 镜头离射线远时就是整条；挨着起点或终点时剩一段；在射线中间时剩两段；整条都在球里时一段不剩。
      */
-    private static void tube(VertexConsumer buffer, PoseStack.Pose pose, int light, Vec3[] corners, Vec3 along,
+    private static double[] visibleSegments(Vec3 start, Vec3 axis, double length, Vec3 cameraPos, double clearance) {
+        Vec3 toCamera = cameraPos.subtract(start);
+        double along = toCamera.dot(axis);
+        double offAxisSqr = toCamera.lengthSqr() - along * along;
+        if (offAxisSqr >= clearance * clearance) {
+            return new double[]{0.0, length};
+        }
+        double half = Math.sqrt(clearance * clearance - offAxisSqr);
+        double cutFrom = along - half;
+        double cutTo = along + half;
+        if (cutTo <= 0.0 || cutFrom >= length) {
+            return new double[]{0.0, length};
+        }
+        boolean before = cutFrom > MIN_SEGMENT;
+        boolean after = length - cutTo > MIN_SEGMENT;
+        if (before && after) {
+            return new double[]{0.0, cutFrom, cutTo, length};
+        }
+        if (before) {
+            return new double[]{0.0, cutFrom};
+        }
+        return after ? new double[]{cutTo, length} : new double[0];
+    }
+
+    /**
+     * 一根方管的四个面。每个面从外面看是逆时针（正面朝外，法线朝外，按面受光时亮面在上）；{@code bothSides} 时再反着画一遍，
+     * 给剔除背面的渲染类型用，射线另一侧的面才能从里面透出来。{@code offset} 是这一段的起点（相对射线起点），{@code along} 是这一段本身。
+     */
+    private static void tube(VertexConsumer buffer, PoseStack.Pose pose, int light, Vec3[] corners, Vec3 offset, Vec3 along,
                              float v0, float v1, boolean bothSides) {
         for (int i = 0; i < 4; i++) {
-            Vec3 a = corners[i];
-            Vec3 b = corners[(i + 1) % 4];
-            Vec3 normal = a.add(b).normalize();
+            Vec3 a = corners[i].add(offset);
+            Vec3 b = corners[(i + 1) % 4].add(offset);
+            Vec3 normal = corners[i].add(corners[(i + 1) % 4]).normalize();
             vertex(buffer, pose, light, a, 0.0F, v0, normal);
             vertex(buffer, pose, light, a.add(along), 0.0F, v1, normal);
             vertex(buffer, pose, light, b.add(along), 1.0F, v1, normal);
