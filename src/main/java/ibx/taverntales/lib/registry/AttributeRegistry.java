@@ -12,6 +12,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.PercentageAttribute;
 import net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -97,12 +98,13 @@ public final class AttributeRegistry {
     /**
      * 暴击率：各类攻击触发暴击的概率。默认 0.05，最小 0，最大 1024。
      * 0~1 之间按概率判定，<b>大于等于 1 必定暴击</b>（上限留到 1024 是为了让加成能无脑往上堆）。
+     * tooltip 里加法修饰符也显示成百分数（+0.15 → +15%）。
      * 判定与生效见 {@link ibx.taverntales.lib.api.CriticalStrikeApi} 与
      * {@link ibx.taverntales.lib.event.DamageHandler}。
      */
     public static final DeferredHolder<Attribute, Attribute> CRITICAL_CHANCE =
             ATTRIBUTES.register("critical_chance",
-                    () -> new RangedAttribute(
+                    () -> new PercentageAttribute(
                             "attribute.name." + TavernTalesLib.MODID + ".critical_chance",
                             0.05D,   // 默认值
                             0.0D,    // 最小值
@@ -111,11 +113,11 @@ public final class AttributeRegistry {
 
     /**
      * 暴击伤害：暴击时的<b>额外</b>伤害比例，公式为 {@code 最终伤害 = 原伤害 × (1 + 本值)}。
-     * 默认 0.5（即暴击打 1.5 倍，与原版跳劈同值），最小 0，最大 2048。
+     * 默认 0.5（即暴击打 1.5 倍，与原版跳劈同值），最小 0，最大 2048。tooltip 显示成百分数（+0.2 → +20%）。
      */
     public static final DeferredHolder<Attribute, Attribute> CRITICAL_DAMAGE =
             ATTRIBUTES.register("critical_damage",
-                    () -> new RangedAttribute(
+                    () -> new PercentageAttribute(
                             "attribute.name." + TavernTalesLib.MODID + ".critical_damage",
                             0.5D,    // 默认值
                             0.0D,    // 最小值
