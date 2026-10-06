@@ -1,6 +1,7 @@
 package ibx.taverntales.lib;
 
 import com.mojang.logging.LogUtils;
+import ibx.taverntales.lib.api.CustomFire;
 import ibx.taverntales.lib.command.ManaCommand;
 import ibx.taverntales.lib.command.SpellCommand;
 import ibx.taverntales.lib.config.Config;
@@ -46,6 +47,7 @@ public class TavernTalesLib {
         HealHandler.register();
         ManaHandler.register();
         SpellCasting.register();
+        CustomFire.register();
         ManaCommand.register();
         SpellCommand.register();
         LOGGER.info("{} loaded", MODID);

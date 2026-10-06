@@ -7,6 +7,7 @@ import ibx.taverntales.lib.api.SpellDamageSnapshot;
 import ibx.taverntales.lib.spell.ActiveCast;
 import ibx.taverntales.lib.spell.SelectedSpell;
 import ibx.taverntales.lib.spell.SpellCooldowns;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -97,6 +98,17 @@ public final class AttachmentRegistry {
                             .serialize(SelectedSpell.CODEC)
                             .sync((holder, player) -> holder == player, SelectedSpell.STREAM_CODEC)
                             .copyOnDeath()
+                            .build());
+
+    /**
+     * 实体身上烧的是哪种火（贴图基础名，见 {@link ibx.taverntales.lib.api.CustomFire}）；没有 = 原版火。
+     * 存盘（着火时间本来就存盘）；同步给所有看得见它的玩家，客户端据此换身上和屏幕上的火。
+     */
+    public static final Supplier<AttachmentType<Identifier>> FIRE_LOOK =
+            ATTACHMENT_TYPES.register("fire_look",
+                    () -> AttachmentType.builder(() -> Identifier.withDefaultNamespace("fire"))
+                            .serialize(Identifier.CODEC.fieldOf("look"))
+                            .sync(Identifier.STREAM_CODEC)
                             .build());
 
     public static void register(IEventBus modEventBus) {

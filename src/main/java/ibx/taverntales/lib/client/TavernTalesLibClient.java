@@ -47,5 +47,8 @@ public final class TavernTalesLibClient {
         // 玩家施法动作（Player Animation Library），以及法典施法时翻开用的物品模型条件 taverntales_l1b:casting
         CastAnimations.register();
         modEventBus.addListener(IsCastingProperty::onRegister);
+        // 换颜色的火（翠焰的绿火）：身上的火苗、第一人称屏幕上的火
+        modEventBus.addListener(CustomFireRendering::onRegisterRenderStateModifiers);
+        NeoForge.EVENT_BUS.addListener(CustomFireRendering::onRenderBlockScreenEffect);
     }
 }

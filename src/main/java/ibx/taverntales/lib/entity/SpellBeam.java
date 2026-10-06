@@ -185,11 +185,14 @@ public abstract class SpellBeam extends Entity implements TraceableEntity {
 
     /**
      * 方向（不必归一化）：默认从起点对准施法者准星指着的地方（视线 {@value #AIM_RANGE} 格内先碰到的方块或生物，见 {@link #aimPoint}），
-     * 远近都打在准星上；生物有攻击目标时对准目标身体正中。起点和准星重合、算不出方向时退回视线。
+     * 远近都打在准星上；生物有攻击目标时对准目标身体正中；施法者实现了 {@link SpellOrigin} 并给了瞄准点时对准那里。
+     * 起点和准星重合、算不出方向时退回视线。
      */
     protected Vec3 direction(LivingEntity owner, Vec3 start, float partialTick) {
+        Vec3 custom = owner instanceof SpellOrigin origin ? origin.getSpellAimPoint() : null;
         LivingEntity target = owner instanceof Mob mob ? mob.getTarget() : null;
-        Vec3 point = target != null ? target.getBoundingBox().getCenter() : this.aimPoint(owner, partialTick);
+        Vec3 point = custom != null ? custom
+                : target != null ? target.getBoundingBox().getCenter() : this.aimPoint(owner, partialTick);
         Vec3 aim = point.subtract(start);
         return aim.lengthSqr() > 1.0E-8 ? aim : owner.getViewVector(partialTick);
     }

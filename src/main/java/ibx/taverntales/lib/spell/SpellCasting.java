@@ -14,6 +14,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -24,6 +25,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
@@ -540,14 +542,18 @@ public final class SpellCasting {
         }
     }
 
-    /** 吟唱中受击打断：只对吟唱、可打断的法术；带 {@code #cast_ignore} 的持续掉血不算。 */
+    /**
+     * 吟唱中受击打断：只对吟唱、可打断的法术；带 {@code #cast_ignore} 的持续掉血不算。
+     * Boss（{@code #c:bosses}）不会被打断：Boss 一直在挨打，能打断的话吟唱类招式（玛门的翠焰）几乎放不出来。
+     */
     private static void onIncomingDamage(LivingIncomingDamageEvent event) {
         CastContext ctx = getCurrentCast(event.getEntity());
         if (ctx != null
                 && ctx.spell().castType() == CastType.CAST
                 && ctx.spell().interruptible()
                 && event.getAmount() > 0.0F
-                && !event.getSource().is(TagRegistry.CAST_IGNORE)) {
+                && !event.getSource().is(TagRegistry.CAST_IGNORE)
+                && !event.getEntity().is(Tags.EntityTypes.BOSSES)) {
             cancelCasting(event.getEntity(), CastEndReason.INTERRUPTED);
         }
     }
@@ -556,11 +562,29 @@ public final class SpellCasting {
         cancelCasting(event.getEntity(), CastEndReason.CANCELLED);
     }
 
-    /** 下线、换维度、卸载、被移除：施法状态不存盘，在这里补上结束钩子让法术收尾。 */
+    /**
+     * 下线、换维度、卸载、被移除：施法状态不存盘，在这里补上结束钩子让法术收尾。
+     *
+     * <p>排到这一 tick 跑完再结束：区块降级时原版一边遍历区块里的实体一边发这个事件，法术收尾当场删掉或生成实体
+     * （翡翠射线的 {@code beam.end()}）会改到正在遍历的列表，服务器直接崩（ConcurrentModificationException）。
+     * 到时只结束离开时的那次施法；这期间又开了新的（换维度后马上放）就不动它。</p>
+     */
     private static void onLeaveLevel(EntityLeaveLevelEvent event) {
-        if (!event.getLevel().isClientSide() && event.getEntity() instanceof LivingEntity living) {
-            cancelCasting(living, CastEndReason.CANCELLED);
+        if (event.getLevel().isClientSide() || !(event.getEntity() instanceof LivingEntity living)) {
+            return;
         }
+        ActiveCast active = living.getExistingDataOrNull(AttachmentRegistry.ACTIVE_CAST);
+        CastContext leaving = active == null ? null : active.current;
+        MinecraftServer server = event.getLevel().getServer();
+        if (leaving == null || server == null) {
+            return;
+        }
+        server.schedule(server.wrapRunnable(() -> {
+            ActiveCast now = living.getExistingDataOrNull(AttachmentRegistry.ACTIVE_CAST);
+            if (now != null && now.current == leaving) {
+                end(living, now, CastEndReason.CANCELLED);
+            }
+        }));
     }
 
     /**
