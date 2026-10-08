@@ -30,8 +30,8 @@
           "base": 3.0,
           "per_level_above_first": 1.5
         },
-        "attribute": "taverntales_l1b:ranged_damage",
-        "id": "taverntales_l1b:enchantment.power",
+        "attribute": "ibx_lib:ranged_damage",
+        "id": "ibx_lib:enchantment.power",
         "operation": "add_value"
       }
     ]

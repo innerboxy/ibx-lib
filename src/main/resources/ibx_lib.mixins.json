@@ -1,0 +1,26 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "ibx.lib.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "AbstractSkeletonMixin",
+    "BowItemMixin",
+    "CrossbowItemMixin",
+    "CrossbowMobMixin",
+    "ItemStackMixin",
+    "LivingEntityAccessor",
+    "ProjectileUtilMixin",
+    "RangedBowAttackGoalMixin",
+    "TagLoaderMixin"
+  ],
+  "client": [
+    "ControlsScreenMixin",
+    "FlameFeatureRendererMixin",
+    "GuiHotbarMixin",
+    "MinecraftMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

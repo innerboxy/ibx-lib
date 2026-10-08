@@ -1,7 +1,7 @@
 {
   "replace": false,
   "values": [
-    "#taverntales_l1b:is_spell",
-    "taverntales_l1b:digest"
+    "#ibx_lib:is_spell",
+    "ibx_lib:digest"
   ]
 }

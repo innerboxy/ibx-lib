@@ -27,7 +27,7 @@
         "type": "minecraft:model",
         "model": "minecraft:item/bow_pulling_0"
       },
-      "property": "taverntales_l1b:pull"
+      "property": "ibx_lib:pull"
     },
     "property": "minecraft:using_item"
   }

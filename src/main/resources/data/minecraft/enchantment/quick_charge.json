@@ -33,8 +33,8 @@
           "base": -0.25,
           "per_level_above_first": -0.25
         },
-        "attribute": "taverntales_l1b:draw_time",
-        "id": "taverntales_l1b:enchantment.quick_charge",
+        "attribute": "ibx_lib:draw_time",
+        "id": "ibx_lib:enchantment.quick_charge",
         "operation": "add_value"
       }
     ]

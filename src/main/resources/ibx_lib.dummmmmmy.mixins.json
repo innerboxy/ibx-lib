@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "ibx.lib.mixin.dummmmmmy",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "ClientConfigsMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
