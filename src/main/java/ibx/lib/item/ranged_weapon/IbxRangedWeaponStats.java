@@ -15,7 +15,7 @@ import net.minecraft.world.item.component.ItemAttributeModifiers;
  * <b>箭速是例外</b>——它没有对应属性，就是物品上的一个定值，只影响弹道手感、不影响伤害，
  * 所以直接读 {@link #arrowVelocity()}。</p>
  */
-public final class RangedWeaponStats {
+public final class IbxRangedWeaponStats {
     private final float rangedDamage;
     private final float drawTime;
     private final float arrowVelocity;
@@ -28,7 +28,7 @@ public final class RangedWeaponStats {
      * @param baselineDrawTime      武器类型的基准秒数（弓 1.0，弩 1.25）
      * @param baselineArrowVelocity 武器类型的基准初速度（弓 3.0，弩 3.15）
      */
-    public RangedWeaponStats(float rangedDamage, float drawTime, float arrowVelocity,
+    public IbxRangedWeaponStats(float rangedDamage, float drawTime, float arrowVelocity,
                              float baselineDrawTime, float baselineArrowVelocity) {
         this.rangedDamage = rangedDamage;
         this.drawTime = drawTime > 0.0F ? drawTime : baselineDrawTime;

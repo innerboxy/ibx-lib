@@ -2,8 +2,8 @@ package ibx.lib.item;
 
 import ibx.lib.api.CriticalStrikeApi;
 import ibx.lib.api.RangedWeaponApi;
-import ibx.lib.item.ranged_weapon.RangedWeaponStats;
-import ibx.lib.item.ranged_weapon.RangedWeaponItem;
+import ibx.lib.item.ranged_weapon.IbxRangedWeaponStats;
+import ibx.lib.item.ranged_weapon.IbxRangedWeaponItem;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -48,7 +48,7 @@ import java.util.function.Predicate;
  * {@code ITEMS.registerItem("my_bow", p -> new IbxBowItem(p.durability(384), 8.0F, 1.0F))}。
  * 拉弓动画的模型写法见 {@link ibx.lib.client.RangedWeaponModelProperties}。</p>
  */
-public class IbxBowItem extends BowItem implements RangedWeaponItem {
+public class IbxBowItem extends BowItem implements IbxRangedWeaponItem {
     /** 本类型的基准满蓄秒数（原版弓 20 tick）。 */
     public static final float BASELINE_DRAW_TIME = 1.0F;
     /** 本类型的基准箭速，即满蓄时的初速度（原版弓 3.0）。 */
@@ -56,7 +56,7 @@ public class IbxBowItem extends BowItem implements RangedWeaponItem {
     /** 发射门槛：蓄力百分比低于此值不发射、不消耗（同原版的 0.1）。 */
     public static final float MIN_CHARGE = 0.1F;
 
-    private final RangedWeaponStats stats;
+    private final IbxRangedWeaponStats stats;
     private final Predicate<ItemStack> ammo;
 
     /** 箭速用基准值。 */
@@ -83,13 +83,13 @@ public class IbxBowItem extends BowItem implements RangedWeaponItem {
     public IbxBowItem(Item.Properties properties, float rangedDamage, float drawTime, float arrowVelocity,
                      Predicate<ItemStack> ammo) {
         super(properties);
-        this.stats = new RangedWeaponStats(rangedDamage, drawTime, arrowVelocity,
+        this.stats = new IbxRangedWeaponStats(rangedDamage, drawTime, arrowVelocity,
                 BASELINE_DRAW_TIME, BASELINE_ARROW_VELOCITY);
         this.ammo = ammo;
     }
 
     @Override
-    public RangedWeaponStats stats() {
+    public IbxRangedWeaponStats stats() {
         return this.stats;
     }
 
@@ -132,7 +132,7 @@ public class IbxBowItem extends BowItem implements RangedWeaponItem {
     @SuppressWarnings("deprecation")
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
                                 Consumer<Component> tooltip, TooltipFlag flag) {
-        RangedWeaponItem.appendAutoFireTooltip(stack, tooltip);
+        IbxRangedWeaponItem.appendAutoFireTooltip(stack, tooltip);
         super.appendHoverText(stack, context, display, tooltip, flag);
     }
 

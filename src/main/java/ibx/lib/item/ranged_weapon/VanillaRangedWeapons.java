@@ -32,14 +32,14 @@ public final class VanillaRangedWeapons {
     /**
      * 原版弓：满蓄伤害 6（原版满蓄 3.0 箭速 × 2 基础伤害）、拉弓 1 秒、箭速 3.0，与原版手感一致。
      */
-    public static final RangedWeaponStats BOW = new RangedWeaponStats(6.0F, 1.0F, 3.0F,
+    public static final IbxRangedWeaponStats BOW = new IbxRangedWeaponStats(6.0F, 1.0F, 3.0F,
             IbxBowItem.BASELINE_DRAW_TIME, IbxBowItem.BASELINE_ARROW_VELOCITY);
 
     /**
      * 原版弩：伤害 7（原版 3.15 箭速 × 2 基础伤害向上取整）、装填 1.25 秒、箭速 3.15。
      * 生物射击同样按 3.15 发射（原版生物固定 1.6），与 Ibx 弩一致。
      */
-    public static final RangedWeaponStats CROSSBOW = new RangedWeaponStats(7.0F, 1.25F, 3.15F,
+    public static final IbxRangedWeaponStats CROSSBOW = new IbxRangedWeaponStats(7.0F, 1.25F, 3.15F,
             IbxCrossbowItem.BASELINE_DRAW_TIME, IbxCrossbowItem.BASELINE_ARROW_VELOCITY);
 
     /** 接管开关（启动配置，改动需重启）。 */

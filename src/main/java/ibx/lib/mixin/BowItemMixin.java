@@ -3,7 +3,7 @@ package ibx.lib.mixin;
 import ibx.lib.api.CriticalStrikeApi;
 import ibx.lib.api.RangedWeaponApi;
 import ibx.lib.item.IbxBowItem;
-import ibx.lib.item.ranged_weapon.RangedWeaponItem;
+import ibx.lib.item.ranged_weapon.IbxRangedWeaponItem;
 import ibx.lib.item.ranged_weapon.VanillaRangedWeapons;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -84,7 +84,7 @@ public abstract class BowItemMixin extends ProjectileWeaponItem {
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
                                 Consumer<Component> tooltip, TooltipFlag flag) {
         if (VanillaRangedWeapons.isManagedBow(this)) {
-            RangedWeaponItem.appendAutoFireTooltip(stack, tooltip);
+            IbxRangedWeaponItem.appendAutoFireTooltip(stack, tooltip);
         }
         super.appendHoverText(stack, context, display, tooltip, flag);
     }

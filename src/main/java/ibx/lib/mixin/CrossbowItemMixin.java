@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import ibx.lib.api.CriticalStrikeApi;
 import ibx.lib.api.RangedWeaponApi;
 import ibx.lib.item.IbxCrossbowItem;
-import ibx.lib.item.ranged_weapon.RangedWeaponItem;
+import ibx.lib.item.ranged_weapon.IbxRangedWeaponItem;
 import ibx.lib.item.ranged_weapon.VanillaRangedWeapons;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -124,7 +124,7 @@ public abstract class CrossbowItemMixin extends ProjectileWeaponItem {
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
                                 Consumer<Component> tooltip, TooltipFlag flag) {
         if (VanillaRangedWeapons.isManagedCrossbow(this)) {
-            RangedWeaponItem.appendAutoFireTooltip(stack, tooltip);
+            IbxRangedWeaponItem.appendAutoFireTooltip(stack, tooltip);
         }
         super.appendHoverText(stack, context, display, tooltip, flag);
     }

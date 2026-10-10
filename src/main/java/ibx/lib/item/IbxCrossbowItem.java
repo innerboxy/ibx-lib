@@ -2,8 +2,8 @@ package ibx.lib.item;
 
 import ibx.lib.api.CriticalStrikeApi;
 import ibx.lib.api.RangedWeaponApi;
-import ibx.lib.item.ranged_weapon.RangedWeaponStats;
-import ibx.lib.item.ranged_weapon.RangedWeaponItem;
+import ibx.lib.item.ranged_weapon.IbxRangedWeaponStats;
+import ibx.lib.item.ranged_weapon.IbxRangedWeaponItem;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -57,7 +57,7 @@ import java.util.function.Predicate;
  * {@code ITEMS.registerItem("my_crossbow", p -> new IbxCrossbowItem(p.durability(465), 9.0F, 1.25F))}。
  * 装填动画的模型写法见 {@link ibx.lib.client.RangedWeaponModelProperties}。</p>
  */
-public class IbxCrossbowItem extends CrossbowItem implements RangedWeaponItem {
+public class IbxCrossbowItem extends CrossbowItem implements IbxRangedWeaponItem {
     /** 本类型的基准装填秒数（原版弩 25 tick）。 */
     public static final float BASELINE_DRAW_TIME = 1.25F;
     /** 本类型的基准箭速（原版弩射箭 3.15）。 */
@@ -69,7 +69,7 @@ public class IbxCrossbowItem extends CrossbowItem implements RangedWeaponItem {
             Optional.of(SoundEvents.CROSSBOW_LOADING_MIDDLE),
             Optional.of(SoundEvents.CROSSBOW_LOADING_END));
 
-    private final RangedWeaponStats stats;
+    private final IbxRangedWeaponStats stats;
     private final Predicate<ItemStack> ammo;
     private final Predicate<ItemStack> heldAmmo;
 
@@ -98,14 +98,14 @@ public class IbxCrossbowItem extends CrossbowItem implements RangedWeaponItem {
     public IbxCrossbowItem(Item.Properties properties, float rangedDamage, float drawTime, float arrowVelocity,
                           Predicate<ItemStack> ammo, boolean allowFireworks) {
         super(properties);
-        this.stats = new RangedWeaponStats(rangedDamage, drawTime, arrowVelocity,
+        this.stats = new IbxRangedWeaponStats(rangedDamage, drawTime, arrowVelocity,
                 BASELINE_DRAW_TIME, BASELINE_ARROW_VELOCITY);
         this.ammo = ammo;
         this.heldAmmo = allowFireworks ? ammo.or(stack -> stack.is(Items.FIREWORK_ROCKET)) : ammo;
     }
 
     @Override
-    public RangedWeaponStats stats() {
+    public IbxRangedWeaponStats stats() {
         return this.stats;
     }
 
@@ -155,7 +155,7 @@ public class IbxCrossbowItem extends CrossbowItem implements RangedWeaponItem {
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
                                 Consumer<Component> tooltip, TooltipFlag flag) {
         // 先加"自动发射"；原版的"弹射物：箭"那行由 charged_projectiles 组件自己在后面渲染。
-        RangedWeaponItem.appendAutoFireTooltip(stack, tooltip);
+        IbxRangedWeaponItem.appendAutoFireTooltip(stack, tooltip);
         super.appendHoverText(stack, context, display, tooltip, flag);
     }
 
