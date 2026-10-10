@@ -9,12 +9,16 @@ import ibx.lib.config.Config;
 import ibx.lib.registry.AttributeRegistry;
 import ibx.lib.registry.TagRegistry;
 import ibx.lib.util.AttributeUtil;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.phys.EntityHitResult;
 import net.neoforged.bus.api.EventPriority;
@@ -40,7 +44,7 @@ import org.jspecify.annotations.Nullable;
  * {@link #applyCriticalDamage} 处理。两条路的概率与倍率都取自同一套属性。
  * 法术暴击在 {@link ibx.lib.api.SpellDamageApi#hurt} 里掷，进本事件时伤害已经乘好了。</p>
  *
- * <p><b>命中后的附带效果</b>（法术的点燃、冰冻、吸血）不改伤害量，放在伤害结算完之后的
+ * <p><b>命中后的附带效果</b>（法术的点燃、冰冻、吸血，反甲）不改伤害量，放在伤害结算完之后的
  * {@link #onDamagePost}，同样写在本类里。</p>
  */
 public final class DamageHandler {
@@ -63,6 +67,7 @@ public final class DamageHandler {
     /** 伤害结算完之后（所有减免都做完、已扣血）：只放命中后的附带效果，不再改伤害量。 */
     private static void onDamagePost(LivingDamageEvent.Post event) {
         applySpellHitEffects(event);
+        applyThorns(event);
     }
 
     /**
@@ -161,6 +166,30 @@ public final class DamageHandler {
         }
         if (snapshot.lifesteal() > 0.0F && source.getEntity() instanceof LivingEntity caster && caster.isAlive()) {
             caster.heal(snapshot.lifesteal() * event.getInflictedDamage());
+        }
+    }
+
+    /**
+     * 反甲：被攻击后对攻击者造成 {@link AttributeRegistry#THORNS} 点 {@code minecraft:thorns} 伤害，
+     * 伤害来源是被攻击的这个实体（击杀、仇恨都算它的）。
+     *
+     * <p>只认"攻击"：近战（直接来源就是攻击者）和弹射物（伤害落在射手身上，同原版荆棘）；
+     * 法术（{@code #ibx_lib:is_spell}）和爆炸不算。荆棘伤害本身不再触发反甲，两边都有反甲时不会来回弹。</p>
+     *
+     * <p>放在伤害结算完之后：被盾全挡、被无敌帧吃掉的那一下不进本事件，同原版"真的造成了伤害才触发"。</p>
+     */
+    private static void applyThorns(LivingDamageEvent.Post event) {
+        LivingEntity victim = event.getEntity();
+        DamageSource source = event.getSource();
+        if (!(victim.level() instanceof ServerLevel level)
+                || !(source.getEntity() instanceof LivingEntity attacker) || attacker == victim || !attacker.isAlive()
+                || source.is(DamageTypes.THORNS) || source.is(TagRegistry.IS_SPELL) || source.is(DamageTypeTags.IS_EXPLOSION)
+                || !(source.getDirectEntity() == attacker || source.getDirectEntity() instanceof Projectile)) {
+            return;
+        }
+        float thorns = (float) AttributeUtil.read(victim, AttributeRegistry.THORNS);
+        if (thorns > 0.0F) {
+            attacker.hurtServer(level, victim.damageSources().thorns(victim), thorns);
         }
     }
 

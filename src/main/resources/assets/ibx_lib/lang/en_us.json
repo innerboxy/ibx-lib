@@ -5,6 +5,7 @@
   "attribute.name.ibx_lib.critical_chance": "Critical Chance",
   "attribute.name.ibx_lib.critical_damage": "Critical Damage",
   "attribute.name.ibx_lib.heal_efficiency": "Heal Efficiency",
+  "attribute.name.ibx_lib.thorns": "Thorns",
   "attribute.name.ibx_lib.max_mana": "Max Mana",
   "attribute.name.ibx_lib.mana_regeneration": "Mana Regeneration",
   "attribute.name.ibx_lib.mana_cost_multiplier": "Mana Cost Multiplier",

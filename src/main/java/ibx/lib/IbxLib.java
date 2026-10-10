@@ -9,6 +9,7 @@ import ibx.lib.config.StartupConfig;
 import ibx.lib.event.DamageHandler;
 import ibx.lib.event.HealHandler;
 import ibx.lib.event.ManaHandler;
+import ibx.lib.item.armor.VanillaArmors;
 import ibx.lib.item.ranged_weapon.VanillaRangedWeapons;
 import ibx.lib.network.LibNetwork;
 import ibx.lib.registry.AttachmentRegistry;
@@ -41,6 +42,7 @@ public class IbxLib {
         SoundRegistry.register(modEventBus);
         LibNetwork.register(modEventBus);
         modEventBus.addListener(VanillaRangedWeapons::onModifyDefaultComponents);
+        modEventBus.addListener(VanillaArmors::onModifyDefaultComponents);
 
         // GAME 总线：统一的伤害、治疗、法力与施法结算，以及法力、法术指令。
         DamageHandler.register();

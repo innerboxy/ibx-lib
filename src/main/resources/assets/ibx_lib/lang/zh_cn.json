@@ -5,6 +5,7 @@
   "attribute.name.ibx_lib.critical_chance": "暴击率",
   "attribute.name.ibx_lib.critical_damage": "暴击伤害",
   "attribute.name.ibx_lib.heal_efficiency": "回复效率",
+  "attribute.name.ibx_lib.thorns": "反甲",
   "attribute.name.ibx_lib.max_mana": "最大法力值",
   "attribute.name.ibx_lib.mana_regeneration": "法力回复效率",
   "attribute.name.ibx_lib.mana_cost_multiplier": "法力消耗倍率",

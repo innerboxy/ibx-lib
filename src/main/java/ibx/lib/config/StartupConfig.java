@@ -28,5 +28,17 @@ public final class StartupConfig {
                     "服务端与客户端需保持一致；修改后重启游戏生效。")
             .define("takeOverVanillaRangedWeapons", true);
 
+    /**
+     * 是否调整原版盔甲套装的属性（下界合金加法术抗性，金、铜的护甲换成法术抗性）。
+     * 详见 {@link ibx.lib.item.armor.VanillaArmors}。
+     */
+    public static final ModConfigSpec.BooleanValue ADJUST_VANILLA_ARMORS = BUILDER
+            .comment("是否调整原版盔甲套装的属性。",
+                    "true  = 下界合金套装额外加上等同于护甲值的法术抗性；",
+                    "        金套装的护甲换成钻石套装护甲值的法术抗性，铜套装的护甲换成等量的法术抗性。",
+                    "false = 原版盔甲保持原版属性。",
+                    "服务端与客户端需保持一致；修改后重启游戏生效。")
+            .define("adjustVanillaArmors", true);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 }

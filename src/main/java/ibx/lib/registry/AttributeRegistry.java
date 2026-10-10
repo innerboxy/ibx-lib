@@ -138,6 +138,20 @@ public final class AttributeRegistry {
                             1024.0D  // 最大值
                     ).setSyncable(true));
 
+    /**
+     * 反甲：被攻击后对攻击者造成本值点 {@code minecraft:thorns} 伤害，伤害来源算被攻击的这个实体。
+     * 默认 0，最小 0，最大 2048。原版荆棘附魔改成每级 +1 本属性（数据包覆盖 {@code data/minecraft/enchantment/thorns.json}）。
+     * 结算见 {@link ibx.lib.event.DamageHandler}。
+     */
+    public static final DeferredHolder<Attribute, Attribute> THORNS =
+            ATTRIBUTES.register("thorns",
+                    () -> new RangedAttribute(
+                            "attribute.name." + IbxLib.MODID + ".thorns",
+                            0.0D,    // 默认值
+                            0.0D,    // 最小值
+                            2048.0D  // 最大值
+                    ).setSyncable(true));
+
     /** 每秒数值的语言键（"%s/秒"）。 */
     public static final String PER_SECOND_VALUE_KEY = "attribute.value." + IbxLib.MODID + ".per_second";
 
