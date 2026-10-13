@@ -1,4 +1,4 @@
-package ibx.lib.item.armor;
+package ibx.lib.item.vanilla;
 
 import ibx.lib.config.StartupConfig;
 import ibx.lib.registry.AttributeRegistry;
@@ -27,7 +27,7 @@ import java.util.List;
  *   <li>铜：护甲换成等量的法术抗性（头 2、胸 4、腿 3、脚 1），自己不再有护甲。</li>
  * </ul>
  *
- * <p>做法同 {@link ibx.lib.item.ranged_weapon.VanillaRangedWeapons}：在 {@code ModifyDefaultComponentsEvent} 里把修饰符烤进
+ * <p>做法同 {@link ibx.lib.item.vanilla.VanillaRangedWeapons}：在 {@code ModifyDefaultComponentsEvent} 里把修饰符烤进
  * 物品的默认组件，tooltip 跟着变；已有存档里的物品只存组件差异，也会吃到新默认值；按物品栈覆盖的组件仍然优先。
  * 数值直接取原版材质（{@link ArmorMaterials}）的护甲值。开关见 {@link StartupConfig#ADJUST_VANILLA_ARMORS}。</p>
  */

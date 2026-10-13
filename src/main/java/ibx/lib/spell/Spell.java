@@ -83,7 +83,7 @@ public abstract class Spell {
 
     /**
      * 法术专属的施法动作（玩家动画 id，动画文件放 {@code assets/<命名空间>/player_animations/}）；没写为 null，
-     * 放手上法器的默认动作，见 {@link ibx.lib.item.magic_weapon.IbxMagicWeaponItem#castAnimation}。
+     * 放手上法器的默认动作，见 {@link ibx.lib.item.general.IbxMagicWeaponItem#castAnimation}。
      */
     public @Nullable Identifier castAnimation() {
         return this.properties.castAnimation;

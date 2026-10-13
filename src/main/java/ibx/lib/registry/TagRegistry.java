@@ -25,7 +25,7 @@ public final class TagRegistry {
     public static final TagKey<DamageType> CAST_IGNORE = damageType("cast_ignore");
 
     /**
-     * 能施法的物品：手持右键释放当前选中的法术。所有 {@link ibx.lib.item.magic_weapon.IbxMagicWeaponItem}（法典等各类法器）自动在里面
+     * 能施法的物品：手持右键释放当前选中的法术。所有 {@link ibx.lib.item.general.IbxMagicWeaponItem}（法典等各类法器）自动在里面
      * （{@link AutoItemTags}）；别的物品要施法，由物品所在模组的 data 往里加。
      */
     public static final TagKey<Item> CAN_CAST_SPELL = TagKey.create(Registries.ITEM,
@@ -36,7 +36,7 @@ public final class TagRegistry {
      * 结构仿 {@code c:tools/ranged_weapon}、{@code c:tools/bow}。都由 AutoItemTags 按物品类自动填，没有数据文件。
      */
 
-    /** 所有法器（{@link ibx.lib.item.magic_weapon.IbxMagicWeaponItem} 及子类）。 */
+    /** 所有法器（{@link ibx.lib.item.general.IbxMagicWeaponItem} 及子类）。 */
     public static final TagKey<Item> TOOLS_MAGIC_WEAPON = commonItem("tools/magic_weapon");
 
     /** 法典（{@link ibx.lib.item.IbxTomeItem}）。 */

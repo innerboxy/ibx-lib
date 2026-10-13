@@ -1,6 +1,6 @@
 package ibx.lib.item;
 
-import ibx.lib.item.magic_weapon.IbxMagicWeaponItem;
+import ibx.lib.item.general.IbxMagicWeaponItem;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 

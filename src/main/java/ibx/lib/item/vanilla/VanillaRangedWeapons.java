@@ -1,8 +1,9 @@
-package ibx.lib.item.ranged_weapon;
+package ibx.lib.item.vanilla;
 
 import ibx.lib.config.StartupConfig;
 import ibx.lib.item.IbxBowItem;
 import ibx.lib.item.IbxCrossbowItem;
+import ibx.lib.item.general.IbxRangedWeaponStats;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;

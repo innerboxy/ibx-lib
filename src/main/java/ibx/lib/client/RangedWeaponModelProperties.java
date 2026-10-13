@@ -5,7 +5,7 @@ import ibx.lib.IbxLib;
 import ibx.lib.api.RangedWeaponApi;
 import ibx.lib.item.IbxBowItem;
 import ibx.lib.item.IbxCrossbowItem;
-import ibx.lib.item.ranged_weapon.VanillaRangedWeapons;
+import ibx.lib.item.vanilla.VanillaRangedWeapons;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.item.properties.numeric.RangeSelectItemModelProperty;
 import net.minecraft.resources.Identifier;

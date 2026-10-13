@@ -1,4 +1,4 @@
-package ibx.lib.item.ranged_weapon;
+package ibx.lib.item.general;
 
 import ibx.lib.IbxLib;
 import ibx.lib.api.RangedWeaponApi;

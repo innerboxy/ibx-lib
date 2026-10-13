@@ -13,7 +13,7 @@ import com.zigythebird.playeranimcore.easing.EasingType;
 import com.zigythebird.playeranimcore.enums.PlayState;
 import ibx.lib.IbxLib;
 import ibx.lib.api.event.SpellCastStateEvent;
-import ibx.lib.item.magic_weapon.IbxMagicWeaponItem;
+import ibx.lib.item.general.IbxMagicWeaponItem;
 import ibx.lib.registry.TagRegistry;
 import ibx.lib.spell.Spell;
 import ibx.lib.spell.SpellCasting;

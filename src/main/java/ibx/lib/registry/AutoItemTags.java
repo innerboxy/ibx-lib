@@ -4,7 +4,7 @@ import ibx.lib.item.IbxBowItem;
 import ibx.lib.item.IbxCrossbowItem;
 import ibx.lib.item.IbxStaffItem;
 import ibx.lib.item.IbxTomeItem;
-import ibx.lib.item.magic_weapon.IbxMagicWeaponItem;
+import ibx.lib.item.general.IbxMagicWeaponItem;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.common.Tags;

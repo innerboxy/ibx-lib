@@ -2,8 +2,8 @@ package ibx.lib.item;
 
 import ibx.lib.api.CriticalStrikeApi;
 import ibx.lib.api.RangedWeaponApi;
-import ibx.lib.item.ranged_weapon.IbxRangedWeaponStats;
-import ibx.lib.item.ranged_weapon.IbxRangedWeaponItem;
+import ibx.lib.item.general.IbxRangedWeaponStats;
+import ibx.lib.item.general.IbxRangedWeaponItem;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;

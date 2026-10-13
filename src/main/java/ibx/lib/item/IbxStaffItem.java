@@ -1,7 +1,7 @@
 package ibx.lib.item;
 
 import ibx.lib.IbxLib;
-import ibx.lib.item.magic_weapon.IbxMagicWeaponItem;
+import ibx.lib.item.general.IbxMagicWeaponItem;
 import ibx.lib.spell.CastType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;

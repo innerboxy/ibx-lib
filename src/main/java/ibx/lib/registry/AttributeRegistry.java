@@ -21,7 +21,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  * 本模组注册的属性（Attribute）。
  *
  * <p>两个远程属性对标近战的 {@code attack_damage}：实体基础值 0，数值由武器物品的属性修饰符提供
- * （见 {@link ibx.lib.item.ranged_weapon.IbxRangedWeaponStats}）。
+ * （见 {@link ibx.lib.item.general.IbxRangedWeaponStats}）。
  * 本类注册的所有属性都挂到全部生物上，见 {@code attachToLivingEntities}。</p>
  */
 public final class AttributeRegistry {

@@ -18,7 +18,7 @@ public final class StartupConfig {
 
     /**
      * 是否接管原版弓与弩，让它们与 Ibx 弓弩走同一套远程系统（属性、伤害快照、暴击、自动射击、副手禁用）。
-     * 详见 {@link ibx.lib.item.ranged_weapon.VanillaRangedWeapons}。
+     * 详见 {@link ibx.lib.item.vanilla.VanillaRangedWeapons}。
      */
     public static final ModConfigSpec.BooleanValue TAKE_OVER_VANILLA_RANGED_WEAPONS = BUILDER
             .comment("是否接管原版弓与弩，让它们按本模组的远程属性结算。",
@@ -30,7 +30,7 @@ public final class StartupConfig {
 
     /**
      * 是否调整原版盔甲套装的属性（下界合金加法术抗性，金、铜的护甲换成法术抗性）。
-     * 详见 {@link ibx.lib.item.armor.VanillaArmors}。
+     * 详见 {@link ibx.lib.item.vanilla.VanillaArmors}。
      */
     public static final ModConfigSpec.BooleanValue ADJUST_VANILLA_ARMORS = BUILDER
             .comment("是否调整原版盔甲套装的属性。",

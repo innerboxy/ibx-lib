@@ -2,7 +2,7 @@ package ibx.lib.api;
 
 import ibx.lib.item.IbxBowItem;
 import ibx.lib.item.IbxCrossbowItem;
-import ibx.lib.item.ranged_weapon.VanillaRangedWeapons;
+import ibx.lib.item.vanilla.VanillaRangedWeapons;
 import ibx.lib.registry.AttachmentRegistry;
 import ibx.lib.registry.AttributeRegistry;
 import ibx.lib.registry.DataComponentRegistry;
