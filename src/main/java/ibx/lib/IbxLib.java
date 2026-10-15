@@ -2,6 +2,7 @@ package ibx.lib;
 
 import com.mojang.logging.LogUtils;
 import ibx.lib.api.CustomFire;
+import ibx.lib.api.ShieldApi;
 import ibx.lib.command.ManaCommand;
 import ibx.lib.command.SpellCommand;
 import ibx.lib.config.Config;
@@ -50,6 +51,7 @@ public class IbxLib {
         ManaHandler.register();
         SpellCasting.register();
         CustomFire.register();
+        ShieldApi.register();
         ManaCommand.register();
         SpellCommand.register();
         LOGGER.info("{} loaded", MODID);

@@ -15,6 +15,7 @@ public final class LibNetwork {
 
     private static void onRegisterPayloadHandlers(RegisterPayloadHandlersEvent event) {
         event.registrar(VERSION)
-                .playToServer(SelectSpellPayload.TYPE, SelectSpellPayload.STREAM_CODEC, SelectSpellPayload::handle);
+                .playToServer(SelectSpellPayload.TYPE, SelectSpellPayload.STREAM_CODEC, SelectSpellPayload::handle)
+                .playToServer(ShieldBashPayload.TYPE, ShieldBashPayload.STREAM_CODEC, ShieldBashPayload::handle);
     }
 }

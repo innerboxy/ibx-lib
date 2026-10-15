@@ -5,6 +5,8 @@ import ibx.lib.item.IbxCrossbowItem;
 import ibx.lib.item.IbxStaffItem;
 import ibx.lib.item.IbxTomeItem;
 import ibx.lib.item.general.IbxMagicWeaponItem;
+import ibx.lib.item.general.IbxShieldItem;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.common.Tags;
@@ -25,6 +27,7 @@ public final class AutoItemTags {
     private static final List<Rule> RULES = List.of(
             new Rule(IbxBowItem.class, List.of(Tags.Items.TOOLS, Tags.Items.RANGED_WEAPON_TOOLS, Tags.Items.TOOLS_BOW)),
             new Rule(IbxCrossbowItem.class, List.of(Tags.Items.TOOLS, Tags.Items.RANGED_WEAPON_TOOLS, Tags.Items.TOOLS_CROSSBOW)),
+            new Rule(IbxShieldItem.class, List.of(ItemTags.DURABILITY_ENCHANTABLE, Tags.Items.TOOLS, Tags.Items.TOOLS_SHIELD)),
             new Rule(IbxMagicWeaponItem.class, List.of(TagRegistry.CAN_CAST_SPELL, Tags.Items.TOOLS, TagRegistry.TOOLS_MAGIC_WEAPON)),
             new Rule(IbxTomeItem.class, List.of(TagRegistry.TOOLS_TOME)),
             new Rule(IbxStaffItem.class, List.of(TagRegistry.TOOLS_STAFF)));

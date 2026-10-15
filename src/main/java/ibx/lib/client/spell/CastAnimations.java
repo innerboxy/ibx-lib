@@ -2,17 +2,12 @@ package ibx.lib.client.spell;
 
 import com.zigythebird.playeranim.animation.PlayerAnimResources;
 import com.zigythebird.playeranim.animation.PlayerAnimationController;
-import com.zigythebird.playeranim.api.PlayerAnimationAccess;
-import com.zigythebird.playeranim.api.PlayerAnimationFactory;
 import com.zigythebird.playeranimcore.animation.Animation;
 import com.zigythebird.playeranimcore.animation.layered.modifier.AbstractFadeModifier;
-import com.zigythebird.playeranimcore.animation.layered.modifier.MirrorModifier;
-import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonConfiguration;
-import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
 import com.zigythebird.playeranimcore.easing.EasingType;
-import com.zigythebird.playeranimcore.enums.PlayState;
 import ibx.lib.IbxLib;
 import ibx.lib.api.event.SpellCastStateEvent;
+import ibx.lib.client.PlayerAnimLayers;
 import ibx.lib.item.general.IbxMagicWeaponItem;
 import ibx.lib.registry.TagRegistry;
 import ibx.lib.spell.Spell;
@@ -84,15 +79,7 @@ public final class CastAnimations {
 
     /** 客户端初始化时调：注册动画图层，监听施法开始 / 结束和客户端 tick。 */
     public static void register() {
-        PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(LAYER, PRIORITY, avatar -> {
-            PlayerAnimationController controller = new PlayerAnimationController(avatar, (c, data, setter) -> PlayState.STOP);
-            controller.setFirstPersonMode(FirstPersonMode.THIRD_PERSON_MODEL);
-            controller.setFirstPersonConfiguration(new FirstPersonConfiguration(true, true, true, true));
-            MirrorModifier mirror = new MirrorModifier();
-            mirror.enabled = false;
-            controller.addModifierLast(mirror);
-            return controller;
-        });
+        PlayerAnimLayers.register(LAYER, PRIORITY);
         NeoForge.EVENT_BUS.addListener(CastAnimations::onCastStart);
         NeoForge.EVENT_BUS.addListener(CastAnimations::onCastEnd);
         NeoForge.EVENT_BUS.addListener(CastAnimations::onClientTick);
@@ -108,11 +95,7 @@ public final class CastAnimations {
         }
         InteractionHand hand = castingHand(avatar);
         HumanoidArm arm = hand == InteractionHand.MAIN_HAND ? avatar.getMainArm() : avatar.getMainArm().getOpposite();
-        for (var modifier : controller.getModifiers()) {
-            if (modifier instanceof MirrorModifier mirror) {
-                mirror.enabled = arm == HumanoidArm.LEFT;
-            }
-        }
+        PlayerAnimLayers.setMirrored(controller, arm == HumanoidArm.LEFT);
         Identifier animation = animationFor(event.getContext().spell(), avatar.getItemInHand(hand));
         if (controller.replaceAnimationWithFade(AbstractFadeModifier.standardFadeIn(FADE_IN_TICKS, EasingType.EASE_OUT_SINE), animation, true)) {
             Animation anim = PlayerAnimResources.getAnimation(animation);
@@ -190,6 +173,6 @@ public final class CastAnimations {
     }
 
     private static @Nullable PlayerAnimationController controller(Avatar avatar) {
-        return PlayerAnimationAccess.getPlayerAnimationLayer(avatar, LAYER) instanceof PlayerAnimationController controller ? controller : null;
+        return PlayerAnimLayers.controller(avatar, LAYER);
     }
 }

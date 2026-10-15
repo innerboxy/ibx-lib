@@ -50,5 +50,8 @@ public final class IbxLibClient {
         // 换颜色的火（翠焰的绿火）：身上的火苗、第一人称屏幕上的火
         modEventBus.addListener(CustomFireRendering::onRegisterRenderStateModifiers);
         NeoForge.EVENT_BUS.addListener(CustomFireRendering::onRenderBlockScreenEffect);
+        // 盾牌：主手举盾中的左键（发盾击的包，不交给原版）和盾击动作
+        ShieldAnimations.register();
+        NeoForge.EVENT_BUS.addListener(ShieldInput::onClientTick);
     }
 }

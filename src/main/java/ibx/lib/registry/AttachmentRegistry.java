@@ -3,6 +3,7 @@ package ibx.lib.registry;
 import com.mojang.serialization.Codec;
 import ibx.lib.IbxLib;
 import ibx.lib.api.ManaStorage;
+import ibx.lib.api.ShieldBash;
 import ibx.lib.api.SpellDamageSnapshot;
 import ibx.lib.spell.ActiveCast;
 import ibx.lib.spell.SelectedSpell;
@@ -109,6 +110,16 @@ public final class AttachmentRegistry {
                     () -> AttachmentType.builder(() -> Identifier.withDefaultNamespace("fire"))
                             .serialize(Identifier.CODEC.fieldOf("look"))
                             .sync(Identifier.STREAM_CODEC)
+                            .build());
+
+    /**
+     * 盾击状态：上一次盾击的时刻和冷却到点的时刻。读写请走 {@link ibx.lib.api.ShieldApi}。
+     * 不存盘；同步给自己和周围玩家，客户端据此放盾击动作。
+     */
+    public static final Supplier<AttachmentType<ShieldBash>> SHIELD_BASH =
+            ATTACHMENT_TYPES.register("shield_bash",
+                    () -> AttachmentType.builder(() -> ShieldBash.NONE)
+                            .sync(ShieldBash.SYNC_HANDLER)
                             .build());
 
     public static void register(IEventBus modEventBus) {
