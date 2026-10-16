@@ -8,8 +8,10 @@ public enum CastSource {
     ITEM(true, true),
     /** 卷轴：不扣蓝、不进冷却，生效过就消耗掉来源物品。 */
     SCROLL(false, false),
-    /** 生物：不扣蓝（生物法力默认 0，扣了一个都放不出），进冷却（AI 不用自己记）。生物施法的默认来源。 */
+    /** 生物：不扣蓝（生物法力默认 0，扣了一个都放不出），进冷却（AI 不用自己记）。普通生物施法的默认来源。 */
     MOB(false, true),
+    /** Boss（{@code #c:bosses}）：不扣蓝、不进冷却，放多勤只看 Boss 自己招式的冷却。Boss 施法的默认来源。 */
+    BOSS(false, false),
     /** 指令：不扣蓝、不进冷却，正在施法时直接取消原来的再放。 */
     COMMAND(false, false);
 

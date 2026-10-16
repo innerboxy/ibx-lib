@@ -117,9 +117,14 @@ public final class SpellCasting {
 
     // ---------------------------------------------------------------- 施法
 
-    /** 按施法者推断来源施法：玩家 → {@link CastSource#ITEM}，生物 → {@link CastSource#MOB}。 */
+    /** 按施法者推断来源施法：玩家 → {@link CastSource#ITEM}，Boss（{@code #c:bosses}）→ {@link CastSource#BOSS}，其他生物 → {@link CastSource#MOB}。 */
     public static CastResult cast(LivingEntity caster, Spell spell) {
-        return cast(caster, spell, caster instanceof Player ? CastSource.ITEM : CastSource.MOB);
+        return cast(caster, spell, defaultSource(caster));
+    }
+
+    private static CastSource defaultSource(LivingEntity caster) {
+        if (caster instanceof Player) return CastSource.ITEM;
+        return caster.is(Tags.EntityTypes.BOSSES) ? CastSource.BOSS : CastSource.MOB;
     }
 
     public static CastResult cast(LivingEntity caster, Holder<Spell> spell) {
