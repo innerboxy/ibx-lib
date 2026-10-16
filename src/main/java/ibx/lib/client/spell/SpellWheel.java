@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import ibx.lib.IbxLib;
 import ibx.lib.api.ManaApi;
+import ibx.lib.api.SummonApi;
 import ibx.lib.client.UiPalette;
 import ibx.lib.config.ClientConfig;
 import ibx.lib.network.SelectSpellPayload;
@@ -266,6 +267,12 @@ public final class SpellWheel {
         List<Component> lines = new ArrayList<>();
         lines.add(spell.getName().copy().withColor(UiPalette.TITLE).withStyle(ChatFormatting.BOLD));
         lines.addAll(spell.getTooltip(player));
+        if (spell.isSummon()) {
+            lines.add(Component.translatable(TOOLTIP + "summon", spell.summonCount(), spell.summonCost()).withColor(UiPalette.BODY));
+            if (spell.summonDuration() > 0.0F) {
+                lines.add(Component.translatable(TOOLTIP + "summon_duration", SECONDS.format(spell.summonDuration())).withColor(UiPalette.BODY));
+            }
+        }
         float cost = ManaApi.getActualCost(player, spell.manaCost());
         if (cost > 0.0F) {
             lines.add(Component.translatable(TOOLTIP + (spell.castType() == CastType.CHANNEL ? "mana_cost_per" : "mana_cost"),
@@ -282,7 +289,10 @@ public final class SpellWheel {
             case CHANNEL -> Component.translatable(TOOLTIP + "channel", SECONDS.format(spell.tickInterval() / 20.0));
         }).withColor(UiPalette.BODY));
         int remaining = SpellCooldowns.getRemaining(player, spell);
-        if (remaining > 0) {
+        if (spell.isSummon() && !SummonApi.fits(player, spell.summonCost())) {
+            lines.add(Component.translatable("message." + IbxLib.MODID + ".cast.summon_over_capacity",
+                    spell.summonCost(), SummonApi.capacity(player)).withColor(UiPalette.NEGATIVE));
+        } else if (remaining > 0) {
             lines.add(Component.translatable(CastResult.ON_COOLDOWN.messageKey(), SECONDS.format(remaining / 20.0)).withColor(UiPalette.NEGATIVE));
         } else if (!ManaApi.canAfford(player, spell.manaCost())) {
             lines.add(Component.translatable(CastResult.NOT_ENOUGH_MANA.messageKey()).withColor(UiPalette.NEGATIVE));

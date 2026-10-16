@@ -2,6 +2,7 @@ package ibx.lib.spell;
 
 import ibx.lib.IbxLib;
 import ibx.lib.api.ManaApi;
+import ibx.lib.api.SummonApi;
 import ibx.lib.api.event.SpellCastEvent;
 import ibx.lib.api.event.SpellListEvent;
 import ibx.lib.compat.CuriosCompat;
@@ -158,6 +159,10 @@ public final class SpellCasting {
                 caster.level().getGameTime(), getCastTicks(caster, spell));
         if (!spell.canCast(ctx)) {
             return fail(caster, CastResult.CONDITION_FAILED, ctx.failure);
+        }
+        if (spell.isSummon() && !SummonApi.fits(caster, spell.summonCost())) {
+            return fail(caster, CastResult.CONDITION_FAILED, Component.translatable("message." + IbxLib.MODID + ".cast.summon_over_capacity",
+                    spell.summonCost(), SummonApi.capacity(caster)));
         }
         if (source.triggersCooldown() && !SpellCooldowns.isReady(caster, spell)) {
             return fail(caster, CastResult.ON_COOLDOWN, Component.translatable(CastResult.ON_COOLDOWN.messageKey(),

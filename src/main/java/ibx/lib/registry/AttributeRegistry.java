@@ -276,6 +276,19 @@ public final class AttributeRegistry {
                             "attribute.name." + IbxLib.MODID + ".can_spell_crit"
                     ).setSyncable(true));
 
+    /**
+     * 召唤物上限：同时在场的召唤物最多占几个名额（每只占几个由召唤法术定，默认 1）。默认 1，最小 0，最大 1024。
+     * 超了让最早召唤的那只消散，单只就超过上限时召唤法术放不出。结算见 {@link ibx.lib.api.SummonApi}。
+     */
+    public static final DeferredHolder<Attribute, Attribute> MAX_SUMMONS =
+            ATTRIBUTES.register("max_summons",
+                    () -> new RangedAttribute(
+                            "attribute.name." + IbxLib.MODID + ".max_summons",
+                            1.0D,    // 默认值
+                            0.0D,    // 最小值
+                            1024.0D  // 最大值
+                    ).setSyncable(true));
+
     public static void register(IEventBus modEventBus) {
         ATTRIBUTES.register(modEventBus);
         modEventBus.addListener(AttributeRegistry::attachToLivingEntities);

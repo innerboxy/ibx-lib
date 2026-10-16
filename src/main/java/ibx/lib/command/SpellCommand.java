@@ -35,7 +35,7 @@ import java.util.Locale;
 /**
  * 法术指令（需要 2 级权限），施法者是指令的执行者（用 {@code /execute as} 让别的生物施法）：
  * <pre>
- * /taverntales spell cast &lt;法术&gt; [来源]     来源：item / scroll / mob / command，不写按执行者推断（玩家 item、生物 mob）
+ * /taverntales spell cast &lt;法术&gt; [来源]     来源：item / scroll / mob / boss / command，不写按执行者推断（玩家 item、Boss boss、其他生物 mob）
  * /taverntales spell stop                     松手：吟唱取消、引导结束、蓄力按当前比例结算
  * /taverntales spell cooldown clear [目标们]   不写目标即执行者
  * /taverntales spell list                     列出所有已注册的法术

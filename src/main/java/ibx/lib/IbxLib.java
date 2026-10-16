@@ -5,6 +5,7 @@ import ibx.lib.api.CustomFire;
 import ibx.lib.api.ShieldApi;
 import ibx.lib.command.ManaCommand;
 import ibx.lib.command.SpellCommand;
+import ibx.lib.command.SummonCommand;
 import ibx.lib.config.Config;
 import ibx.lib.config.StartupConfig;
 import ibx.lib.event.DamageHandler;
@@ -17,8 +18,10 @@ import ibx.lib.registry.AttachmentRegistry;
 import ibx.lib.registry.AttributeRegistry;
 import ibx.lib.registry.DataComponentRegistry;
 import ibx.lib.registry.SoundRegistry;
+import ibx.lib.registry.SpellRegistry;
 import ibx.lib.spell.SpellCasting;
 import ibx.lib.spell.SpellRegistries;
+import ibx.lib.summon.SummonHandler;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -40,20 +43,23 @@ public class IbxLib {
         AttachmentRegistry.register(modEventBus);
         DataComponentRegistry.register(modEventBus);
         SpellRegistries.register(modEventBus);
+        SpellRegistry.register(modEventBus);
         SoundRegistry.register(modEventBus);
         LibNetwork.register(modEventBus);
         modEventBus.addListener(VanillaRangedWeapons::onModifyDefaultComponents);
         modEventBus.addListener(VanillaArmors::onModifyDefaultComponents);
 
-        // GAME 总线：统一的伤害、治疗、法力与施法结算，以及法力、法术指令。
+        // GAME 总线：统一的伤害、治疗、法力与施法结算，召唤物框架，以及法力、法术、召唤物指令。
         DamageHandler.register();
         HealHandler.register();
         ManaHandler.register();
         SpellCasting.register();
         CustomFire.register();
         ShieldApi.register();
+        SummonHandler.register();
         ManaCommand.register();
         SpellCommand.register();
+        SummonCommand.register();
         LOGGER.info("{} loaded", MODID);
     }
 }

@@ -89,6 +89,26 @@ public abstract class Spell {
         return this.properties.castAnimation;
     }
 
+    /** 是不是召唤法术（注册行写了 {@code summonCount}）。召唤法术放之前框架会查名额，说明框多显示召唤几行。 */
+    public boolean isSummon() {
+        return this.properties.summonCount > 0;
+    }
+
+    /** 一次召几只，非召唤法术为 0。 */
+    public int summonCount() {
+        return this.properties.summonCount;
+    }
+
+    /** 每只占几个召唤物名额（主人的属性「召唤物上限」是总名额）。 */
+    public int summonCost() {
+        return this.properties.summonCost;
+    }
+
+    /** 限时召唤物的寿命（秒），0 = 常驻。目前召唤物一律常驻，没有法术写它，接口留着以后要限时再用。 */
+    public float summonDuration() {
+        return this.properties.summonDuration;
+    }
+
     // ---------- 身份 ----------
 
     /** 注册 id；注册前为 null。 */
@@ -161,6 +181,9 @@ public abstract class Spell {
         float minCharge = 0.1F;
         boolean interruptible = true;
         @Nullable Identifier castAnimation;
+        int summonCount;
+        int summonCost = 1;
+        float summonDuration;
 
         private Properties() {}
 
@@ -218,6 +241,28 @@ public abstract class Spell {
          */
         public Properties castAnimation(Identifier animation) {
             this.castAnimation = animation;
+            return this;
+        }
+
+        /**
+         * 召唤法术：一次召几只（写了就是召唤法术）。召唤本身写在法术的 {@code onCast} 里，
+         * 用 {@link ibx.lib.api.SummonApi#summon(net.minecraft.world.entity.LivingEntity, net.minecraft.world.entity.Mob, Spell)}，
+         * 名额、时长按这里的数值走。
+         */
+        public Properties summonCount(int count) {
+            this.summonCount = Math.max(0, count);
+            return this;
+        }
+
+        /** 召唤法术：每只占几个召唤物名额，默认 1。 */
+        public Properties summonCost(int cost) {
+            this.summonCost = Math.max(0, cost);
+            return this;
+        }
+
+        /** 召唤法术：限时召唤物的寿命（秒）。不写 = 常驻（目前召唤物一律常驻，接口留着以后要限时再用）。 */
+        public Properties summonDuration(float seconds) {
+            this.summonDuration = Math.max(0.0F, seconds);
             return this;
         }
     }

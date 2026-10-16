@@ -8,6 +8,8 @@ import ibx.lib.api.SpellDamageSnapshot;
 import ibx.lib.spell.ActiveCast;
 import ibx.lib.spell.SelectedSpell;
 import ibx.lib.spell.SpellCooldowns;
+import ibx.lib.summon.OwnerSummons;
+import ibx.lib.summon.SummonData;
 import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
@@ -120,6 +122,28 @@ public final class AttachmentRegistry {
             ATTACHMENT_TYPES.register("shield_bash",
                     () -> AttachmentType.builder(() -> ShieldBash.NONE)
                             .sync(ShieldBash.SYNC_HANDLER)
+                            .build());
+
+    /**
+     * 召唤物身上的框架数据（主人、法术、名额、到期时刻）。读写请走 {@link ibx.lib.api.SummonApi}。
+     * 存盘（跨维度搬运时随实体数据复制）；不同步。
+     */
+    public static final Supplier<AttachmentType<SummonData>> SUMMON =
+            ATTACHMENT_TYPES.register("summon",
+                    () -> AttachmentType.builder(() -> SummonData.NONE)
+                            .serialize(SummonData.CODEC)
+                            .build());
+
+    /**
+     * 主人身上的召唤物名单（按召唤顺序）和标记目标。读写请走 {@link ibx.lib.api.SummonApi}。
+     * 名单存盘（生物当主人时随世界存）；名单只同步给主人自己（轮盘要知道有没有召唤物），标记目标不同步；
+     * 不标 copyOnDeath（主人死了召唤物全走，名单本来就空了）。
+     */
+    public static final Supplier<AttachmentType<OwnerSummons>> OWNER_SUMMONS =
+            ATTACHMENT_TYPES.register("owner_summons",
+                    () -> AttachmentType.builder(() -> new OwnerSummons())
+                            .serialize(OwnerSummons.CODEC)
+                            .sync((holder, player) -> holder == player, OwnerSummons.STREAM_CODEC)
                             .build());
 
     public static void register(IEventBus modEventBus) {
