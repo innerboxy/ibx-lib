@@ -52,14 +52,27 @@ public abstract class Spell {
         return this.properties.manaCost;
     }
 
-    /** 基础冷却（秒）。实际 = 本值 × {@code spell_cooldown_ratio}，见 {@link SpellCasting#getCooldownTicks}。 */
+    /** 基础冷却（秒）。实际 = {@link #cooldown(LivingEntity)} × {@code spell_cooldown_ratio}，见 {@link SpellCasting#getCooldownTicks}。 */
     public float cooldown() {
         return this.properties.cooldown;
     }
 
-    /** 基础吟唱 / 满蓄时间（秒）。实际 = 本值 ÷ {@code spell_cast_speed}，见 {@link SpellCasting#getCastTicks}。 */
+    /** 基础吟唱 / 满蓄时间（秒）。实际 = {@link #castTime(LivingEntity)} ÷ {@code spell_cast_speed}，见 {@link SpellCasting#getCastTicks}。 */
     public float castTime() {
         return this.properties.castTime;
+    }
+
+    /**
+     * 这名施法者放本法术的冷却（秒），框架再乘 {@code spell_cooldown_ratio}。默认就是 {@link #cooldown()}；
+     * 冷却随施法者变化的法术（如按法强缩短）重写它。两端都会调（轮盘显示用客户端的属性算）。
+     */
+    public float cooldown(LivingEntity caster) {
+        return this.cooldown();
+    }
+
+    /** 这名施法者放本法术的吟唱 / 满蓄时间（秒），框架再除 {@code spell_cast_speed}。默认就是 {@link #castTime()}，用法同 {@link #cooldown(LivingEntity)}。 */
+    public float castTime(LivingEntity caster) {
+        return this.castTime();
     }
 
     public CastType castType() {

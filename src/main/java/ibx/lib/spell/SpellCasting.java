@@ -100,19 +100,19 @@ public final class SpellCasting {
 
     // ---------------------------------------------------------------- 数值
 
-    /** 实际吟唱 / 满蓄 tick = 吟唱时间 × 20 ÷ {@code spell_cast_speed}，最少 1；瞬发、引导为 0。 */
+    /** 实际吟唱 / 满蓄 tick = {@link Spell#castTime(LivingEntity)} × 20 ÷ {@code spell_cast_speed}，最少 1；瞬发、引导为 0。 */
     public static int getCastTicks(LivingEntity caster, Spell spell) {
         if (spell.castType() != CastType.CAST && spell.castType() != CastType.CHARGE) {
             return 0;
         }
         // spell_cast_speed 下限 0.01，不会除以零。
-        double ticks = spell.castTime() * 20.0D / AttributeUtil.read(caster, AttributeRegistry.SPELL_CAST_SPEED);
+        double ticks = spell.castTime(caster) * 20.0D / AttributeUtil.read(caster, AttributeRegistry.SPELL_CAST_SPEED);
         return Math.max(1, (int) Math.round(ticks));
     }
 
-    /** 实际冷却 tick = 冷却 × 20 × {@code spell_cooldown_ratio}。 */
+    /** 实际冷却 tick = {@link Spell#cooldown(LivingEntity)} × 20 × {@code spell_cooldown_ratio}。 */
     public static int getCooldownTicks(LivingEntity caster, Spell spell) {
-        double ticks = spell.cooldown() * 20.0D * AttributeUtil.read(caster, AttributeRegistry.SPELL_COOLDOWN_RATIO);
+        double ticks = spell.cooldown(caster) * 20.0D * AttributeUtil.read(caster, AttributeRegistry.SPELL_COOLDOWN_RATIO);
         return Math.max(0, (int) Math.round(ticks));
     }
 
