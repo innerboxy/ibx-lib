@@ -76,5 +76,6 @@
   "subtitles.ibx_lib.spell_wheel.close": "法术轮盘：关闭",
   "subtitles.ibx_lib.spell.cast_fail": "施法失败",
   "tooltip.ibx_lib.auto_fire": "自动发射",
-  "tooltip.ibx_lib.spells": "法术："
+  "tooltip.ibx_lib.spells": "法术：",
+  "config.jade.plugin_ibx_lib.spell_resistance": "实体魔法抗性"
 }

@@ -20,4 +20,6 @@ dependencies {
     // Curios (optional)
     compileOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}:api"
     runtimeOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}"
+    // Jade（可选）：首次进世界关掉它的「显示Boss」、提示框里显示魔抗；只编译，开发环境运行用 tavern/run/mods 里的同版本 jar
+    compileOnly "maven.modrinth:jade:${jade_version}"
 }

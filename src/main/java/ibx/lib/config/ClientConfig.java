@@ -50,6 +50,12 @@ public final class ClientConfig {
                     "false = 必须点击：只有左键点一格才选中，松开轮盘键只是关上。")
             .define("spellWheelSelectOnRelease", true);
 
+    public static final ModConfigSpec.BooleanValue JADE_BOSSES_HIDDEN_ONCE = BUILDER
+            .comment("内部记录，一般不用改：是否已经替你关掉过 Jade 的「显示Boss」（装了 Jade 才有用）。",
+                    "Jade 准星对着 Boss 时会再显示一遍血量，和 Boss 血条重复，所以第一次进世界时自动关一次；",
+                    "之后在 Jade 设置里重新打开就不会再自动关；改回 false，下次进世界会再关一次。")
+            .define("jadeBossesHiddenOnce", false);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     public static boolean vanillaHud() {

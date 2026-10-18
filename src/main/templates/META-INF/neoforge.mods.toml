@@ -66,3 +66,11 @@ TODO: mod description.
     versionRange="[${curios_version},)"
     ordering="AFTER"
     side="BOTH"
+
+# Jade 非强制依赖:装了就首次进世界关掉它的「显示Boss」,提示框里在护甲后面显示魔抗。
+[[dependencies."${mod_id}"]]
+    modId="jade"
+    type="optional"
+    versionRange="*"
+    ordering="NONE"
+    side="CLIENT"

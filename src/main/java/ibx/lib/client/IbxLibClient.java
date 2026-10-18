@@ -8,6 +8,7 @@ import ibx.lib.client.spell.SpellCastInput;
 import ibx.lib.client.spell.SpellIcons;
 import ibx.lib.client.spell.SpellItemTooltip;
 import ibx.lib.client.spell.SpellWheel;
+import ibx.lib.compat.jade.JadeCompat;
 import ibx.lib.config.ClientConfig;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
@@ -53,5 +54,7 @@ public final class IbxLibClient {
         // 盾牌：主手举盾中的左键（发盾击的包，不交给原版）和盾击动作
         ShieldAnimations.register();
         NeoForge.EVENT_BUS.addListener(ShieldInput::onClientTick);
+        // Jade（装了才有）：首次进世界关掉它的「显示Boss」；提示框里的魔抗由 Jade 插件 IbxJadePlugin 自己注册
+        JadeCompat.register();
     }
 }
