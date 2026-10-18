@@ -35,7 +35,7 @@
   "commands.ibx_lib.spell.list": "共 %s 个法术：",
   "commands.ibx_lib.spell.list.entry": "%s（%s）耗蓝 %s，冷却 %s 秒，读条 %s 秒",
   "commands.ibx_lib.spell.unknown": "未知法术：%s",
-  "commands.ibx_lib.spell.unknown_source": "未知施法来源：%s（可选 item / scroll / mob / boss / command）",
+  "commands.ibx_lib.spell.unknown_source": "未知施法来源：%s（可选 item / scroll / mob / command）",
   "commands.ibx_lib.spell.not_living": "需要由生物执行",
   "commands.ibx_lib.summon.list": "%s 的召唤物：%s 只，名额 %s / %s",
   "commands.ibx_lib.summon.list.entry": "%s（占 %s 个名额，%s）",

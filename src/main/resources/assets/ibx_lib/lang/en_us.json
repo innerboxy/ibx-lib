@@ -35,7 +35,7 @@
   "commands.ibx_lib.spell.list": "%s spells:",
   "commands.ibx_lib.spell.list.entry": "%s (%s) mana %s, cooldown %ss, cast time %ss",
   "commands.ibx_lib.spell.unknown": "Unknown spell: %s",
-  "commands.ibx_lib.spell.unknown_source": "Unknown cast source: %s (item / scroll / mob / boss / command)",
+  "commands.ibx_lib.spell.unknown_source": "Unknown cast source: %s (item / scroll / mob / command)",
   "commands.ibx_lib.spell.not_living": "Must be run by a living entity",
   "commands.ibx_lib.summon.list": "%s has %s summon(s), slots %s / %s",
   "commands.ibx_lib.summon.list.entry": "%s (%s slot(s), %s)",
