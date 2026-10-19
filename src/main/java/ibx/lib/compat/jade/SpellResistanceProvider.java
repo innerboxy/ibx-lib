@@ -4,6 +4,7 @@ import ibx.lib.IbxLib;
 import ibx.lib.registry.AttributeRegistry;
 import ibx.lib.util.AttributeUtil;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import snownee.jade.api.EntityAccessor;
 import snownee.jade.api.IEntityComponentProvider;
@@ -15,7 +16,7 @@ import snownee.jade.api.ui.JadeUI;
 
 /**
  * Jade 生物提示框里的魔法抗性（{@code spell_resistance}）：接在 Jade 自己的护甲后面、同一行，画法照护甲
- * （{@link SpellResistanceElement}）；没有护甲那一项时单独一行；魔抗为 0 不显示。
+ * （{@link SpellResistanceElement}）；没有护甲那一项时单独一行；向下取整后为 0 不显示（同护甲）。
  * 魔抗属性会同步给客户端，直接读客户端的值。Jade 的插件设置里可以关掉。
  */
 public enum SpellResistanceProvider implements IEntityComponentProvider {
@@ -26,8 +27,8 @@ public enum SpellResistanceProvider implements IEntityComponentProvider {
     @Override
     public void appendTooltip(ITooltip tooltip, EntityAccessor accessor, IPluginConfig config) {
         if (!(accessor.getEntity() instanceof LivingEntity living)) return;
-        float value = (float) AttributeUtil.read(living, AttributeRegistry.SPELL_RESISTANCE);
-        if (value <= 0.0F) return;
+        int value = Mth.floor(AttributeUtil.read(living, AttributeRegistry.SPELL_RESISTANCE));
+        if (value <= 0) return;
         Element element = new SpellResistanceElement(value).tag(UID);
         if (tooltip.get(JadeIds.MC_ENTITY_ARMOR).isEmpty()) {
             tooltip.add(element);
