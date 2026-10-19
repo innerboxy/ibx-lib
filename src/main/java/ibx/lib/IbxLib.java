@@ -22,6 +22,7 @@ import ibx.lib.registry.SpellRegistry;
 import ibx.lib.spell.SpellCasting;
 import ibx.lib.spell.SpellRegistries;
 import ibx.lib.summon.SummonHandler;
+import ibx.lib.target.TargetHandler;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -54,6 +55,7 @@ public class IbxLib {
         HealHandler.register();
         ManaHandler.register();
         SpellCasting.register();
+        TargetHandler.register();
         CustomFire.register();
         ShieldApi.register();
         SummonHandler.register();

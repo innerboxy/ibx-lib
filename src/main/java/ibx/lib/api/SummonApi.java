@@ -24,8 +24,10 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 import net.neoforged.neoforge.common.NeoForge;
@@ -36,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 /**
  * 召唤物框架的入口（只在服务端生效）。
@@ -337,8 +340,37 @@ public final class SummonApi {
     }
 
     public static Vec3 findSpawnPos(Level level, Vec3 center, Mob summon, double minRadius, double maxRadius) {
+        Vec3 pos = tryFindSpawnPos(level, center, summon, minRadius, maxRadius, 0.0, Math.PI, candidate -> true);
+        return pos != null ? pos : center;
+    }
+
+    /**
+     * 同 {@link #findSpawnPos(LivingEntity, Mob, double, double)}，但只在主人面前的扇形里找（面朝方向左右各 {@code halfAngle} 度），
+     * 而且主人要看得见那里（眼睛到召唤物身子中间不隔方块）：召唤法术用，召唤物出现在主人视线里，不会冒在墙后、地板下。
+     * 面前找不到（贴着墙、悬崖边）再在身边一圈找，还找不到就是主人脚下。
+     */
+    public static Vec3 findSpawnPosInFront(LivingEntity owner, Mob summon, double minRadius, double maxRadius, double halfAngle) {
+        Level level = owner.level();
+        Vec3 center = owner.position();
+        // 原版朝向 yRot 的前方是 (-sin, cos)，换成这里 (cos φ, sin φ) 的角度
+        float yRot = owner.getYRot() * Mth.DEG_TO_RAD;
+        double facing = Math.atan2(Mth.cos(yRot), -Mth.sin(yRot));
+        Vec3 eye = owner.getEyePosition();
+        double halfHeight = summon.getBbHeight() / 2.0;
+        Vec3 pos = tryFindSpawnPos(level, center, summon, minRadius, maxRadius, facing, halfAngle * Mth.DEG_TO_RAD,
+                candidate -> level.clip(new ClipContext(eye, candidate.add(0.0, halfHeight, 0.0), ClipContext.Block.COLLIDER,
+                        ClipContext.Fluid.NONE, owner)).getType() == HitResult.Type.MISS);
+        if (pos == null) {
+            pos = tryFindSpawnPos(level, center, summon, minRadius, maxRadius, 0.0, Math.PI, candidate -> true);
+        }
+        return pos != null ? pos : center;
+    }
+
+    /** 以 {@code facing} 为中线、左右各 {@code halfSpread} 弧度的扇形里随机找 16 次，还要过 {@code accept}；都不行为 null。 */
+    private static @Nullable Vec3 tryFindSpawnPos(Level level, Vec3 center, Mob summon, double minRadius, double maxRadius,
+                                                  double facing, double halfSpread, Predicate<Vec3> accept) {
         for (int attempt = 0; attempt < 16; attempt++) {
-            double angle = summon.getRandom().nextDouble() * Math.PI * 2.0D;
+            double angle = facing + (summon.getRandom().nextDouble() * 2.0D - 1.0D) * halfSpread;
             double r = Mth.lerp(summon.getRandom().nextDouble(), minRadius, maxRadius);
             double x = center.x + Math.cos(angle) * r;
             double z = center.z + Math.sin(angle) * r;
@@ -350,12 +382,12 @@ public final class SummonApi {
                 }
                 Vec3 pos = new Vec3(x, feet.getY(), z);
                 AABB box = summon.getDimensions(summon.getPose()).makeBoundingBox(pos);
-                if (level.noCollision(summon, box) && !level.containsAnyLiquid(box)) {
+                if (level.noCollision(summon, box) && !level.containsAnyLiquid(box) && accept.test(pos)) {
                     return pos;
                 }
             }
         }
-        return center;
+        return null;
     }
 
     // ---------------------------------------------------------------- 内部

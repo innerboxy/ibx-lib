@@ -8,6 +8,8 @@ import com.geckolib.animation.RawAnimation;
 import com.geckolib.util.GeckoLibUtil;
 import ibx.lib.api.SpellDamageApi;
 import ibx.lib.api.SpellDamageSnapshot;
+import ibx.lib.target.Faction;
+import ibx.lib.target.TargetApi;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -15,14 +17,11 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -81,8 +80,6 @@ public abstract class SpellProjectile extends Projectile implements GeoEntity {
     private static final double HOMING_CONE = 0.5;
     /** 出发点在眼睛下方多少格。 */
     private static final double SPAWN_DROP = 0.25;
-    /** 找准星指着的地方最远看多少格。 */
-    private static final double AIM_RANGE = 64.0;
 
     private int age;
     private int pierced;
@@ -118,34 +115,23 @@ public abstract class SpellProjectile extends Projectile implements GeoEntity {
 
     /**
      * 朝主人准星指着的地方发射：{@code speed} 格 / tick，{@code inaccuracy} 同原版（0 为绝对准，弓满弦是 1）。
-     * 出发点不在眼睛上，所以不是顺着视线平行飞，而是斜着对准准星，远近都打在准星上（见 {@link #aimPoint}）。
-     * 生物没有准星：有攻击目标时瞄目标身体正中，带重力的弹射物再把瞄准点抬高一截抵消下坠（见 {@link #liftForGravity}）；
-     * 没有目标时照样按视线。主人自己的速度照原版叠上去。没有主人时什么也不做。
+     * 出发点不在眼睛上，所以不是顺着视线平行飞，而是斜着对准准星，远近都打在准星上（见 {@link TargetApi#aimPoint}）。
+     * 生物没有准星：瞄 AI 直接给的对象，没给就瞄攻击目标（{@link TargetApi#aimEntity}）的身体正中，带重力的弹射物再把瞄准点抬高一截
+     * 抵消下坠（见 {@link #liftForGravity}）；都没有时照样按视线。主人自己的速度照原版叠上去。没有主人时什么也不做。
      */
     public SpellProjectile shootFromCaster(float speed, float inaccuracy) {
         Entity owner = this.getOwner();
         if (owner != null) {
             Vec3 from = this.getBoundingBox().getCenter();
-            LivingEntity target = owner instanceof Mob mob ? mob.getTarget() : null;
-            Vec3 point = target != null ? this.liftForGravity(target.getBoundingBox().getCenter(), from, speed) : this.aimPoint(owner);
+            LivingEntity target = owner instanceof LivingEntity living ? TargetApi.aimEntity(living) : null;
+            Vec3 point = target != null ? this.liftForGravity(target.getBoundingBox().getCenter(), from, speed)
+                    : TargetApi.aimPoint(owner, 1.0F, this);
             Vec3 aim = point.subtract(from);
             this.shoot(aim.x, aim.y, aim.z, speed, inaccuracy);
             Vec3 movement = owner.getKnownMovement();
             this.setDeltaMovement(this.getDeltaMovement().add(movement.x, owner.onGround() ? 0.0 : movement.y, movement.z));
         }
         return this;
-    }
-
-    /** 准星指着的地方：视线 {@value #AIM_RANGE} 格内先碰到的方块或生物；什么也没指着时是视线上 {@value #AIM_RANGE} 格远的那一点。 */
-    private Vec3 aimPoint(Entity owner) {
-        Vec3 eye = owner.getEyePosition();
-        Vec3 end = eye.add(owner.getViewVector(1.0F).scale(AIM_RANGE));
-        HitResult block = this.level().clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, owner));
-        Vec3 reach = block.getType() == HitResult.Type.MISS ? end : block.getLocation();
-        AABB area = owner.getBoundingBox().expandTowards(reach.subtract(eye)).inflate(1.0);
-        EntityHitResult entity = ProjectileUtil.getEntityHitResult(owner, eye, reach, area,
-                target -> target != this && !target.isSpectator() && target.isPickable(), eye.distanceToSqr(reach));
-        return entity != null ? entity.getLocation() : reach;
     }
 
     /**
@@ -328,18 +314,23 @@ public abstract class SpellProjectile extends Projectile implements GeoEntity {
         return nearest;
     }
 
-    /** 不打施法者自己、不重复打同一个目标；友伤保护开着时不打友方（直接穿过去）。 */
+    /**
+     * 作用于谁：默认敌方（友伤保护：宠物、同队、关了 PvP 的玩家直接穿过去），快照开了友伤（{@code friendlyFire}）就不分敌我。
+     * 两端都会调（客户端也算碰撞），客户端没有快照，按敌方算。
+     */
+    protected Faction affects() {
+        boolean friendlyFire = SpellDamageApi.getProjectileSnapshot(this).map(SpellDamageSnapshot::friendlyFire).orElse(false);
+        return friendlyFire ? Faction.ALL : Faction.ENEMY;
+    }
+
+    /** 不打施法者自己、不重复打同一个目标；阵营不对的直接穿过去（{@link #affects}）。 */
     @Override
     protected boolean canHitEntity(Entity entity) {
         if (!super.canHitEntity(entity) || this.hitEntities.contains(entity.getId())) {
             return false;
         }
         Entity owner = this.getOwner();
-        if (entity == owner) {
-            return false;
-        }
-        boolean friendlyFire = SpellDamageApi.getProjectileSnapshot(this).map(SpellDamageSnapshot::friendlyFire).orElse(false);
-        return friendlyFire || owner == null || SpellDamageApi.canHarm(owner, entity);
+        return entity != owner && this.affects().test(owner, entity);
     }
 
     @Override

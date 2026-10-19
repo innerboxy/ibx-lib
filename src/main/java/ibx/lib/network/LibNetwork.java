@@ -13,9 +13,13 @@ public final class LibNetwork {
         modEventBus.addListener(LibNetwork::onRegisterPayloadHandlers);
     }
 
+    /** 发给客户端的包只在这里登记格式，处理器在客户端入口另外注册（{@code RegisterClientPayloadHandlersEvent}）。 */
     private static void onRegisterPayloadHandlers(RegisterPayloadHandlersEvent event) {
         event.registrar(VERSION)
                 .playToServer(SelectSpellPayload.TYPE, SelectSpellPayload.STREAM_CODEC, SelectSpellPayload::handle)
-                .playToServer(ShieldBashPayload.TYPE, ShieldBashPayload.STREAM_CODEC, ShieldBashPayload::handle);
+                .playToServer(ShieldBashPayload.TYPE, ShieldBashPayload.STREAM_CODEC, ShieldBashPayload::handle)
+                .playToServer(TargetModesPayload.TYPE, TargetModesPayload.STREAM_CODEC, TargetModesPayload::handle)
+                .playToClient(TargetIndicatorPayload.TYPE, TargetIndicatorPayload.STREAM_CODEC)
+                .playToClient(CastRejectedPayload.TYPE, CastRejectedPayload.STREAM_CODEC);
     }
 }

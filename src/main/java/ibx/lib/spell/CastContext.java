@@ -2,12 +2,15 @@ package ibx.lib.spell;
 
 import ibx.lib.api.SpellDamageApi;
 import ibx.lib.api.SpellDamageSnapshot;
+import ibx.lib.target.TargetApi;
+import ibx.lib.target.TargetLock;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -38,6 +41,8 @@ public final class CastContext {
     boolean fromSelection;
     /** 由右键施法物品发起并挂着原版"使用物品"：松手结算、物品离手取消、结束时停用。只在服务端有意义。 */
     boolean heldByUse;
+    /** 按法术的瞄准方式开始的锁定（{@link TargetApi#begin}）；不选目标的法术、客户端为 null。 */
+    @Nullable TargetLock lock;
     private @Nullable Object data;
 
     CastContext(LivingEntity caster, Spell spell, CastSource source, ItemStack triggerItem, ItemStack sourceItem,
@@ -102,6 +107,29 @@ public final class CastContext {
         return this.effects;
     }
 
+    /**
+     * 指向型法术作用到的生物：{@code canCast} 和读条中是现在选中的（开始时锁定的那个，或者生效时选取模式下准星现在指着的 / 后备），
+     * {@code onCast} 里是生效时定下来的那个（可能是施法者自己，声明了对自己时）。生物施法时 AI 直接给的对象也在这里（方向型同样）。
+     * 不选目标的法术、客户端为 null。
+     */
+    public @Nullable LivingEntity target() {
+        return this.lock != null ? this.lock.target() : null;
+    }
+
+    /** 地点型法术的落点，规则同 {@link #target()}；其他法术、客户端为 null。 */
+    public @Nullable Vec3 targetPos() {
+        return this.lock != null ? this.lock.point() : null;
+    }
+
+    /**
+     * 方向型法术朝哪：AI 直接给的对象、生物的攻击目标的身体正中，玩家是准星指着的地方（{@link TargetApi#aimPoint}）。
+     * 弹射物、射线基类自己就按这个规则瞄，一般用不到。
+     */
+    public Vec3 aimPoint() {
+        LivingEntity aim = TargetApi.aimEntity(this.caster);
+        return aim != null ? aim.getBoundingBox().getCenter() : TargetApi.aimPoint(this.caster, 1.0F, null);
+    }
+
     /** 用默认伤害类型生成法术伤害快照，带上本法术的 id。公式拿施法者此刻的属性。 */
     public SpellDamageSnapshot damage(SpellDamageApi.Formula formula) {
         return SpellDamageApi.snapshot(this.caster, formula).withSpell(this.spell.id());
@@ -118,7 +146,7 @@ public final class CastContext {
     }
 
     /**
-     * 本次施法的临时对象（引导生成的射线实体、吟唱开始时锁定的目标……）：{@code onCastStart} 放，之后的钩子取，
+     * 本次施法的临时对象（引导生成的射线实体……）：{@code onCastStart} 放，之后的钩子取，
      * 施法结束自动丢弃。不同步、不存盘，服务端和客户端各是各的。
      */
     @SuppressWarnings("unchecked")

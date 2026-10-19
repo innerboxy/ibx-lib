@@ -8,6 +8,8 @@ import ibx.lib.client.spell.SpellCastInput;
 import ibx.lib.client.spell.SpellIcons;
 import ibx.lib.client.spell.SpellItemTooltip;
 import ibx.lib.client.spell.SpellWheel;
+import ibx.lib.client.target.TargetIndicatorRendering;
+import ibx.lib.client.target.TargetModeSync;
 import ibx.lib.compat.jade.JadeCompat;
 import ibx.lib.config.ClientConfig;
 import net.neoforged.api.distmarker.Dist;
@@ -16,6 +18,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.client.gui.ConfigurationScreen;
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
 
 /**
@@ -25,6 +29,8 @@ import net.neoforged.neoforge.common.NeoForge;
 public final class IbxLibClient {
     public IbxLibClient(IEventBus modEventBus, ModContainer modContainer) {
         modContainer.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
+        // 模组列表里的「配置」按钮：NeoForge 自带的配置界面，游戏里直接改（名字见语言文件 ibx_lib.configuration.*，说明取配置注释）
+        modContainer.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
 
         modEventBus.addListener(RangedWeaponModelProperties::onRegisterRangeSelectProperties);
         // 最低优先级：等其他模组先注册完自己的客户端扩展，再给剩下的 Ibx 弩补上，避免重复注册报错。
@@ -43,6 +49,8 @@ public final class IbxLibClient {
         // 右键施法的切换模式（吟唱、引导可以按一下开始、再按一下结束），开关在 选项 → 控制
         NeoForge.EVENT_BUS.addListener(SpellCastInput::onUseItemStart);
         NeoForge.EVENT_BUS.addListener(SpellCastInput::onClientTick);
+        // 服务端拒绝右键施法（没有目标等）时马上松手
+        modEventBus.addListener(SpellCastInput::onRegisterPayloadHandlers);
         // 法术容器的物品提示：名字下面列出提供的法术
         NeoForge.EVENT_BUS.addListener(SpellItemTooltip::onItemTooltip);
         // 玩家施法动作（Player Animation Library），以及法典施法时翻开用的物品模型条件 ibx_lib:casting
@@ -51,6 +59,10 @@ public final class IbxLibClient {
         // 换颜色的火（翠焰的绿火）：身上的火苗、第一人称屏幕上的火
         modEventBus.addListener(CustomFireRendering::onRegisterRenderStateModifiers);
         NeoForge.EVENT_BUS.addListener(CustomFireRendering::onRenderBlockScreenEffect);
+        // 选目标：读条时地上的提示（锁定的目标脚下的方形、范围的圆 / 扇形）；进服时和客户端配置重载时把选取时机设置告诉服务端
+        TargetIndicatorRendering.register(modEventBus);
+        NeoForge.EVENT_BUS.addListener(TargetModeSync::onLoggingIn);
+        modEventBus.addListener(TargetModeSync::onConfigReloaded);
         // 盾牌：主手举盾中的左键（发盾击的包，不交给原版）和盾击动作
         ShieldAnimations.register();
         NeoForge.EVENT_BUS.addListener(ShieldInput::onClientTick);

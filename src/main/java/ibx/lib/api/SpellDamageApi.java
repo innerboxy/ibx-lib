@@ -7,6 +7,7 @@ import ibx.lib.mixin.LivingEntityAccessor;
 import ibx.lib.registry.AttachmentRegistry;
 import ibx.lib.registry.DamageTypeRegistry;
 import ibx.lib.registry.TagRegistry;
+import ibx.lib.target.TargetApi;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
@@ -16,12 +17,9 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.scores.PlayerTeam;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jspecify.annotations.Nullable;
@@ -118,7 +116,7 @@ public final class SpellDamageApi {
             return target.hurtServer(level, new SpellDamageSource(type, directEntity, caster, sourcePosition, snapshot, false),
                     snapshot.baseAmount());
         }
-        if (!snapshot.friendlyFire() && !canHarm(caster, living)) {
+        if (!snapshot.friendlyFire() && !TargetApi.canHarm(caster, living)) {
             return false;
         }
 
@@ -182,38 +180,6 @@ public final class SpellDamageApi {
     }
 
     /**
-     * 施法者能不能伤到目标（友伤保护）。以下情况不能：
-     * <ul>
-     *   <li>目标是施法者自己；施法者与目标同乘一个载具；</li>
-     *   <li>两者"归属"相同：施法者的宠物、宠物打主人、同一主人的宠物（按 {@link OwnableEntity#getRootOwner()} 归到主人）；</li>
-     *   <li>两个玩家之间：按 {@link Player#canHarmPlayer}（服务器 PvP 开关、队伍友伤）；</li>
-     *   <li>同队且队伍关了友伤；不在队伍里时按原版 {@code isAlliedTo}（驯服动物、袭击者互认等）。</li>
-     * </ul>
-     * 没有施法者时一律能伤。
-     */
-    public static boolean canHarm(@Nullable Entity caster, Entity target) {
-        if (caster == null) {
-            return true;
-        }
-        if (caster == target || caster.isPassengerOfSameVehicle(target)) {
-            return false;
-        }
-        Entity casterSide = rootOwner(caster);
-        Entity targetSide = rootOwner(target);
-        if (casterSide == targetSide) {
-            return false;
-        }
-        if (casterSide instanceof Player casterPlayer && targetSide instanceof Player targetPlayer) {
-            return casterPlayer.canHarmPlayer(targetPlayer);
-        }
-        PlayerTeam team = casterSide.getTeam();
-        if (team != null && team.isAlliedTo(targetSide.getTeam())) {
-            return team.isAllowFriendlyFire();
-        }
-        return !casterSide.isAlliedTo(targetSide);
-    }
-
-    /**
      * 击退工具：法术伤害默认不击退（伤害类型都在 {@code no_knockback} 里），要击退的法术命中后自己调。
      * 水平方向走原版 {@code knockback}（吃击退抗性、触发 NeoForge 的击退事件），再按击退抗性加一点向上的速度。
      *
@@ -231,17 +197,6 @@ public final class SpellDamageApi {
         }
         // 让服务端把新速度同步给客户端（玩家的移动由客户端模拟，不标记就推不动）。
         target.hurtMarked = true;
-    }
-
-    /** 宠物、召唤物归到它的最终主人；没有主人的就是它自己。 */
-    private static Entity rootOwner(Entity entity) {
-        if (entity instanceof OwnableEntity ownable) {
-            LivingEntity owner = ownable.getRootOwner();
-            if (owner != null) {
-                return owner;
-            }
-        }
-        return entity;
     }
 
     private static boolean rollCritical(RandomSource random, SpellDamageSnapshot snapshot) {

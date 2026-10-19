@@ -10,6 +10,8 @@ import ibx.lib.spell.SelectedSpell;
 import ibx.lib.spell.SpellCooldowns;
 import ibx.lib.summon.OwnerSummons;
 import ibx.lib.summon.SummonData;
+import ibx.lib.target.TargetLock;
+import ibx.lib.target.TargetModes;
 import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
@@ -144,6 +146,27 @@ public final class AttachmentRegistry {
                     () -> AttachmentType.builder(() -> new OwnerSummons())
                             .serialize(OwnerSummons.CODEC)
                             .sync((holder, player) -> holder == player, OwnerSummons.STREAM_CODEC)
+                            .build());
+
+    /**
+     * 实体的「当前锁定」：一次施法或一次物品使用选中的目标 / 落点。读写请走 {@link ibx.lib.target.TargetApi}。
+     * 只在服务端用；不存盘（施法、使用物品都不跨存档）、不同步（地上的提示另外发包）。
+     */
+    public static final Supplier<AttachmentType<TargetLock>> TARGET_LOCK =
+            ATTACHMENT_TYPES.register("target_lock",
+                    () -> AttachmentType.<TargetLock>builder(() -> {
+                        throw new IllegalStateException("当前锁定只能由 TargetApi.begin 写入");
+                    }).build());
+
+    /**
+     * 玩家的两个选取时机设置（指向型、地点型）。源头是客户端配置，进服、改动时由 {@code TargetModesPayload} 发上来；
+     * 存盘只为死亡后保留（原版要求带序列化才能 copyOnDeath），不同步。
+     */
+    public static final Supplier<AttachmentType<TargetModes>> TARGET_MODES =
+            ATTACHMENT_TYPES.register("target_modes",
+                    () -> AttachmentType.builder(() -> TargetModes.DEFAULT)
+                            .serialize(TargetModes.CODEC)
+                            .copyOnDeath()
                             .build());
 
     public static void register(IEventBus modEventBus) {

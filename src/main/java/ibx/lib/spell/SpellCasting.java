@@ -6,10 +6,16 @@ import ibx.lib.api.SummonApi;
 import ibx.lib.api.event.SpellCastEvent;
 import ibx.lib.api.event.SpellListEvent;
 import ibx.lib.compat.CuriosCompat;
+import ibx.lib.network.CastRejectedPayload;
 import ibx.lib.registry.AttachmentRegistry;
 import ibx.lib.registry.AttributeRegistry;
 import ibx.lib.registry.SoundRegistry;
 import ibx.lib.registry.TagRegistry;
+import ibx.lib.target.TargetApi;
+import ibx.lib.target.TargetHandler;
+import ibx.lib.target.TargetLock;
+import ibx.lib.target.TargetMode;
+import ibx.lib.target.Targeting;
 import ibx.lib.util.AttributeUtil;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
@@ -34,6 +40,7 @@ import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jspecify.annotations.Nullable;
 
 import java.text.DecimalFormat;
@@ -48,8 +55,10 @@ import java.util.function.Consumer;
  * 施法的唯一入口。施法者是玩家、生物都一样：{@code SpellCasting.cast(caster, spell)}。
  *
  * <ul>
- *   <li>{@link #cast}：检查（正在施法 → 法术条件 → 冷却 → 法力）→ {@link SpellCastEvent.Pre} → 按类型开始。
+ *   <li>{@link #cast}：检查（正在施法 → 冷却 → 法力 → 按瞄准方式选目标 → 法术条件 → 召唤名额）→ {@link SpellCastEvent.Pre} → 按类型开始。
  *       失败时把原因发到玩家的 action bar。</li>
+ *   <li>选目标走 {@link TargetApi}（见法术的 {@link Spell#targeting()}）：开始时锁定的目标读条中失效就取消；
+ *       吟唱到点、引导每次生效、蓄力松手，扣蓝之前再定一次目标、再调一次 {@link Spell#canCast}，不通过就取消、这一下不扣蓝。</li>
  *   <li>读条由框架推进（{@link ActiveCast} + 每 tick 的 {@link #onEntityTick}），生物 AI 不用自己计时，
  *       只要 {@link #isCasting} / {@link #stopCasting}。</li>
  *   <li>扣蓝、冷却、卷轴消耗按 {@link CastSource} 结算；生效过至少一次才进冷却、才消耗卷轴。</li>
@@ -131,8 +140,25 @@ public final class SpellCasting {
         return cast(caster, spell.value());
     }
 
+    /**
+     * 生物 AI 直接给对象施法：指向型锁它、地点型落在它脚下、方向型瞄它。只查够不够得着（活着、同维度、在法术射程内），
+     * 不查阵营；之后按开始时锁定处理，它失效了施法就取消。{@code target} 为 null 时同 {@link #cast(LivingEntity, Spell)}。
+     */
+    public static CastResult cast(LivingEntity caster, Spell spell, @Nullable LivingEntity target) {
+        return cast(caster, spell, defaultSource(caster), ItemStack.EMPTY, ItemStack.EMPTY, target);
+    }
+
+    public static CastResult cast(LivingEntity caster, Holder<Spell> spell, @Nullable LivingEntity target) {
+        return cast(caster, spell.value(), target);
+    }
+
     public static CastResult cast(LivingEntity caster, Spell spell, CastSource source) {
         return cast(caster, spell, source, ItemStack.EMPTY, ItemStack.EMPTY);
+    }
+
+    public static CastResult cast(LivingEntity caster, Spell spell, CastSource source,
+                                  ItemStack triggerItem, ItemStack sourceItem) {
+        return cast(caster, spell, source, triggerItem, sourceItem, null);
     }
 
     /**
@@ -140,9 +166,10 @@ public final class SpellCasting {
      *
      * @param triggerItem 右键的那件施法物品，没有填 {@link ItemStack#EMPTY}
      * @param sourceItem  提供这个法术的物品（卷轴消耗、法杖耐久靠它），没有填 {@link ItemStack#EMPTY}
+     * @param target      AI 直接给的对象，见 {@link #cast(LivingEntity, Spell, LivingEntity)}；没有填 null，按法术的瞄准方式选
      */
     public static CastResult cast(LivingEntity caster, Spell spell, CastSource source,
-                                  ItemStack triggerItem, ItemStack sourceItem) {
+                                  ItemStack triggerItem, ItemStack sourceItem, @Nullable LivingEntity target) {
         if (caster.level().isClientSide()) {
             return check(caster, spell, source);
         }
@@ -156,13 +183,7 @@ public final class SpellCasting {
 
         CastContext ctx = new CastContext(caster, spell, source, triggerItem, sourceItem,
                 caster.level().getGameTime(), getCastTicks(caster, spell));
-        if (!spell.canCast(ctx)) {
-            return fail(caster, CastResult.CONDITION_FAILED, ctx.failure);
-        }
-        if (spell.isSummon() && !SummonApi.fits(caster, spell.summonCost())) {
-            return fail(caster, CastResult.CONDITION_FAILED, Component.translatable("message." + IbxLib.MODID + ".cast.summon_over_capacity",
-                    spell.summonCost(), SummonApi.capacity(caster)));
-        }
+        // 冷却、法力最便宜，也最该先告诉玩家；之后才选目标（canCast 要看选中的是谁：满血、已有护盾……）
         if (source.triggersCooldown() && !SpellCooldowns.isReady(caster, spell)) {
             return fail(caster, CastResult.ON_COOLDOWN, Component.translatable(CastResult.ON_COOLDOWN.messageKey(),
                     SECONDS.format(SpellCooldowns.getRemaining(caster, spell) / 20.0D)));
@@ -170,9 +191,24 @@ public final class SpellCasting {
         if (source.consumesMana() && !ManaApi.canAfford(caster, spell.manaCost())) {
             return fail(caster, CastResult.NOT_ENOUGH_MANA, null);
         }
+        Targeting targeting = spell.targeting();
+        if (targeting.needsLock() || target != null) {
+            ctx.lock = TargetApi.begin(caster, targeting, target, ctx, () -> onTargetLost(caster, ctx));
+            if (ctx.lock == null) {
+                return fail(caster, CastResult.CONDITION_FAILED, Component.translatable(TargetHandler.NO_TARGET));
+            }
+        }
+        if (!spell.canCast(ctx)) {
+            return abort(ctx, CastResult.CONDITION_FAILED, ctx.failure);
+        }
+        if (spell.isSummon() && !SummonApi.fits(caster, spell.summonCost())) {
+            return abort(ctx, CastResult.CONDITION_FAILED, Component.translatable("message." + IbxLib.MODID + ".cast.summon_over_capacity",
+                    spell.summonCost(), SummonApi.capacity(caster)));
+        }
         SpellCastEvent.Pre pre = NeoForge.EVENT_BUS.post(new SpellCastEvent.Pre(caster, spell, source,
                 spell.manaCost(), getCooldownTicks(caster, spell)));
         if (pre.isCanceled()) {
+            TargetApi.release(caster, ctx);
             return CastResult.CONDITION_FAILED;
         }
         ctx.manaCost = pre.getManaCost();
@@ -181,7 +217,7 @@ public final class SpellCasting {
         if (spell.castType() == CastType.INSTANT) {
             // 先扣：施法前事件可能把耗蓝改高了。
             if (!pay(ctx)) {
-                return fail(caster, CastResult.NOT_ENOUGH_MANA, null);
+                return abort(ctx, CastResult.NOT_ENOUGH_MANA, null);
             }
             // 也走一遍"开始 → 结束"的同步，客户端的开始 / 结束钩子（起手音效、粒子）才会跑。
             start(caster, active, ctx);
@@ -191,8 +227,11 @@ public final class SpellCasting {
         }
 
         start(caster, active, ctx);
-        if (spell.castType() == CastType.CHANNEL && active.current == ctx && !fire(ctx)) {
-            end(caster, active, CastEndReason.OUT_OF_MANA);
+        if (spell.castType() == CastType.CHANNEL && active.current == ctx) {
+            CastEndReason stopped = fire(ctx);
+            if (stopped != null) {
+                end(caster, active, stopped);
+            }
         }
         return CastResult.SUCCESS;
     }
@@ -237,7 +276,8 @@ public final class SpellCasting {
             if (ctx.charge < ctx.spell().minCharge()) {
                 end(caster, active, CastEndReason.CANCELLED, stopUsing);
             } else {
-                end(caster, active, fire(ctx) ? CastEndReason.COMPLETED : CastEndReason.OUT_OF_MANA, stopUsing);
+                CastEndReason stopped = fire(ctx);
+                end(caster, active, stopped != null ? stopped : CastEndReason.COMPLETED, stopUsing);
             }
             return;
         }
@@ -409,13 +449,47 @@ public final class SpellCasting {
         ctx.spell().onCastStart(ctx);
     }
 
-    /** 扣蓝（按来源）+ 生效。付不起返回 false，不生效。 */
-    private static boolean fire(CastContext ctx) {
+    /**
+     * 生效前校验 + 扣蓝（按来源）+ 生效。返回 null 表示生效了；否则是该怎么结束：
+     * 目标没了、法术条件不满足为 {@link CastEndReason#CANCELLED}（这一下不扣蓝），付不起为 {@link CastEndReason#OUT_OF_MANA}。
+     */
+    private static @Nullable CastEndReason fire(CastContext ctx) {
+        if (!checkEffect(ctx)) {
+            return CastEndReason.CANCELLED;
+        }
         if (!pay(ctx)) {
-            return false;
+            return CastEndReason.OUT_OF_MANA;
         }
         effect(ctx);
+        return null;
+    }
+
+    /**
+     * 生效前再校验一次：按瞄准方式定下这次作用到谁（开始时锁定的查还有没有效，生效时选取的按准星重选、没指着用后备），
+     * 再调一次法术的 {@link Spell#canCast}（目标可能换了、可能被别人治满了）。不通过时提示原因。
+     */
+    private static boolean checkEffect(CastContext ctx) {
+        LivingEntity caster = ctx.caster();
+        TargetLock lock = ctx.lock;
+        if (lock != null && !TargetApi.resolve(caster, lock)) {
+            String key = lock.isGiven() || lock.mode() == TargetMode.START ? TargetHandler.TARGET_LOST : TargetHandler.NO_TARGET;
+            fail(caster, CastResult.CONDITION_FAILED, Component.translatable(key));
+            return false;
+        }
+        ctx.failure = null;
+        if (!ctx.spell().canCast(ctx)) {
+            fail(caster, CastResult.CONDITION_FAILED, ctx.failure);
+            return false;
+        }
         return true;
+    }
+
+    /** 开始时锁定的目标在读条中失效（{@link TargetApi} 每 tick 查）：还在放这一次就取消，提示目标丢失。 */
+    private static void onTargetLost(LivingEntity caster, CastContext ctx) {
+        if (getCurrentCast(caster) == ctx) {
+            fail(caster, CastResult.CONDITION_FAILED, Component.translatable(TargetHandler.TARGET_LOST));
+            cancelCasting(caster, CastEndReason.CANCELLED);
+        }
     }
 
     private static boolean pay(CastContext ctx) {
@@ -475,6 +549,7 @@ public final class SpellCasting {
         }
         active.current = null;
         active.lastEnd = reason;
+        TargetApi.release(caster, ctx);
         if (ctx.effects > 0) {
             if (ctx.source().triggersCooldown() && !isCreative(caster)) {
                 SpellCooldowns.start(caster, ctx.spell(), ctx.cooldownTicks);
@@ -488,6 +563,12 @@ public final class SpellCasting {
         }
         caster.syncData(AttachmentRegistry.ACTIVE_CAST);
         ctx.spell().onCastEnd(ctx, reason);
+    }
+
+    /** 开始前的检查没过：放掉已经选好的目标，再按 {@link #fail} 提示。 */
+    private static CastResult abort(CastContext ctx, CastResult result, @Nullable Component message) {
+        TargetApi.release(ctx.caster(), ctx);
+        return fail(ctx.caster(), result, message);
     }
 
     /**
@@ -535,7 +616,8 @@ public final class SpellCasting {
         switch (spell.castType()) {
             case CAST -> {
                 if (ctx.elapsed() >= ctx.castTicks()) {
-                    end(caster, active, fire(ctx) ? CastEndReason.COMPLETED : CastEndReason.OUT_OF_MANA);
+                    CastEndReason stopped = fire(ctx);
+                    end(caster, active, stopped != null ? stopped : CastEndReason.COMPLETED);
                 } else {
                     spell.onCastTick(ctx);
                 }
@@ -545,8 +627,9 @@ public final class SpellCasting {
                 // 取模会把那一次永久跳过；这里下一 tick 补上（每 tick 最多补一次）。开始那一 tick 的第一次已在 cast 里生效。
                 int due = ctx.elapsed() / spell.tickInterval() + 1;
                 if (ctx.effects < due) {
-                    if (!fire(ctx)) {
-                        end(caster, active, CastEndReason.OUT_OF_MANA);
+                    CastEndReason stopped = fire(ctx);
+                    if (stopped != null) {
+                        end(caster, active, stopped);
                     }
                 } else {
                     spell.onCastTick(ctx);
@@ -616,6 +699,10 @@ public final class SpellCasting {
         CastResult result = castSelected(player, hand);
         SpellEntry entry = result.isSuccess() ? getSelectedSpell(player) : null;
         event.setCancellationResult(entry == null ? InteractionResult.FAIL : holdCast(player, hand, entry.value(), result));
+        // 客户端只判断了冷却、法力，没判断目标和法术条件，可能已经举起手了：服务端拒绝时让它马上松手
+        if (entry == null && player instanceof ServerPlayer serverPlayer) {
+            PacketDistributor.sendToPlayer(serverPlayer, CastRejectedPayload.INSTANCE);
+        }
     }
 
     /**

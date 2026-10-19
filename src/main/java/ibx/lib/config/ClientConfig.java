@@ -50,6 +50,50 @@ public final class ClientConfig {
                     "false = 必须点击：只有左键点一格才选中，松开轮盘键只是关上。")
             .define("spellWheelSelectOnRelease", true);
 
+    public static final ModConfigSpec.BooleanValue TARGET_UNIT_LOCK_AT_START = BUILDER
+            .comment("指向型（锁一个生物的法术、物品）什么时候选目标，游戏里在 选项 → 控制 里改。",
+                    "false = 生效时选取：开始时选中的只当后备，读完 / 松手时按当时的准星重新选，没指着才用后备；",
+                    "true  = 开始时锁定：开始时选中就锁死，读条中目标死了、走远了就取消。")
+            .define("targetUnitLockAtStart", false);
+
+    public static final ModConfigSpec.BooleanValue TARGET_POINT_LOCK_AT_START = BUILDER
+            .comment("地点型（选落点的法术、物品）什么时候选落点，游戏里在 选项 → 控制 里改。",
+                    "false = 生效时选取：读完 / 松手时按当时的准星重新选，没指着才用开始时的；",
+                    "true  = 开始时锁定：开始时选中就定下，之后准星怎么动都不变。")
+            .define("targetPointLockAtStart", false);
+
+    public static final ModConfigSpec.BooleanValue SHOW_TARGET_SELF = BUILDER
+            .comment("读条时地上的提示（锁定的目标脚下的方块、范围的圆 / 扇形）：是否显示自己的。")
+            .define("showTargetSelf", true);
+
+    public static final ModConfigSpec.BooleanValue SHOW_TARGET_PLAYER_ALLY = BUILDER
+            .comment("是否显示友方玩家的提示（友方 / 敌方是相对你来说的，按服务器的 PvP 规则和队伍算）。")
+            .define("showTargetPlayerAlly", true);
+
+    public static final ModConfigSpec.BooleanValue SHOW_TARGET_PLAYER_ENEMY = BUILDER
+            .comment("是否显示敌方玩家的提示。")
+            .define("showTargetPlayerEnemy", true);
+
+    public static final ModConfigSpec.BooleanValue SHOW_TARGET_MOB_ALLY = BUILDER
+            .comment("是否显示友方生物（你的宠物、召唤物……）的提示。")
+            .define("showTargetMobAlly", true);
+
+    public static final ModConfigSpec.BooleanValue SHOW_TARGET_MOB_ENEMY = BUILDER
+            .comment("是否显示敌方生物（怪物、Boss……）的提示。")
+            .define("showTargetMobEnemy", true);
+
+    public static final ModConfigSpec.ConfigValue<String> TARGET_COLOR_ALLY = BUILDER
+            .comment("提示的颜色：作用于友方的（治疗、护盾……），十六进制 #RRGGBB。")
+            .define("targetColorAlly", "#55D16A", ClientConfig::isColor);
+
+    public static final ModConfigSpec.ConfigValue<String> TARGET_COLOR_ENEMY = BUILDER
+            .comment("提示的颜色：作用于敌方的（伤害、减益……），十六进制 #RRGGBB。")
+            .define("targetColorEnemy", "#E5484D", ClientConfig::isColor);
+
+    public static final ModConfigSpec.ConfigValue<String> TARGET_COLOR_ALL = BUILDER
+            .comment("提示的颜色：敌我都作用的，以及只标落点的，十六进制 #RRGGBB。")
+            .define("targetColorAll", "#F2C230", ClientConfig::isColor);
+
     public static final ModConfigSpec.BooleanValue JADE_BOSSES_HIDDEN_ONCE = BUILDER
             .comment("内部记录，一般不用改：是否已经替你关掉过 Jade 的「显示Boss」（装了 Jade 才有用）。",
                     "Jade 准星对着 Boss 时会再显示一遍血量，和 Boss 血条重复，所以第一次进世界时自动关一次；",
@@ -77,5 +121,18 @@ public final class ClientConfig {
     /** 开关类配置的当前值，没加载时取默认值。 */
     public static boolean get(ModConfigSpec.BooleanValue value) {
         return SPEC.isLoaded() ? value.get() : value.getDefault();
+    }
+
+    /** 颜色配置的 RGB 值（不带透明度）；没加载、写错时取默认值。 */
+    public static int color(ModConfigSpec.ConfigValue<String> value) {
+        String text = SPEC.isLoaded() ? value.get() : value.getDefault();
+        if (!isColor(text)) {
+            text = value.getDefault();
+        }
+        return Integer.parseInt(text.substring(text.length() - 6), 16);
+    }
+
+    private static boolean isColor(Object value) {
+        return value instanceof String text && text.matches("#?[0-9A-Fa-f]{6}");
     }
 }

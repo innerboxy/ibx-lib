@@ -3,6 +3,8 @@ package ibx.lib.entity;
 import ibx.lib.api.HitTracker;
 import ibx.lib.api.SpellDamageApi;
 import ibx.lib.api.SpellDamageSnapshot;
+import ibx.lib.target.Faction;
+import ibx.lib.target.TargetApi;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -12,10 +14,8 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TraceableEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.PushReaction;
@@ -23,7 +23,6 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
@@ -105,8 +104,6 @@ public abstract class SpellBeam extends Entity implements TraceableEntity {
 
     /** 默认起点离脚多高：身高的这个比例（胸口）。 */
     private static final double CHEST_HEIGHT = 0.65;
-    /** 找准星指着的地方最远看多少格，同 {@code SpellProjectile}。 */
-    private static final double AIM_RANGE = 64.0;
     /** 渲染距离的平方（格）。按实体自己那个小碰撞箱算太近，起点离镜头稍远整条就不画了。 */
     private static final double RENDER_DISTANCE_SQR = 128.0 * 128.0;
 
@@ -184,42 +181,36 @@ public abstract class SpellBeam extends Entity implements TraceableEntity {
     }
 
     /**
-     * 方向（不必归一化）：默认从起点对准施法者准星指着的地方（视线 {@value #AIM_RANGE} 格内先碰到的方块或生物，见 {@link #aimPoint}），
-     * 远近都打在准星上；生物有攻击目标时对准目标身体正中；施法者实现了 {@link SpellOrigin} 并给了瞄准点时对准那里。
-     * 起点和准星重合、算不出方向时退回视线。
+     * 方向（不必归一化）：默认从起点对准施法者准星指着的地方（{@link #aimPoint}），远近都打在准星上；
+     * 生物瞄 AI 直接给的对象，没给就瞄攻击目标（{@link TargetApi#aimEntity}）的身体正中；施法者实现了 {@link SpellOrigin}
+     * 并给了瞄准点时对准那里。起点和准星重合、算不出方向时退回视线。
      */
     protected Vec3 direction(LivingEntity owner, Vec3 start, float partialTick) {
         Vec3 custom = owner instanceof SpellOrigin origin ? origin.getSpellAimPoint() : null;
-        LivingEntity target = owner instanceof Mob mob ? mob.getTarget() : null;
+        LivingEntity target = owner.level().isClientSide() ? null : TargetApi.aimEntity(owner);
         Vec3 point = custom != null ? custom
                 : target != null ? target.getBoundingBox().getCenter() : this.aimPoint(owner, partialTick);
         Vec3 aim = point.subtract(start);
         return aim.lengthSqr() > 1.0E-8 ? aim : owner.getViewVector(partialTick);
     }
 
-    /** 准星指着的地方：视线 {@value #AIM_RANGE} 格内先碰到的方块或生物；什么也没指着时是视线上 {@value #AIM_RANGE} 格远的那一点。 */
+    /** 准星指着的地方（{@link TargetApi#aimPoint}，射线自己不算）。 */
     protected Vec3 aimPoint(LivingEntity owner, float partialTick) {
-        Vec3 eye = owner.getEyePosition(partialTick);
-        Vec3 end = eye.add(owner.getViewVector(partialTick).scale(AIM_RANGE));
-        HitResult block = this.level().clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, owner));
-        Vec3 reach = block.getType() == HitResult.Type.MISS ? end : block.getLocation();
-        AABB area = owner.getBoundingBox().expandTowards(reach.subtract(eye)).inflate(1.0);
-        EntityHitResult entity = ProjectileUtil.getEntityHitResult(owner, eye, reach, area,
-                candidate -> candidate != this && !candidate.isSpectator() && candidate.isPickable(), eye.distanceToSqr(reach));
-        return entity != null ? entity.getLocation() : reach;
+        return TargetApi.aimPoint(owner, partialTick, this);
     }
 
     // ---------------------------------------------------------------- 钩子（子类重写，都只在服务端调，粒子除外）
 
-    /** 这个目标该不该作用：默认不打施法者，友伤保护开着时只打能伤害的。治疗光线改成只选友方。 */
+    /** 作用于谁：默认敌方，快照开了友伤（{@code friendlyFire}）就不分敌我。治疗光线改成友方。 */
+    protected Faction affects() {
+        SpellDamageSnapshot snapshot = this.snapshot();
+        return snapshot != null && snapshot.friendlyFire() ? Faction.ALL : Faction.ENEMY;
+    }
+
+    /** 这个目标该不该作用：不打施法者，其余看 {@link #affects}。 */
     protected boolean canAffect(LivingEntity target) {
         LivingEntity owner = this.getOwner();
-        if (target == owner) {
-            return false;
-        }
-        SpellDamageSnapshot snapshot = this.snapshot();
-        boolean friendlyFire = snapshot != null && snapshot.friendlyFire();
-        return friendlyFire || owner == null || SpellDamageApi.canHarm(owner, target);
+        return target != owner && this.affects().test(owner, target);
     }
 
     /** 作用一次：默认造成快照伤害，返回是否打中。治疗光线改成 {@link SpellDamageApi#heal}。 */

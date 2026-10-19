@@ -3,6 +3,8 @@ package ibx.lib.entity;
 import ibx.lib.api.HitTracker;
 import ibx.lib.api.SpellDamageApi;
 import ibx.lib.api.SpellDamageSnapshot;
+import ibx.lib.target.Faction;
+import ibx.lib.target.TargetApi;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -52,8 +54,8 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>默认行为（都能在子类里改）：</p>
  * <ul>
- *   <li>对范围里<b>能伤害的</b>生物造成快照伤害（{@link #canAffect} + {@link #affect}）：不打施法者，友伤保护开着时（快照默认）不打友方；
- *       治疗圈之类重写这两个方法（{@link SpellDamageApi#heal}、只选友方）；</li>
+ *   <li>对范围里<b>能伤害的</b>生物造成快照伤害（{@link #affects} + {@link #affect}）：不打施法者，友伤保护开着时（快照默认）不打友方；
+ *       治疗圈之类重写这两个方法（友方、{@link SpellDamageApi#heal}）；</li>
  *   <li>同一目标 10 tick 一下（每秒两下），打完不留无敌帧；</li>
  *   <li>高 1 格，半径不变；</li>
  *   <li>可以先"预警"一段时间再生效（{@link #setWaitTime}，默认 0）：预警期间不作用，粒子稀疏；</li>
@@ -90,12 +92,17 @@ public abstract class SpellAoe extends Entity implements TraceableEntity {
      */
     protected SpellAoe(EntityType<? extends SpellAoe> type, LivingEntity caster, SpellDamageSnapshot snapshot, Vec3 pos,
                        float radius, int durationTicks) {
+        this(type, caster, pos, radius, durationTicks);
+        SpellDamageApi.setProjectileSnapshot(this, snapshot);
+    }
+
+    /** 不带伤害快照：只借外壳（预警、时长、半径同步）、自己不结算的范围效果用，配合 {@link #affects} 返回 {@link Faction#NONE}。 */
+    protected SpellAoe(EntityType<? extends SpellAoe> type, LivingEntity caster, Vec3 pos, float radius, int durationTicks) {
         this(type, caster.level());
         this.owner = EntityReference.of(caster);
         this.setPos(pos);
         this.setRadius(radius);
         this.duration = Math.max(1, durationTicks);
-        SpellDamageApi.setProjectileSnapshot(this, snapshot);
     }
 
     // ---------------------------------------------------------------- 参数（子类重写）
@@ -127,14 +134,19 @@ public abstract class SpellAoe extends Entity implements TraceableEntity {
 
     // ---------------------------------------------------------------- 钩子（子类重写，都只在服务端调，粒子除外）
 
-    /** 这个目标该不该作用：默认不打施法者，友伤保护开着时只打能伤害的。治疗圈改成只选友方。 */
+    /**
+     * 作用于谁：默认敌方，快照开了友伤（{@code friendlyFire}）就不分敌我。治疗圈改成友方；
+     * 只借外壳（预警、时长、半径同步）、自己不结算的改成 {@link Faction#NONE}，就不再每 tick 找人。
+     */
+    protected Faction affects() {
+        SpellDamageSnapshot snapshot = this.snapshot();
+        return snapshot != null && snapshot.friendlyFire() ? Faction.ALL : Faction.ENEMY;
+    }
+
+    /** 这个目标该不该作用：不打施法者，其余看 {@link #affects}。 */
     protected boolean canAffect(LivingEntity target) {
         Entity owner = this.getOwner();
-        if (target == owner) {
-            return false;
-        }
-        boolean friendlyFire = this.snapshot() != null && this.snapshot().friendlyFire();
-        return friendlyFire || owner == null || SpellDamageApi.canHarm(owner, target);
+        return target != owner && this.affects().test(owner, target);
     }
 
     /** 作用一次：默认造成快照伤害，返回是否打中。治疗圈改成 {@link SpellDamageApi#heal}。 */
@@ -231,22 +243,17 @@ public abstract class SpellAoe extends Entity implements TraceableEntity {
             this.setRadius(radius);
         }
 
+        if (this.affects() == Faction.NONE) {
+            return;
+        }
         if (this.hits == null) {
             this.hits = new HitTracker(this.getHitInterval());
         }
-        float radius = this.getRadius();
-        for (LivingEntity target : this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox(),
-                entity -> entity.isAlive() && !entity.isSpectator() && this.inCircle(entity, radius))) {
-            if (this.canAffect(target) && this.hits.tryHit(target)) {
+        for (LivingEntity target : TargetApi.inCylinder(this.level(), this.position(), this.getRadius(), this.getHeight(), this::canAffect)) {
+            if (this.hits.tryHit(target)) {
                 this.onAffect(target, this.affect(target));
             }
         }
-    }
-
-    private boolean inCircle(Entity entity, float radius) {
-        double dx = entity.getX() - this.getX();
-        double dz = entity.getZ() - this.getZ();
-        return dx * dx + dz * dz <= radius * radius;
     }
 
     private void expire() {

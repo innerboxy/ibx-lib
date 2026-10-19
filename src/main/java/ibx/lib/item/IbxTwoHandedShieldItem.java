@@ -4,6 +4,8 @@ import ibx.lib.IbxLib;
 import ibx.lib.api.CriticalStrikeApi;
 import ibx.lib.api.ShieldApi;
 import ibx.lib.item.general.IbxShieldItem;
+import ibx.lib.target.Faction;
+import ibx.lib.target.TargetApi;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -15,16 +17,11 @@ import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
-import net.minecraft.world.item.component.PiercingWeapon;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -167,30 +164,10 @@ public class IbxTwoHandedShieldItem extends IbxShieldItem {
         }
     }
 
-    /** 盾击打到谁：前方 {@link #bashRange} 格、左右各 {@link #bashHalfAngle} 度的扇形里看得见的生物，近的先挨。 */
+    /** 盾击打到谁：前方 {@link #bashRange} 格、左右各 {@link #bashHalfAngle} 度的扇形里看得见的敌方（{@link TargetApi#inFan}），近的先挨；无敌的、打不中的（{@code canBeHitByProjectile}）不算。 */
     protected List<LivingEntity> bashTargets(ServerPlayer player) {
-        double range = this.bashRange();
-        float yRot = player.getYRot() * Mth.DEG_TO_RAD;
-        Vec3 forward = new Vec3(-Mth.sin(yRot), 0.0, Mth.cos(yRot));
-        double cosHalfAngle = Math.cos(this.bashHalfAngle() * Mth.DEG_TO_RAD);
-        AABB area = player.getBoundingBox().inflate(range, 1.0, range);
-        List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class, area, target -> {
-            if (target == player || player.isAlliedTo(target)
-                    || target instanceof ArmorStand stand && stand.isMarker()
-                    || !PiercingWeapon.canHitEntity(player, target)) {
-                return false;
-            }
-            Vec3 offset = target.position().subtract(player.position()).multiply(1.0, 0.0, 1.0);
-            double distance = offset.length();
-            if (distance > range + target.getBbWidth() * 0.5) {
-                return false;
-            }
-            // 贴着身的目标不看角度
-            boolean inCone = distance < 1.0E-4 || offset.normalize().dot(forward) >= cosHalfAngle;
-            return inCone && player.hasLineOfSight(target);
-        });
-        targets.sort(Comparator.comparingDouble(player::distanceToSqr));
-        return targets;
+        return TargetApi.inFan(player, this.bashRange(), this.bashHalfAngle(), true,
+                TargetApi.affects(player, Faction.ENEMY, false).and(target -> !target.isInvulnerable() && target.canBeHitByProjectile()));
     }
 
     /**

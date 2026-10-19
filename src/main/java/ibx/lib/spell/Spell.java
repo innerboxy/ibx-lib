@@ -1,5 +1,6 @@
 package ibx.lib.spell;
 
+import ibx.lib.target.Targeting;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -32,12 +33,23 @@ import java.util.List;
 public abstract class Spell {
     private final Properties properties;
     private final CastType castType;
+    private final Targeting targeting;
 
+    /** 不选目标的法术（作用于自己、自身周围，或者自己处理方向）。 */
     protected Spell(Properties properties) {
+        this(properties, Targeting.self());
+    }
+
+    /**
+     * 要选目标的法术在类里声明瞄准方式（{@link Targeting}），框架按它选目标、锁定、读条中校验、生效前再校验、画地上的提示，
+     * 法术里用 {@link CastContext#target()} / {@link CastContext#targetPos()} / {@link CastContext#aimPoint()} 取。
+     */
+    protected Spell(Properties properties, Targeting targeting) {
         this.properties = properties;
         this.castType = properties.castType != null
                 ? properties.castType
                 : properties.castTime > 0.0F ? CastType.CAST : CastType.INSTANT;
+        this.targeting = targeting;
     }
 
     /** 新建一份数值，注册行里用：{@code Spell.props().manaCost(25).cooldown(6.0F).castTime(1.0F)}。 */
@@ -77,6 +89,11 @@ public abstract class Spell {
 
     public CastType castType() {
         return this.castType;
+    }
+
+    /** 瞄准方式，构造时声明，默认 {@link Targeting#self()}。 */
+    public Targeting targeting() {
+        return this.targeting;
     }
 
     /** 引导每隔多少 tick 生效一次。不受施法速率影响。 */
@@ -149,8 +166,11 @@ public abstract class Spell {
     // ---------- 钩子 ----------
 
     /**
-     * 蓝、冷却之外的额外条件（要有目标、脚下有地……），只在服务端调。不满足时可以 {@code ctx.fail(原因)}，
+     * 蓝、冷却之外的额外条件（目标满血放不了、脚下要有地……），只在服务端调。不满足时可以 {@code ctx.fail(原因)}，
      * 框架把原因发到玩家的 action bar。默认 true。
+     *
+     * <p>开始施法时调一次，这时目标已经按声明选好（{@code ctx.target()}）；吟唱到点、引导每次生效、蓄力松手、扣蓝之前<b>再调一次</b>
+     * （目标可能换了），不满足就取消这次施法，不扣蓝、不冷却。所以这里只检查、不改东西。</p>
      */
     public boolean canCast(CastContext ctx) {
         return true;

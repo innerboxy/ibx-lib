@@ -1,13 +1,16 @@
 package ibx.lib.client.spell;
 
 import ibx.lib.config.ClientConfig;
+import ibx.lib.network.CastRejectedPayload;
 import ibx.lib.registry.TagRegistry;
 import ibx.lib.spell.SpellCasting;
 import ibx.lib.spell.SpellEntry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
  * 右键施法的「切换」操作：吟唱、引导法术可以在 选项 → 控制 里（{@link SpellControlOptions}）各自改成按一下右键开始、
@@ -19,7 +22,8 @@ import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
  * 吟唱读完、引导蓝尽、被打断、切物品时服务端照常停用物品。</p>
  *
  * <p>客户端不预测施法状态，读条是服务端开始后同步过来的。服务端拒绝了（法术自己的条件不满足等）就一直不会有读条，
- * 等 {@link #START_GRACE_TICKS} 还没有就自动松手，免得一直举着手减速；读条结束后（服务端会停用物品）也退回按住。</p>
+ * 服务端会发 {@link CastRejectedPayload} 让这边马上松手；保险起见，等 {@link #START_GRACE_TICKS} 还没有读条也自动松手，
+ * 免得一直举着手减速；读条结束后（服务端会停用物品）也退回按住。</p>
  *
  * <p>打开任何界面（背包、聊天、暂停）都退回按住：关界面时右键没按着，原版就松手取消，和按住模式一样。
  * 原版的「使用：切换」打开时所有物品都已经是切换，这里不再插手。</p>
@@ -57,6 +61,26 @@ public final class SpellCastInput {
         };
         castSeen = false;
         waitTicks = 0;
+    }
+
+    /** MOD 总线：服务端拒绝右键施法的包（{@link CastRejectedPayload}）在这里收。 */
+    public static void onRegisterPayloadHandlers(RegisterClientPayloadHandlersEvent event) {
+        event.register(CastRejectedPayload.TYPE, SpellCastInput::onCastRejected);
+    }
+
+    /**
+     * 服务端拒绝了这次右键施法（没有目标、法术条件不满足……）：还举着施法物品、也没在读条，就马上松手，不用等 {@link #START_GRACE_TICKS}。
+     * 已经在读条说明是之后的一次右键成功了，不动它。
+     */
+    private static void onCastRejected(CastRejectedPayload payload, IPayloadContext context) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null || mc.gameMode == null || !player.isUsingItem() || !player.getUseItem().is(TagRegistry.CAN_CAST_SPELL)
+                || SpellCasting.getCurrentCast(player) != null) {
+            return;
+        }
+        toggled = false;
+        mc.gameMode.releaseUsingItem(player);
     }
 
     /**
