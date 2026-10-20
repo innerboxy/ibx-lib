@@ -58,9 +58,12 @@ public final class IbxLibClient {
         // 玩家施法动作（Player Animation Library），以及法典施法时翻开用的物品模型条件 ibx_lib:casting
         CastAnimations.register();
         modEventBus.addListener(IsCastingProperty::onRegister);
-        // 换颜色的火（翠焰的绿火）：身上的火苗、第一人称屏幕上的火
+        // 着火：换颜色的火（翠焰的绿火）身上的火苗；第一人称屏幕上的火改成四周的边框（原版火、换色火都是）
         modEventBus.addListener(CustomFireRendering::onRegisterRenderStateModifiers);
+        modEventBus.addListener(CustomFireRendering::onRegisterGuiLayers);
+        modEventBus.addListener(CustomFireRendering::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(CustomFireRendering::onRenderBlockScreenEffect);
+        NeoForge.EVENT_BUS.addListener(CustomFireRendering::onClientTick);
         // 选目标：读条时地上的提示（锁定的目标脚下的方形、范围的圆 / 扇形）；进服时和客户端配置重载时把选取时机设置告诉服务端
         TargetIndicatorRendering.register(modEventBus);
         // 地面预警（Boss 招式落点之类，同目标提示的画法）、地面起伏（浪经过的方块弹起来）

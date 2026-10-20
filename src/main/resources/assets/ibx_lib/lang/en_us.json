@@ -92,6 +92,7 @@
   "ibx_lib.configuration.vanillaHud": "Use Vanilla HUD",
   "ibx_lib.configuration.showStatsRow": "Show Stats Beside Hotbar",
   "ibx_lib.configuration.alwaysShowManaBar": "Always Show Mana Bar",
+  "ibx_lib.configuration.replaceFireOverlay": "Fire Overlay at Screen Corners",
   "ibx_lib.configuration.spellWheelScale": "Spell Wheel Scale",
   "ibx_lib.configuration.toggleCastSpell": "Toggle Chanted Spells",
   "ibx_lib.configuration.toggleChannelSpell": "Toggle Channeled Spells",

@@ -12,7 +12,8 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>着火本身还是原版的（着火时间、伤害、水能浇灭、防火的不着）；这里只在实体上记“烧的是哪种火”（{@code fire_look}，
  * 存盘、同步给看得见它的玩家），火灭了就自动清掉。贴图是方块图集里的两张 {@code <命名空间>:block/<路径>_0}、{@code _1}，
- * 同原版的 {@code fire_0} / {@code fire_1}（放在 {@code textures/block/} 下，可以带 .mcmeta 动画）。
+ * 同原版的 {@code fire_0} / {@code fire_1}（放在 {@code textures/block/} 下，可以带 .mcmeta 动画）；第一人称屏幕四周的火焰边框是
+ * {@code <命名空间>:textures/misc/<路径>_outline.png}（格式同 lib 的 {@code fire_outline.png}），没有就用原版火色的那张。
  * 客户端的换图在 {@code client.CustomFireRendering} 和 {@code mixin.FlameFeatureRendererMixin}。</p>
  *
  * <pre>{@code

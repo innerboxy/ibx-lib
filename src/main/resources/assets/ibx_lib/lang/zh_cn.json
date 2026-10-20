@@ -92,6 +92,7 @@
   "ibx_lib.configuration.vanillaHud": "使用原版 HUD",
   "ibx_lib.configuration.showStatsRow": "快捷栏旁显示属性",
   "ibx_lib.configuration.alwaysShowManaBar": "蓝条常驻",
+  "ibx_lib.configuration.replaceFireOverlay": "着火画面改成四角火焰",
   "ibx_lib.configuration.spellWheelScale": "法术轮盘大小",
   "ibx_lib.configuration.toggleCastSpell": "吟唱法术：切换",
   "ibx_lib.configuration.toggleChannelSpell": "引导法术：切换",

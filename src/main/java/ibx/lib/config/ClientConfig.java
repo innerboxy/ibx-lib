@@ -27,6 +27,12 @@ public final class ClientConfig {
                     "false = 蓝不满时显示，回满 3 秒后淡出；true = 一直显示。")
             .define("alwaysShowManaBar", false);
 
+    public static final ModConfigSpec.BooleanValue REPLACE_FIRE_OVERLAY = BUILDER
+            .comment("第一人称着火时的屏幕效果。",
+                    "true  = 换成屏幕四角的火焰边框（中间不挡视线），着火 / 熄灭时淡入淡出；",
+                    "false = 原版镜头前的两大片火。")
+            .define("replaceFireOverlay", true);
+
     public static final ModConfigSpec.DoubleValue SPELL_WHEEL_SCALE = BUILDER
             .comment("法术轮盘的大小倍数，以\"刚好放得下 16×16 图标\"为 1。",
                     "屏幕放不下时自动缩小，但不会小于 1。")
