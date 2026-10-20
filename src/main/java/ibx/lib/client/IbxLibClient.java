@@ -1,6 +1,8 @@
 package ibx.lib.client;
 
 import ibx.lib.IbxLib;
+import ibx.lib.client.ground.BlockWaveRendering;
+import ibx.lib.client.ground.GroundWarningRendering;
 import ibx.lib.client.hud.TavernHud;
 import ibx.lib.client.spell.CastAnimations;
 import ibx.lib.client.spell.IsCastingProperty;
@@ -61,6 +63,9 @@ public final class IbxLibClient {
         NeoForge.EVENT_BUS.addListener(CustomFireRendering::onRenderBlockScreenEffect);
         // 选目标：读条时地上的提示（锁定的目标脚下的方形、范围的圆 / 扇形）；进服时和客户端配置重载时把选取时机设置告诉服务端
         TargetIndicatorRendering.register(modEventBus);
+        // 地面预警（Boss 招式落点之类，同目标提示的画法）、地面起伏（浪经过的方块弹起来）
+        GroundWarningRendering.register(modEventBus);
+        BlockWaveRendering.register(modEventBus);
         NeoForge.EVENT_BUS.addListener(TargetModeSync::onLoggingIn);
         modEventBus.addListener(TargetModeSync::onConfigReloaded);
         // 盾牌：主手举盾中的左键（发盾击的包，不交给原版）和盾击动作

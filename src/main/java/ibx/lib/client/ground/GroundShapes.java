@@ -1,4 +1,4 @@
-package ibx.lib.client.target;
+package ibx.lib.client.ground;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -17,12 +17,13 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
 /**
  * 地上的提示形状：圆 / 扇形 / 长条，中间填色、边框稍深，贴着地形起伏（每个顶点往上 / 往下找地面）。目标选择读条时的提示
- * （{@link TargetIndicatorRendering}）用它画；别的要在地上标范围的（Boss 的地面预警之类）也拿它画，看着是同一套。
+ * （{@code client.target.TargetIndicatorRendering}）和地面预警（{@link GroundWarningRendering}）都用它画，看着是同一套。
  *
  * <p>先用 {@link #sector} / {@link #rect} 把形状切成小四边形（坐标相对 {@code origin}），再 {@link #submit} 画出来；
  * 颜色用 {@link #color} 取客户端配置里那个阵营的颜色，{@link #fill} / {@link #edge} 换成填充、边框色。</p>
@@ -202,6 +203,24 @@ public final class GroundShapes {
             }
         }
         return nearY;
+    }
+
+    /**
+     * 第 (bx, bz) 列在 baseY 附近露天的方块：从高出 baseY 一格的台阶往下找到低一格的坑，只认上面那格空着的；
+     * 两格以上的墙、两格以上的坑返回 null。贴地的贴图、地面起伏（{@link BlockWaveRendering}）找「这一列的地面是哪块」用。
+     */
+    public static @Nullable BlockPos surfaceBlock(BlockGetter level, int bx, int bz, double baseY) {
+        int top = Mth.floor(baseY + 0.01);
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        BlockPos.MutableBlockPos above = new BlockPos.MutableBlockPos();
+        for (int by = top; by >= top - 2; by--) {
+            pos.set(bx, by, bz);
+            if (level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()) continue;
+            above.set(bx, by + 1, bz);
+            if (!level.getBlockState(above).getCollisionShape(level, above).isEmpty()) return null;
+            return pos.immutable();
+        }
+        return null;
     }
 
     /** 这一格碰撞箱的顶面高度；没有碰撞为 NaN。 */

@@ -1,6 +1,7 @@
 package ibx.lib.client.target;
 
 import ibx.lib.IbxLib;
+import ibx.lib.client.ground.GroundShapes;
 import ibx.lib.config.ClientConfig;
 import ibx.lib.network.TargetIndicatorPayload;
 import ibx.lib.target.TargetIndicator;
