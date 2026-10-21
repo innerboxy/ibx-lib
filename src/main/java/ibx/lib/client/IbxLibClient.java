@@ -9,6 +9,7 @@ import ibx.lib.client.spell.IsCastingProperty;
 import ibx.lib.client.spell.SpellCastInput;
 import ibx.lib.client.spell.SpellIcons;
 import ibx.lib.client.spell.SpellItemTooltip;
+import ibx.lib.client.spell.SpellPickerInput;
 import ibx.lib.client.spell.SpellWheel;
 import ibx.lib.client.target.TargetIndicatorRendering;
 import ibx.lib.client.target.TargetModeSync;
@@ -53,6 +54,8 @@ public final class IbxLibClient {
         NeoForge.EVENT_BUS.addListener(SpellCastInput::onClientTick);
         // 服务端拒绝右键施法（没有目标等）时马上松手
         modEventBus.addListener(SpellCastInput::onRegisterPayloadHandlers);
+        // 选法术界面：主手拿着 SpellPicker 物品蹲下 + 左键打开（右边列注册的全部法术还是身上的法术，由物品决定）
+        NeoForge.EVENT_BUS.addListener(SpellPickerInput::onInteraction);
         // 法术容器的物品提示：名字下面列出提供的法术
         NeoForge.EVENT_BUS.addListener(SpellItemTooltip::onItemTooltip);
         // 玩家施法动作（Player Animation Library），以及法典施法时翻开用的物品模型条件 ibx_lib:casting

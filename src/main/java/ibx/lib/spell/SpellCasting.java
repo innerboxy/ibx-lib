@@ -308,8 +308,19 @@ public final class SpellCasting {
      * <p>两端都能调：客户端画轮盘、HUD，服务端校验选中、施法。玩家本身没有"学会"的数据，卸下装备法术就没了。</p>
      */
     public static List<SpellEntry> getSpells(Player player) {
+        return getSpellsExcept(player, ItemStack.EMPTY);
+    }
+
+    /**
+     * 同 {@link #getSpells}，但不算 {@code excluded} 这一个物品栈（按是不是同一个对象认）：比如选法术界面
+     * （{@link SpellPickerSource#CARRIED}）列「身上的法术」时，不算正在改的那件物品自己的。
+     */
+    public static List<SpellEntry> getSpellsExcept(Player player, ItemStack excluded) {
         List<SpellEntry> spells = new ArrayList<>();
         Consumer<ItemStack> collect = stack -> {
+            if (stack == excluded) {
+                return;
+            }
             for (Holder<Spell> spell : SpellContainer.spellsOf(stack)) {
                 if (spells.stream().noneMatch(entry -> entry.value() == spell.value())) {
                     spells.add(new SpellEntry(spell, stack));

@@ -7,7 +7,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 public final class LibNetwork {
     private LibNetwork() {}
 
-    private static final String VERSION = "3";
+    private static final String VERSION = "4";
 
     public static void register(IEventBus modEventBus) {
         modEventBus.addListener(LibNetwork::onRegisterPayloadHandlers);
@@ -17,6 +17,7 @@ public final class LibNetwork {
     private static void onRegisterPayloadHandlers(RegisterPayloadHandlersEvent event) {
         event.registrar(VERSION)
                 .playToServer(SelectSpellPayload.TYPE, SelectSpellPayload.STREAM_CODEC, SelectSpellPayload::handle)
+                .playToServer(PickSpellsPayload.TYPE, PickSpellsPayload.STREAM_CODEC, PickSpellsPayload::handle)
                 .playToServer(ShieldBashPayload.TYPE, ShieldBashPayload.STREAM_CODEC, ShieldBashPayload::handle)
                 .playToServer(TargetModesPayload.TYPE, TargetModesPayload.STREAM_CODEC, TargetModesPayload::handle)
                 .playToClient(TargetIndicatorPayload.TYPE, TargetIndicatorPayload.STREAM_CODEC)

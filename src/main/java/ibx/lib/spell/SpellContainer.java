@@ -17,6 +17,14 @@ public interface SpellContainer {
     /** 这件物品现在提供哪些法术，按显示顺序。 */
     List<Holder<Spell>> getSpells(ItemStack stack);
 
+    /**
+     * 物品自带的法术：没被 {@code spells} 组件改过时提供的那几个（Ibx 法器就是构造时给的）。默认没有。
+     * 选法术界面按 {@link SpellPickerSource#CARRIED} 列法术时一直算它们可选，移出了还能加回来。
+     */
+    default List<Holder<Spell>> innateSpells(ItemStack stack) {
+        return List.of();
+    }
+
     /** 任意物品提供的法术：物品类实现了本接口就问它，否则读 {@code spells} 组件；都没有为空。 */
     static List<Holder<Spell>> spellsOf(ItemStack stack) {
         if (stack.isEmpty()) {

@@ -126,6 +126,12 @@ public class IbxMagicWeaponItem extends Item implements SpellContainer {
         return own != null ? own : this.defaultSpells();
     }
 
+    /** 构造时给的自带法术（物品栈上的 {@code spells} 组件改过也还是这几个）。 */
+    @Override
+    public List<Holder<Spell>> innateSpells(ItemStack stack) {
+        return this.defaultSpells();
+    }
+
     private List<Holder<Spell>> defaultSpells() {
         if (this.defaultSpells == null) {
             List<Holder<Spell>> resolved = new ArrayList<>(this.defaultSpellIds.size());
