@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "#ibx_lib:is_spell",
-    "ibx_lib:digest"
+    "ibx_lib:digest",
+    "ibx_lib:bleeding"
   ]
 }

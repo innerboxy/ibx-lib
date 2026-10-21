@@ -20,6 +20,9 @@ public final class DamageTypeRegistry {
     /** 消化：别西卜胃里的伤害，无视护甲、盾牌和无敌帧，没有击退。 */
     public static final ResourceKey<DamageType> DIGEST = key("digest");
 
+    /** 流血：真实伤害，无视护甲、盔甲韧性、抗性提升和保护类附魔，没有击退；吸收（金心）照常先扣。 */
+    public static final ResourceKey<DamageType> BLEEDING = key("bleeding");
+
     private static ResourceKey<DamageType> key(String name) {
         return ResourceKey.create(Registries.DAMAGE_TYPE, Identifier.fromNamespaceAndPath(IbxLib.MODID, name));
     }
