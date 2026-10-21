@@ -18,7 +18,7 @@ public abstract class SummonEvent extends Event {
         this.summon = summon;
     }
 
-    /** 主人；{@link Unsummon} 里主人可能已经找不到了，为 null。 */
+    /** 主人；{@link Unsummon} 里主人可能已经找不到了，{@link Transfer} 里是原主人（也可能找不到），这两种可能为 null。 */
     public @Nullable LivingEntity getOwner() {
         return this.owner;
     }
@@ -46,6 +46,23 @@ public abstract class SummonEvent extends Event {
     public static final class Post extends SummonEvent {
         public Post(LivingEntity owner, Mob summon) {
             super(owner, summon);
+        }
+    }
+
+    /**
+     * 换主人前（{@code SummonApi.transferOwner}）：{@link #getOwner()} 是原主人（找不到时为 null），{@link #getNewOwner()} 是要转给的。
+     * 取消 = 这次不转（{@code transferOwner} 返回 false）。
+     */
+    public static final class Transfer extends SummonEvent implements ICancellableEvent {
+        private final LivingEntity newOwner;
+
+        public Transfer(@Nullable LivingEntity owner, Mob summon, LivingEntity newOwner) {
+            super(owner, summon);
+            this.newOwner = newOwner;
+        }
+
+        public LivingEntity getNewOwner() {
+            return this.newOwner;
         }
     }
 

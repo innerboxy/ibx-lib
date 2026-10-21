@@ -24,6 +24,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -52,6 +53,7 @@ import java.util.function.Predicate;
  *       {@code OwnableEntity#getRootOwner}（召唤物实现 {@link Summoned}）自动覆盖。</li>
  *   <li><b>标记目标</b>：主人打中谁就标记谁，召唤物优先打它（目标 {@code SummonMarkedTargetGoal}）；最近一次打中后 10 秒有效。</li>
  *   <li><b>击杀归属</b>：主人是玩家时，召唤物打死的生物算主人杀的（经验、玩家击杀掉落、统计）。</li>
+ *   <li><b>换主人</b>：{@link #transferOwner} 把召唤物转给别人（策反），占新主人的名额，名额不够就转不了。</li>
  * </ul>
  * 生命周期、友伤、标记、击杀归属的事件监听在 {@code ibx.lib.summon.SummonHandler}。
  */
@@ -125,7 +127,12 @@ public final class SummonApi {
             Entity e = find(level, entry.id());
             if (e instanceof Mob mob && !mob.isRemoved()) {
                 MISSING_SINCE.remove(entry.id());
-                result.add(mob);
+                if (isOwnedBy(mob, owner)) {
+                    result.add(mob);
+                } else {
+                    // 已经换了主人（转走时原主人没加载，名单里留下的）
+                    pruned |= list.remove(entry.id());
+                }
             } else {
                 long since = MISSING_SINCE.computeIfAbsent(entry.id(), id -> now);
                 if (now - since >= LOST_ENTRY_TICKS) {
@@ -256,6 +263,55 @@ public final class SummonApi {
             changed(owner);
             NeoForge.EVENT_BUS.post(new SummonEvent.Unsummon(owner, summon, reason));
         }
+    }
+
+    // ---------------------------------------------------------------- 换主人
+
+    /**
+     * 把召唤物转给 {@code newOwner}（比如被 Boss 策反）。转完它就是新主人的召唤物：跟着新主人走、帮新主人打，友伤、队伍、标记目标、
+     * 击杀归属都按新主人算，原主人成了外人。
+     *
+     * <ul>
+     *   <li>从原主人名单划掉，加到新主人名单末尾（算新主人最新召的）；占的名额、召它的法术、寿命、身板快照都不变。</li>
+     *   <li>要占新主人的名额：剩下的名额放不下它就转不了，也不挤掉新主人已有的召唤物。</li>
+     *   <li>手上的目标清掉（原来可能正打着新主人），下一刻按新主人重新找。</li>
+     * </ul>
+     *
+     * @return 转成了；不是召唤物、已经是新主人的、新主人死了或自己也是召唤物、新主人名额不够、被 {@link SummonEvent.Transfer} 取消时为 false
+     */
+    public static boolean transferOwner(Mob summon, LivingEntity newOwner) {
+        if (summon.level().isClientSide() || summon.isRemoved() || !summon.isAlive() || !newOwner.isAlive() || newOwner == summon) {
+            return false;
+        }
+        SummonData data = data(summon);
+        if (!data.isSummon() || isOwnedBy(summon, newOwner) || isSummon(newOwner)) {
+            return false;
+        }
+        // 先清掉新主人名单里已经不归他、或找不到太久的条目，免得白占名额
+        getSummons(newOwner);
+        if (used(newOwner) + data.cost() > capacity(newOwner)) {
+            return false;
+        }
+        LivingEntity oldOwner = getOwner(summon);
+        if (NeoForge.EVENT_BUS.post(new SummonEvent.Transfer(oldOwner, summon, newOwner)).isCanceled()) {
+            return false;
+        }
+        if (oldOwner != null && oldOwner.hasData(AttachmentRegistry.OWNER_SUMMONS)
+                && oldOwner.getData(AttachmentRegistry.OWNER_SUMMONS).remove(summon.getUUID())) {
+            changed(oldOwner);
+        }
+        summon.setData(AttachmentRegistry.SUMMON, new SummonData(newOwner.getUUID(), data.spell(), data.cost(), data.expiresAt()));
+        newOwner.getData(AttachmentRegistry.OWNER_SUMMONS).add(summon.getUUID(), data.cost());
+        changed(newOwner);
+        // 原版目标选择在目标被清空时会把它记着的目标再设回去，要先停掉正在跑的
+        for (WrappedGoal goal : summon.targetSelector.getAvailableGoals()) {
+            if (goal.isRunning()) {
+                goal.stop();
+            }
+        }
+        summon.setTarget(null);
+        summon.setLastHurtByMob(null);
+        return true;
     }
 
     // ---------------------------------------------------------------- 认亲、队伍
