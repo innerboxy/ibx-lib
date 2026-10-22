@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "ibx_lib:digest"
+    "ibx_lib:digest",
+    "ibx_lib:soul_link"
   ]
 }

@@ -3,6 +3,7 @@
   "values": [
     "#ibx_lib:is_spell",
     "ibx_lib:digest",
-    "ibx_lib:bleeding"
+    "ibx_lib:bleeding",
+    "ibx_lib:soul_link"
   ]
 }

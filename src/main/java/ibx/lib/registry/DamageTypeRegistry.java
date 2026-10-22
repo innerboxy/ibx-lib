@@ -23,6 +23,12 @@ public final class DamageTypeRegistry {
     /** 流血：真实伤害，无视护甲、盔甲韧性、抗性提升和保护类附魔，没有击退；吸收（金心）照常先扣。 */
     public static final ResourceKey<DamageType> BLEEDING = key("bleeding");
 
+    /**
+     * 灵魂链接：链接里别人挨打、平摊过来的那一份。已经按挨打者的护甲等减过，所以是真实伤害：
+     * 无视护甲、盔甲韧性、抗性提升、保护类附魔、盾牌和无敌帧，没有击退；吸收（金心）照常先扣。
+     */
+    public static final ResourceKey<DamageType> SOUL_LINK = key("soul_link");
+
     private static ResourceKey<DamageType> key(String name) {
         return ResourceKey.create(Registries.DAMAGE_TYPE, Identifier.fromNamespaceAndPath(IbxLib.MODID, name));
     }
