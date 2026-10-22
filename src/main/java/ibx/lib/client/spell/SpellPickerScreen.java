@@ -9,6 +9,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.Tooltip;
@@ -38,7 +39,8 @@ import java.util.function.Supplier;
  * 再加上打开界面时物品上已经有的法术——这一次里移出了还能点回来，关了界面就不算了。
  * <ul>
  *   <li>两边各有搜索框（按显示名或 id 匹配，不分大小写）、5 × 4 一页、翻页箭头和页码，鼠标滚轮也能翻页。</li>
- *   <li>左键点左边的法术把它移出；左键点右边的法术把它选上（加到已选末尾），右边已经选了的格子带绿框，再点一下就移出。</li>
+ *   <li>左键点左边的法术把它移出；左键点右边的法术把它选上（加到已选末尾），右边已经选了的格子带绿框，再点一下就移出。
+ *       左边搜索框右边的「清空」一下移出全部已选（没选时按不了）。</li>
  *   <li>关界面时（有改动才）把整张已选列表发给服务端（{@link PickSpellsPayload}）写回主手那件物品。主手换了物品或换了快捷栏格子
  *       就直接关掉、不发，免得写到别的物品上。</li>
  *   <li>右边的法术每 tick 重算一次，界面开着时换装备右边会跟着变。</li>
@@ -212,6 +214,8 @@ public class SpellPickerScreen extends Screen {
         private int x, y, page;
         private @Nullable EditBox search;
         private @Nullable ImageButton forward, backward;
+        /** 只有左边那本有：清空已选。 */
+        private @Nullable Button clear;
 
         Panel(boolean removes, Supplier<List<Holder<Spell>>> spells) {
             this.removes = removes;
@@ -238,6 +242,17 @@ public class SpellPickerScreen extends Screen {
             this.forward.setTooltip(Tooltip.create(next));
             this.backward = addRenderableWidget(new ImageButton(x + 38, y + 137, 12, 17, PAGE_BACKWARD, b -> this.turn(-1), previous));
             this.backward.setTooltip(Tooltip.create(previous));
+            if (this.removes) {
+                // 原版配方书里「只显示可合成」开关的位置
+                this.clear = addRenderableWidget(Button.builder(Component.translatable("gui.ibx_lib.spell_picker.clear"), b -> {
+                            SpellPickerScreen.this.selected.clear();
+                            SpellPickerScreen.this.left.refresh();
+                            SpellPickerScreen.this.right.refresh();
+                        })
+                        .bounds(x + 110, y + 12, 26, 16)
+                        .tooltip(Tooltip.create(Component.translatable("gui.ibx_lib.spell_picker.clear.tooltip")))
+                        .build());
+            }
             this.refresh();
         }
 
@@ -251,6 +266,9 @@ public class SpellPickerScreen extends Screen {
             }
             if (this.backward != null) {
                 this.backward.visible = this.page > 0;
+            }
+            if (this.clear != null) {
+                this.clear.active = !SpellPickerScreen.this.selected.isEmpty();
             }
         }
 

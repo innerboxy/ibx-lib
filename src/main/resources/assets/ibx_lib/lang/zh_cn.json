@@ -94,6 +94,8 @@
   "gui.ibx_lib.spell_picker.empty": "还没有选法术",
   "gui.ibx_lib.spell_picker.none": "没有可选的法术",
   "gui.ibx_lib.spell_picker.no_match": "没有匹配的法术",
+  "gui.ibx_lib.spell_picker.clear": "清空",
+  "gui.ibx_lib.spell_picker.clear.tooltip": "移出全部已选法术",
   "subtitles.ibx_lib.spell_wheel.open": "法术轮盘：打开",
   "subtitles.ibx_lib.spell_wheel.select": "法术轮盘：选中",
   "subtitles.ibx_lib.spell_wheel.close": "法术轮盘：关闭",

@@ -94,6 +94,8 @@
   "gui.ibx_lib.spell_picker.empty": "No spells selected",
   "gui.ibx_lib.spell_picker.none": "No spells to choose from",
   "gui.ibx_lib.spell_picker.no_match": "No matching spells",
+  "gui.ibx_lib.spell_picker.clear": "Clear",
+  "gui.ibx_lib.spell_picker.clear.tooltip": "Remove all selected spells",
   "subtitles.ibx_lib.spell_wheel.open": "Spell wheel opens",
   "subtitles.ibx_lib.spell_wheel.select": "Spell selected",
   "subtitles.ibx_lib.spell_wheel.close": "Spell wheel closes",
