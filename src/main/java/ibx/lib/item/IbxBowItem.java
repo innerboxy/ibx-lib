@@ -40,7 +40,8 @@ import java.util.function.Predicate;
  *   <li>带 {@code auto_fire} 组件时拉满自动射出，见 {@link RangedWeaponApi#tickAutoFire}。</li>
  *   <li>自动进 {@code #c:tools}、{@code #c:tools/ranged_weapon}、{@code #c:tools/bow}（见 {@link ibx.lib.registry.AutoItemTags}）。</li>
  * </ul>
- * 需要改箭速、门槛、弹药的变种，继承后重写对应的 protected 方法即可。
+ * 需要改箭速、门槛、弹药的变种，继承后重写对应的 protected 方法即可；
+ * 要在发射时结算额外代价、改这一发的伤害或给箭挂数据，重写 {@link #prepareShot}。
  *
  * <p>注册：26.1 起 {@link Item.Properties} 必须先带上物品 id 才能构造物品，请用
  * {@code DeferredRegister.Items#registerItem} 注册，在工厂里使用传进来的 Properties，
@@ -114,6 +115,18 @@ public class IbxBowItem extends BowItem implements IbxRangedWeaponItem {
         return MIN_CHARGE;
     }
 
+    /**
+     * 发射前调用一次（服务端，已过发射门槛、马上要射）：子类在这里结算这一发的额外代价。
+     * 返回的处理会在每支弹射物写好伤害快照之后、生成进世界之前调用（多重射击每支都调），
+     * 可以改伤害快照（{@link RangedWeaponApi#setAmmoRangedDamage}）、给弹射物挂数据；返回 null 表示不额外处理。
+     *
+     * @param chargePercent 这一发的蓄力百分比，拉满为 1
+     */
+    protected @Nullable Consumer<Projectile> prepareShot(ServerLevel level, Player player, ItemStack stack,
+                                                         float chargePercent) {
+        return null;
+    }
+
     /** 线性蓄力百分比：已蓄力 tick ÷ 满蓄 tick，clamp 到 1。 */
     public float getChargePercent(int chargeTicks, LivingEntity shooter, ItemStack stack) {
         return RangedWeaponApi.getChargePercent(chargeTicks, shooter, stack);
@@ -169,8 +182,9 @@ public class IbxBowItem extends BowItem implements IbxRangedWeaponItem {
             // 暴击在这里掷骰（服务端），结果记在箭的原版暴击标记上，顺带白拿原版的暴击粒子；
             // 真正的伤害倍率由 DamageHandler 在命中时叠加。
             float damage = RangedWeaponApi.getRangedDamage(player, stack) * pct;
+            Consumer<Projectile> extra = this.prepareShot(serverLevel, player, stack, pct);
             this.shootWithDamage(serverLevel, player, player.getUsedItemHand(), stack, projectiles,
-                    this.getArrowVelocity(stack) * pct, 1.0F, CriticalStrikeApi.roll(player), null, damage);
+                    this.getArrowVelocity(stack) * pct, 1.0F, CriticalStrikeApi.roll(player), null, damage, extra);
         }
 
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS,
@@ -183,10 +197,12 @@ public class IbxBowItem extends BowItem implements IbxRangedWeaponItem {
      * 原版 {@code ProjectileWeaponItem#shoot} 的复刻，多一个 damage 参数：每支箭生成后写入伤害快照。
      * 原版 createProjectile 没有蓄力参数，所以只能在这一层塞进去；散射、耐久、多重射击结构原样保留。
      * 生成同原版走 {@link Projectile#spawnProjectile}：火矢等附魔的"弹射物生成"效果是在那里触发的。
+     *
+     * @param extra {@link #prepareShot} 返回的额外处理，写完伤害快照后对每支弹射物调用；null 不处理
      */
     protected void shootWithDamage(ServerLevel level, LivingEntity shooter, InteractionHand hand, ItemStack weapon,
                                    List<ItemStack> projectileItems, float velocity, float inaccuracy, boolean isCrit,
-                                   @Nullable LivingEntity target, float damage) {
+                                   @Nullable LivingEntity target, float damage, @Nullable Consumer<Projectile> extra) {
         float spread = EnchantmentHelper.processProjectileSpread(level, weapon, shooter, 0.0F);
         float step = projectileItems.size() == 1 ? 0.0F : 2.0F * spread / (float) (projectileItems.size() - 1);
         float offset = (float) ((projectileItems.size() - 1) % 2) * step / 2.0F;
@@ -203,6 +219,9 @@ public class IbxBowItem extends BowItem implements IbxRangedWeaponItem {
 
             Projectile projectile = this.createProjectile(level, shooter, weapon, ammoStack, isCrit);
             RangedWeaponApi.setAmmoRangedDamage(projectile, damage);
+            if (extra != null) {
+                extra.accept(projectile);
+            }
             Projectile.spawnProjectile(projectile, level, ammoStack,
                     spawned -> this.shootProjectile(shooter, spawned, index, velocity, inaccuracy, angle, target));
 
