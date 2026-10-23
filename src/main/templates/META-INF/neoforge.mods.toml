@@ -1,13 +1,14 @@
 modLoader="javafml" #mandatory
 loaderVersion="${loader_version_range}" #mandatory
 license="${mod_license}"
-# 有图标后:把 icon.png 放进 src/main/resources/ 根目录,再取消下面这行注释
-#logoFile="icon.png"
 
 [[mods]] #mandatory
 modId="${mod_id}" #mandatory
 version="${mod_version}" #mandatory
 displayName="${mod_name}" #mandatory
+logoFile="icon.png" #optional
+# 像素画图标，模组列表里按最近邻缩放
+logoBlur=false
 authors="innerbox"
 description='''
 TODO: mod description.

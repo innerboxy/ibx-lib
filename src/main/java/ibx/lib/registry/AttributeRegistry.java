@@ -292,21 +292,23 @@ public final class AttributeRegistry {
     public static void register(IEventBus modEventBus) {
         ATTRIBUTES.register(modEventBus);
         modEventBus.addListener(AttributeRegistry::attachToLivingEntities);
-        makeAttackDamageSyncable();
+        makeVanillaAttributesSyncable();
     }
 
     /**
-     * 让原版的攻击伤害同步到客户端。
+     * 让原版的攻击伤害、击退、击退抗性同步到客户端。
      *
-     * <p>原版只同步护甲、韧性、攻速这类客户端要用的属性，攻击伤害没标同步；而手持物品的属性修饰符只在服务端加
+     * <p>原版只同步护甲、韧性、攻速这类客户端要用的属性，这三个没标同步；而装备的属性修饰符只在服务端加
      * （{@code LivingEntity.detectEquipmentUpdates} 在 {@code !isClientSide()} 里），所以客户端读到的永远是基础值，
-     * HUD 属性行的"力量"拿剑也不变。本模组的远程伤害、法强等属性注册时都标了同步，没有这个问题。</p>
+     * 背包旁的属性面板拿剑、穿下界合金甲也不变。本模组的远程伤害、法强等属性注册时都标了同步，没有这个问题。</p>
      *
-     * <p>{@code setSyncable} 只是改个标记：服务端在属性变化时据此决定发不发属性包，变化很少（换武器、药水起落），流量可忽略。
+     * <p>{@code setSyncable} 只是改个标记：服务端在属性变化时据此决定发不发属性包，变化很少（换装备、药水起落），流量可忽略。
      * 在模组构造时调用，早于任何实体生成。</p>
      */
-    private static void makeAttackDamageSyncable() {
+    private static void makeVanillaAttributesSyncable() {
         Attributes.ATTACK_DAMAGE.value().setSyncable(true);
+        Attributes.ATTACK_KNOCKBACK.value().setSyncable(true);
+        Attributes.KNOCKBACK_RESISTANCE.value().setSyncable(true);
     }
 
     /**

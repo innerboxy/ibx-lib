@@ -79,4 +79,12 @@ public final class UiPalette {
     public static final int WHEEL_SELECT_LIGHT = 0xFFFFE0A0;
     public static final int WHEEL_SELECT_MID = 0xFFFFB347;
     public static final int WHEEL_SELECT_DARK = 0xFFB86E1E;
+
+    // ---------------------------------------------------------------- 背包旁的属性面板、属性面板设置界面（自己画的木框）
+    /** 凹进去的列表底（比面板底深一档）。 */
+    public static final int INSET = 0xFF1E140E;
+    /** 列表隔行的浅一档。 */
+    public static final int ROW_ALT = 0xFF271A12;
+    /** 木框的亮边：凹槽的右 / 下沿、按钮的左 / 上沿、勾选框的边、分组标题后面的横线。 */
+    public static final int EDGE = 0xFF6E4B30;
 }

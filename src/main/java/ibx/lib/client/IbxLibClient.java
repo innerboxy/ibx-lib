@@ -1,6 +1,7 @@
 package ibx.lib.client;
 
 import ibx.lib.IbxLib;
+import ibx.lib.client.attribute.AttributePanel;
 import ibx.lib.client.ground.BlockWaveRendering;
 import ibx.lib.client.ground.GroundWarningRendering;
 import ibx.lib.client.hud.TavernHud;
@@ -39,7 +40,7 @@ public final class IbxLibClient {
         // 最低优先级：等其他模组先注册完自己的客户端扩展，再给剩下的 Ibx 弩补上，避免重复注册报错。
         modEventBus.addListener(EventPriority.LOWEST, CrossbowArmPose::onRegisterClientExtensions);
 
-        // HUD：快捷栏旁的属性块、副手栏外侧的当前法术、吟唱条、蓝条、经验条正中的等级数字；隐藏原版护甲行
+        // HUD：副手栏外侧的当前法术、吟唱条、蓝条、经验条正中的等级数字；隐藏原版护甲行
         modEventBus.addListener(TavernHud::onRegisterGuiLayers);
         NeoForge.EVENT_BUS.addListener(TavernHud::onClientTick);
         // 法术轮盘：按住轮盘键弹出、左键点选；法术图标资源重载时重新找
@@ -79,5 +80,7 @@ public final class IbxLibClient {
         NeoForge.EVENT_BUS.addListener(ShieldInput::onClientTick);
         // Jade（装了才有）：首次进世界关掉它的「显示Boss」；提示框里的魔抗由 Jade 插件 IbxJadePlugin 自己注册
         JadeCompat.register();
+        // 背包左边的属性面板（人物框左下角的卷轴按钮开关）和它的设置界面
+        AttributePanel.register(modEventBus);
     }
 }

@@ -1,6 +1,9 @@
 package ibx.lib.config;
 
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.common.ModConfigSpec;
+
+import java.util.List;
 
 /**
  * 本模组的客户端配置（{@code config/ibx_lib-client.toml}），只影响本机的显示和操作，不同步。
@@ -14,13 +17,9 @@ public final class ClientConfig {
 
     public static final ModConfigSpec.BooleanValue VANILLA_HUD = BUILDER
             .comment("是否完全使用原版 HUD。",
-                    "false = 心形 / 鸡腿换成生命条、饥饿条，加上属性块、吟唱条、蓝条，隐藏原版护甲行，等级数字挪到经验条正中；",
+                    "false = 心形 / 鸡腿换成生命条、饥饿条，加上吟唱条、蓝条，隐藏原版护甲行，等级数字挪到经验条正中；",
                     "true  = 全部原版。和其他改 HUD 的模组冲突时可以打开。")
             .define("vanillaHud", false);
-
-    public static final ModConfigSpec.BooleanValue SHOW_STATS_ROW = BUILDER
-            .comment("是否在快捷栏右侧显示属性（护甲、法抗、韧性 | 力量、远程伤害、法强）。")
-            .define("showStatsRow", true);
 
     public static final ModConfigSpec.BooleanValue ALWAYS_SHOW_MANA_BAR = BUILDER
             .comment("蓝条是否常驻。",
@@ -100,6 +99,41 @@ public final class ClientConfig {
             .comment("提示的颜色：敌我都作用的，以及只标落点的，十六进制 #RRGGBB。")
             .define("targetColorAll", "#F2C230", ClientConfig::isColor);
 
+    public static final ModConfigSpec.BooleanValue ATTRIBUTE_PANEL_OPEN = BUILDER
+            .comment("背包左边的属性面板是否开着（点人物框左下角的卷轴按钮开关，记住上次的状态）。")
+            .define("attributePanelOpen", false);
+
+    public static final ModConfigSpec.BooleanValue ATTRIBUTE_PANEL_SHOW_ICONS = BUILDER
+            .comment("属性面板：每行是否画图标。")
+            .define("attributePanelShowIcons", true);
+
+    public static final ModConfigSpec.BooleanValue ATTRIBUTE_PANEL_SHOW_NAMES = BUILDER
+            .comment("属性面板：每行是否写属性名。")
+            .define("attributePanelShowNames", true);
+
+    public static final ModConfigSpec.BooleanValue ATTRIBUTE_PANEL_GROUP_BY_MOD = BUILDER
+            .comment("属性面板：是否按模组分组（原版、酒馆轶事、其他模组各一组，带组名）；false = 不分组排成一列。")
+            .define("attributePanelGroupByMod", false);
+
+    public static final ModConfigSpec.BooleanValue ATTRIBUTE_PANEL_HIDE_DEFAULT = BUILDER
+            .comment("属性面板：是否不列出还是默认值的属性（只列被装备、效果等改过的）。")
+            .define("attributePanelHideDefault", false);
+
+    public static final ModConfigSpec.EnumValue<AttributeSort> ATTRIBUTE_PANEL_SORT = BUILDER
+            .comment("属性面板的排序：DEFAULT = 默认顺序，NAME = 按名称，CUSTOM = 自定义（设置界面里用 ▲▼ 调的顺序）。")
+            .defineEnum("attributePanelSort", AttributeSort.DEFAULT);
+
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> ATTRIBUTE_PANEL_ORDER = BUILDER
+            .comment("属性面板的自定义顺序（属性 id），排序选 CUSTOM 时用；没列出的属性按默认顺序接在后面。")
+            .defineListAllowEmpty("attributePanelOrder", List.of(), () -> "", ClientConfig::isId);
+
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> ATTRIBUTE_PANEL_HIDDEN = BUILDER
+            .comment("属性面板里不显示的属性（属性 id）。",
+                    "默认不显示：镜头距离、路径点传输 / 接收距离、名称标签渲染距离、创造模式飞行。")
+            .defineListAllowEmpty("attributePanelHidden", List.of(
+                    "minecraft:camera_distance", "minecraft:waypoint_transmit_range", "minecraft:waypoint_receive_range",
+                    "neoforge:nametag_distance", "neoforge:creative_flight"), () -> "", ClientConfig::isId);
+
     public static final ModConfigSpec.BooleanValue JADE_BOSSES_HIDDEN_ONCE = BUILDER
             .comment("内部记录，一般不用改：是否已经替你关掉过 Jade 的「显示Boss」（装了 Jade 才有用）。",
                     "Jade 准星对着 Boss 时会再显示一遍血量，和 Boss 血条重复，所以第一次进世界时自动关一次；",
@@ -110,10 +144,6 @@ public final class ClientConfig {
 
     public static boolean vanillaHud() {
         return SPEC.isLoaded() && VANILLA_HUD.get();
-    }
-
-    public static boolean showStatsRow() {
-        return !SPEC.isLoaded() || SHOW_STATS_ROW.get();
     }
 
     public static double spellWheelScale() {
@@ -140,5 +170,19 @@ public final class ClientConfig {
 
     private static boolean isColor(Object value) {
         return value instanceof String text && text.matches("#?[0-9A-Fa-f]{6}");
+    }
+
+    private static boolean isId(Object value) {
+        return value instanceof String text && Identifier.tryParse(text) != null;
+    }
+
+    /** 列表类配置的当前值，没加载时取默认值。 */
+    public static List<? extends String> get(ModConfigSpec.ConfigValue<List<? extends String>> value) {
+        return SPEC.isLoaded() ? value.get() : value.getDefault();
+    }
+
+    /** 属性面板的排序方式。 */
+    public enum AttributeSort {
+        DEFAULT, NAME, CUSTOM
     }
 }

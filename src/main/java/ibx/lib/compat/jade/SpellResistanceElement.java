@@ -20,7 +20,7 @@ import java.text.DecimalFormat;
 /**
  * 魔法抗性的提示框元素，和 Jade 画护甲的效果一样：魔抗先向下取整（同护甲的 {@code getArmorValue}），每个图标 2 点、向上取整、
  * 全画满格不画半格；一行最多 Jade「每行图标数」个、多行往上错开；超过 Jade「显示盔甲的最大值」就画一个图标加数字。
- * 几项设置都用 Jade 护甲的，两边一起变。图标是 lib HUD 的魔抗图标（{@code ibx_lib:hud/icon/spell_resistance}，9×9）。
+ * 几项设置都用 Jade 护甲的，两边一起变。图标用 {@code ibx_lib:hud/icon/spell_resistance}（9×9）。
  */
 final class SpellResistanceElement extends Element {
     private static final Identifier ICON = Identifier.fromNamespaceAndPath(IbxLib.MODID, "hud/icon/spell_resistance");

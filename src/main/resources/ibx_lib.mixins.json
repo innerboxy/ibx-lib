@@ -15,9 +15,9 @@
     "TagLoaderMixin"
   ],
   "client": [
+    "AbstractRecipeBookScreenAccessor",
     "ControlsScreenMixin",
     "FlameFeatureRendererMixin",
-    "GuiHotbarMixin",
     "MinecraftMixin"
   ],
   "injectors": {

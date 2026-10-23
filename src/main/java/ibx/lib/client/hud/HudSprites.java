@@ -43,14 +43,6 @@ final class HudSprites {
     static final Identifier HEALTH_AIR = id("bar/health_air");
     static final Identifier HEALTH_DROWN = id("bar/health_drown");
 
-    // 9×9 图标
-    static final Identifier ICON_ARMOR = id("icon/armor");
-    static final Identifier ICON_SPELL_RESISTANCE = id("icon/spell_resistance");
-    static final Identifier ICON_TOUGHNESS = id("icon/toughness");
-    static final Identifier ICON_ATTACK_DAMAGE = id("icon/attack_damage");
-    static final Identifier ICON_RANGED_DAMAGE = id("icon/ranged_damage");
-    static final Identifier ICON_SPELL_POWER = id("icon/spell_power");
-
     private static Identifier id(String path) {
         return Identifier.fromNamespaceAndPath(IbxLib.MODID, "hud/" + path);
     }

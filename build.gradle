@@ -17,9 +17,11 @@ dependencies {
     runtimeOnly "maven.modrinth:mmmmmmmmmmmm:${dummmmmmy_version}"
     // Dummmmmmy 的前置
     runtimeOnly "maven.modrinth:moonlight:${moonlight_version}"
-    // Curios (optional)
-    compileOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}:api"
+    // Curios (optional)：编译用完整 jar（属性面板要认它的饰品栏界面、借它算饰品栏占的区域报给 JEI，这些不在 API 里）
+    compileOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}"
     runtimeOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}"
     // Jade（可选）：首次进世界关掉它的「显示Boss」、提示框里显示魔抗；只编译，开发环境运行用 tavern/run/mods 里的同版本 jar
     compileOnly "maven.modrinth:jade:${jade_version}"
+    // JEI（可选）：背包旁的属性面板开着时告诉 JEI 让开那块地方（书签栏）；只编译 API，开发环境运行用 tavern 里带的 JEI
+    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
 }
