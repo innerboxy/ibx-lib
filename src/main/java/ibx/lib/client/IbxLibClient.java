@@ -20,6 +20,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
@@ -31,8 +32,12 @@ import net.neoforged.neoforge.common.NeoForge;
  */
 @Mod(value = IbxLib.MODID, dist = Dist.CLIENT)
 public final class IbxLibClient {
+    private static final String PLAYER_ANIMATION_LIBRARY = "player_animation_library";
+
     public IbxLibClient(IEventBus modEventBus, ModContainer modContainer) {
         modContainer.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
+        // Player Animation Library 是可选依赖：没装时动作相关的类（CastAnimations、ShieldAnimations、PlayerAnimLayers）一个都不加载
+        boolean playerAnimationsLoaded = ModList.get().isLoaded(PLAYER_ANIMATION_LIBRARY);
         // 模组列表里的「配置」按钮：NeoForge 自带的配置界面，游戏里直接改（名字见语言文件 ibx_lib.configuration.*，说明取配置注释）
         modContainer.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
 
@@ -59,8 +64,10 @@ public final class IbxLibClient {
         NeoForge.EVENT_BUS.addListener(SpellPickerInput::onInteraction);
         // 法术容器的物品提示：名字下面列出提供的法术
         NeoForge.EVENT_BUS.addListener(SpellItemTooltip::onItemTooltip);
-        // 玩家施法动作（Player Animation Library），以及法典施法时翻开用的物品模型条件 ibx_lib:casting
-        CastAnimations.register();
+        // 玩家施法动作（Player Animation Library，可选：没装就不放动作），以及法典施法时翻开用的物品模型条件 ibx_lib:casting
+        if (playerAnimationsLoaded) {
+            CastAnimations.register();
+        }
         modEventBus.addListener(IsCastingProperty::onRegister);
         // 着火：换颜色的火（翠焰的绿火）身上的火苗；第一人称屏幕上的火改成四周的边框（原版火、换色火都是）
         modEventBus.addListener(CustomFireRendering::onRegisterRenderStateModifiers);
@@ -75,8 +82,10 @@ public final class IbxLibClient {
         BlockWaveRendering.register(modEventBus);
         NeoForge.EVENT_BUS.addListener(TargetModeSync::onLoggingIn);
         modEventBus.addListener(TargetModeSync::onConfigReloaded);
-        // 盾牌：主手举盾中的左键（发盾击的包，不交给原版）和盾击动作
-        ShieldAnimations.register();
+        // 盾牌：主手举盾中的左键（发盾击的包，不交给原版）和盾击动作（盾击动作同样要 Player Animation Library）
+        if (playerAnimationsLoaded) {
+            ShieldAnimations.register();
+        }
         NeoForge.EVENT_BUS.addListener(ShieldInput::onClientTick);
         // Jade（装了才有）：首次进世界关掉它的「显示Boss」；提示框里的魔抗由 Jade 插件 IbxJadePlugin 自己注册
         JadeCompat.register();

@@ -38,7 +38,6 @@ TODO: mod description.
     ordering="NONE"
     side="BOTH"
 
-# MmmMmmMmmMmm(试验假人)非强制依赖:装了就联动,没装本模组照常加载。
 [[dependencies."${mod_id}"]]
     modId="geckolib"
     type="required"
@@ -46,13 +45,15 @@ TODO: mod description.
     ordering="NONE"
     side="BOTH"
 
+# Player Animation Library 非强制依赖:装了就有施法、盾击时的玩家动作,没装本模组照常加载(只是手臂不动)。
 [[dependencies."${mod_id}"]]
     modId="player_animation_library"
-    type="required"
+    type="optional"
     versionRange="[1.2.6,)"
     ordering="NONE"
     side="BOTH"
 
+# MmmMmmMmmMmm(试验假人)非强制依赖:装了就联动,没装本模组照常加载。
 [[dependencies."${mod_id}"]]
     modId="dummmmmmy"
     type="optional"

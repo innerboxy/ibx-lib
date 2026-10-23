@@ -10,7 +10,7 @@ apply from: rootProject.file('gradle/mod-common.gradle')
 dependencies {
     // GeckoLib（强制前置）
     implementation "com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
-    // Player Animation Library（强制前置）：玩家施法动作
+    // Player Animation Library（可选）：施法、盾击时的玩家动作；没装就不放动作。开发环境照常带上
     implementation "maven.modrinth:player-animation-library:${player_animation_library_version}"
     // Dummmmmmy (optional)
     compileOnly "maven.modrinth:mmmmmmmmmmmm:${dummmmmmy_version}"

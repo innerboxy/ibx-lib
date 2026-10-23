@@ -9,14 +9,11 @@ import ibx.lib.IbxLib;
 import ibx.lib.api.event.SpellCastStateEvent;
 import ibx.lib.client.PlayerAnimLayers;
 import ibx.lib.item.general.IbxMagicWeaponItem;
-import ibx.lib.registry.TagRegistry;
 import ibx.lib.spell.Spell;
-import ibx.lib.spell.SpellCasting;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Avatar;
 import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -38,7 +35,7 @@ import java.util.WeakHashMap;
  *       手臂平滑回到原版姿势，但至少放满 {@link #MIN_SHOW_TICKS}（瞬发的结束紧跟在开始后面，不等就看不到）。
  *       直接停的话控制器立刻失效，淡出不会生效，所以淡到空动画。</li>
  *   <li>第一人称也显示：用第三人称模型的手臂和手上物品画。</li>
- *   <li>施法中或动作还在放时，施法那只手上的物品算"正在施法"（{@link #isCastingWith}），法典据此翻开，瞬发也一样。</li>
+ *   <li>动作还在放时，施法那只手上的物品也算"正在施法"（注册时告诉 {@link IsCastingProperty}），法典据此翻开，瞬发也一样。</li>
  * </ul>
  */
 public final class CastAnimations {
@@ -68,18 +65,10 @@ public final class CastAnimations {
         }
     }
 
-    /**
-     * 这件物品是不是正拿在手上施法：施法者正在施法（两端同步的施法状态），或施法动作还在放（瞬发法术的动作比施法本身长），
-     * 并且物品就在施法那只手上。物品模型条件 {@code ibx_lib:casting} 用它（法典施法时翻开）。
-     */
-    public static boolean isCastingWith(LivingEntity owner, ItemStack stack) {
-        boolean casting = SpellCasting.isCasting(owner) || owner instanceof Avatar avatar && PLAYING.containsKey(avatar);
-        return casting && owner.getItemInHand(castingHand(owner)) == stack;
-    }
-
-    /** 客户端初始化时调：注册动画图层，监听施法开始 / 结束和客户端 tick。 */
+    /** 客户端初始化时调（装了 Player Animation Library 才调）：注册动画图层，监听施法开始 / 结束和客户端 tick。 */
     public static void register() {
         PlayerAnimLayers.register(LAYER, PRIORITY);
+        IsCastingProperty.setAnimationPlaying(entity -> entity instanceof Avatar avatar && PLAYING.containsKey(avatar));
         NeoForge.EVENT_BUS.addListener(CastAnimations::onCastStart);
         NeoForge.EVENT_BUS.addListener(CastAnimations::onCastEnd);
         NeoForge.EVENT_BUS.addListener(CastAnimations::onClientTick);
@@ -93,7 +82,7 @@ public final class CastAnimations {
         if (controller == null) {
             return;
         }
-        InteractionHand hand = castingHand(avatar);
+        InteractionHand hand = IsCastingProperty.castingHand(avatar);
         HumanoidArm arm = hand == InteractionHand.MAIN_HAND ? avatar.getMainArm() : avatar.getMainArm().getOpposite();
         PlayerAnimLayers.setMirrored(controller, arm == HumanoidArm.LEFT);
         Identifier animation = animationFor(event.getContext().spell(), avatar.getItemInHand(hand));
@@ -167,11 +156,6 @@ public final class CastAnimations {
     }
 
     /** 主手拿着施法物品就是主手，否则副手（都没有时按主手）。 */
-    private static InteractionHand castingHand(LivingEntity entity) {
-        return !entity.getMainHandItem().is(TagRegistry.CAN_CAST_SPELL) && entity.getOffhandItem().is(TagRegistry.CAN_CAST_SPELL)
-                ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
-    }
-
     private static @Nullable PlayerAnimationController controller(Avatar avatar) {
         return PlayerAnimLayers.controller(avatar, LAYER);
     }
