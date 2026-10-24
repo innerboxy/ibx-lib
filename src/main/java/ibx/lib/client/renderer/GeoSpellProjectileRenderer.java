@@ -36,6 +36,7 @@ import org.jspecify.annotations.Nullable;
  *       partialTick 插值，拐弯是平滑的；</li>
  *   <li>{@code emissive} 为 true 时自发光：不吃光照，夜里、洞里也是贴图本来的颜色，但各面仍按朝向分明暗，看得出立体。</li>
  * </ul>
+ * 要装 GeckoLib 才能加载（对 lib 是可选依赖），同 {@code SpellProjectile}。
  */
 public class GeoSpellProjectileRenderer<T extends SpellProjectile, R extends EntityRenderState & GeoRenderState>
         extends GeoEntityRenderer<T, R> {

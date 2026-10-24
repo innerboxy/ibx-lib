@@ -72,6 +72,9 @@ import org.jspecify.annotations.Nullable;
  * <p>渲染：客户端用 {@code client.renderer.SpellProjectileRenderer}（一张朝向镜头的图）、
  * {@code client.renderer.GeoSpellProjectileRenderer}（GeckoLib 3D 模型，飞行中循环播 {@link #flyAnimation()}），或者自己写渲染器。
  * 实体类型由各模组自己注册（{@code DeferredRegister.Entities}），大小建议 0.25 ~ 0.5 格。</p>
+ *
+ * <p>这个类实现了 GeckoLib 的 {@code GeoEntity}，要装 GeckoLib 才能加载。GeckoLib 对 lib 是可选依赖（用它的模组自己强制要求），
+ * 所以 lib 自己常驻的代码里不能引用这个类（{@code instanceof}、参数类型都不行），只给注册了弹射物的模组继承。</p>
  */
 public abstract class SpellProjectile extends Projectile implements GeoEntity {
     /** 命中结束时发给客户端的实体事件，客户端据此播 {@link #impactParticles()}。 */

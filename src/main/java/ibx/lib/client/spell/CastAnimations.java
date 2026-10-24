@@ -37,6 +37,9 @@ import java.util.WeakHashMap;
  *   <li>第一人称也显示：用第三人称模型的手臂和手上物品画。</li>
  *   <li>动作还在放时，施法那只手上的物品也算"正在施法"（注册时告诉 {@link IsCastingProperty}），法典据此翻开，瞬发也一样。</li>
  * </ul>
+ *
+ * Player Animation Library 是 lib 的可选依赖：这个类引用了它的类，只能在装了它时加载——只由 {@code IbxLibClient} 判断装了才调 {@code register}，
+ * 别的地方别直接引用这个类。
  */
 public final class CastAnimations {
     private CastAnimations() {}
@@ -68,6 +71,7 @@ public final class CastAnimations {
     /** 客户端初始化时调（装了 Player Animation Library 才调）：注册动画图层，监听施法开始 / 结束和客户端 tick。 */
     public static void register() {
         PlayerAnimLayers.register(LAYER, PRIORITY);
+        // 瞬发法术的动作比施法本身长：动作放着的这段也让法典保持翻开（IsCastingProperty 不引用这个类，没装动作库也能加载）
         IsCastingProperty.setAnimationPlaying(entity -> entity instanceof Avatar avatar && PLAYING.containsKey(avatar));
         NeoForge.EVENT_BUS.addListener(CastAnimations::onCastStart);
         NeoForge.EVENT_BUS.addListener(CastAnimations::onCastEnd);

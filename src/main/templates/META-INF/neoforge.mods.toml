@@ -38,9 +38,11 @@ TODO: mod description.
     ordering="NONE"
     side="BOTH"
 
+# GeckoLib 非强制依赖:只有法术弹射物基类 SpellProjectile 和它的 3D 渲染器用到,给注册弹射物的模组继承(那些模组自己强制要 GeckoLib)。
+# lib 自己不会加载这两个类,没装 GeckoLib 照常加载。
 [[dependencies."${mod_id}"]]
     modId="geckolib"
-    type="required"
+    type="optional"
     versionRange="[${geckolib_version},)"
     ordering="NONE"
     side="BOTH"

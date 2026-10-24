@@ -14,6 +14,9 @@ import org.jspecify.annotations.Nullable;
 /**
  * 本模组玩家动作图层（Player Animation Library）的公共写法：每个玩家一个控制器，第一人称用第三人称模型画手臂和手上物品，
  * 挂一个镜像修饰符（动作都按右手做，要给左手用时整段镜像）。施法动作、盾击动作都用它。
+ *
+ * <p>Player Animation Library 是 lib 的可选依赖：这个类只被 {@code CastAnimations}、{@code ShieldAnimations} 用，
+ * 它们只在装了动作库时注册；别的地方别直接引用这个类。</p>
  */
 public final class PlayerAnimLayers {
     private PlayerAnimLayers() {}

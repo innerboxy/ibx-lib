@@ -34,6 +34,9 @@ import java.util.WeakHashMap;
  *       第一人称也显示（用第三人称模型画手臂和盾，同施法动作）。盾击会让盾放下，放完回到双手站姿；右键还按着的话
  *       盾失效一过客户端重新举盾，再接回格挡。</li>
  * </ul>
+ *
+ * Player Animation Library 是 lib 的可选依赖：这个类引用了它的类，只能在装了它时加载——只由 {@code IbxLibClient} 判断装了才调 {@code register}，
+ * 别的地方别直接引用这个类。
  */
 public final class ShieldAnimations {
     private ShieldAnimations() {}

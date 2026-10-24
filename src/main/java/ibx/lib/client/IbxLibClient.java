@@ -32,6 +32,7 @@ import net.neoforged.neoforge.common.NeoForge;
  */
 @Mod(value = IbxLib.MODID, dist = Dist.CLIENT)
 public final class IbxLibClient {
+    /** Player Animation Library 的模组 id：可选依赖，装了才注册施法、盾击动作。 */
     private static final String PLAYER_ANIMATION_LIBRARY = "player_animation_library";
 
     public IbxLibClient(IEventBus modEventBus, ModContainer modContainer) {
