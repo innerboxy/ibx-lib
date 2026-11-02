@@ -17,9 +17,10 @@ import net.minecraft.world.entity.LivingEntity;
  * @param canCrit        法术能否暴击（{@code can_spell_crit} 总值大于等于 1）
  * @param critChance     暴击率（{@code critical_chance}）：0~1 为概率，大于等于 1 必定暴击
  * @param critMultiplier 暴击时的伤害倍率，即 1 + {@code critical_damage}
+ * @param spellPenetration 法术穿透（{@code spell_penetration}）
  */
 public record SpellDamageContext(LivingEntity caster, float spellPower, boolean canCrit,
-                                 float critChance, float critMultiplier) {
+                                 float critChance, float critMultiplier, float spellPenetration) {
 
     /**
      * 按施法者此刻的属性生成。
@@ -32,6 +33,7 @@ public record SpellDamageContext(LivingEntity caster, float spellPower, boolean 
                 (float) AttributeUtil.read(caster, AttributeRegistry.SPELL_POWER),
                 AttributeUtil.read(caster, AttributeRegistry.CAN_SPELL_CRIT) >= 1.0D,
                 CriticalStrikeApi.getChance(caster),
-                CriticalStrikeApi.getMultiplier(caster));
+                CriticalStrikeApi.getMultiplier(caster),
+                (float) AttributeUtil.read(caster, AttributeRegistry.SPELL_PENETRATION));
     }
 }

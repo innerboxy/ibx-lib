@@ -125,6 +125,21 @@ public final class AttributeRegistry {
                     ).setSyncable(true));
 
     /**
+     * 护甲穿透：攻击时无视目标护甲减免的比例，公式为 {@code 实际减免 = 护甲减免 × (1 − 本值)}，护甲减免按原版护甲和韧性算。
+     * 读攻击者身上的值，弹射物读射手。只打折护甲这一步，保护附魔和抗性效果照常减免。
+     * 默认 0，最小 0，最大 1（完全无视护甲）。tooltip 里加法修饰符也显示成百分数（+0.2 → +20%）。
+     * 结算见 {@link ibx.lib.event.DamageHandler}。
+     */
+    public static final DeferredHolder<Attribute, Attribute> ARMOR_PENETRATION =
+            ATTRIBUTES.register("armor_penetration",
+                    () -> new PercentageAttribute(
+                            "attribute.name." + IbxLib.MODID + ".armor_penetration",
+                            0.0D,    // 默认值
+                            0.0D,    // 最小值
+                            1.0D     // 最大值
+                    ).setSyncable(true));
+
+    /**
      * 回复效率：受到治疗时的倍率，公式为 {@code 实际回复量 = 回复量 × 本值}。
      * 默认 1（不改变回复量），最小 0（完全无法回复），最大 1024。
      * 结算见 {@link ibx.lib.event.HealHandler}。
@@ -261,6 +276,21 @@ public final class AttributeRegistry {
                             0.0D,    // 默认值
                             0.0D,    // 最小值
                             4096.0D  // 最大值
+                    ).setSyncable(true));
+
+    /**
+     * 法术穿透：法术命中时无视目标法术抗性减免的比例，公式为 {@code 实际减免 = 法术抗性减免 × (1 − 本值)}，口径同 {@link #ARMOR_PENETRATION}。
+     * 施法时读进快照（{@link ibx.lib.api.SpellDamageSnapshot}），之后换装备不影响已经放出去的法术。
+     * 默认 0，最小 0，最大 1（完全无视法术抗性）。tooltip 里加法修饰符也显示成百分数（+0.2 → +20%）。
+     * 结算见 {@link ibx.lib.event.DamageHandler}。
+     */
+    public static final DeferredHolder<Attribute, Attribute> SPELL_PENETRATION =
+            ATTRIBUTES.register("spell_penetration",
+                    () -> new PercentageAttribute(
+                            "attribute.name." + IbxLib.MODID + ".spell_penetration",
+                            0.0D,    // 默认值
+                            0.0D,    // 最小值
+                            1.0D     // 最大值
                     ).setSyncable(true));
 
     /**

@@ -36,17 +36,18 @@ import java.util.Optional;
  * @param fireTicks      命中后点燃的 tick 数，0 为不点燃
  * @param freezeTicks    命中后冰冻的大致 tick 数，0 为不冰冻（只有减速表现，不够原版冻伤门槛不掉血）
  * @param lifesteal      吸血比例：按实际造成的伤害给施法者回血，0 为不吸血
+ * @param spellPenetration 施法时的法术穿透（{@code spell_penetration}）
  */
 public record SpellDamageSnapshot(ResourceKey<DamageType> damageType, float baseAmount,
                                   boolean canCrit, float critChance, float critMultiplier,
                                   @Nullable Identifier spellId, boolean friendlyFire,
                                   boolean ignoreIFrames, boolean leaveNoIFrames,
-                                  int fireTicks, int freezeTicks, float lifesteal) {
+                                  int fireTicks, int freezeTicks, float lifesteal, float spellPenetration) {
 
     /** 附加数据的默认值，只为满足注册要求；读弹射物上的快照请走 {@link SpellDamageApi#getProjectileSnapshot}。 */
     public static final SpellDamageSnapshot NONE =
             new SpellDamageSnapshot(DamageTypeRegistry.SPELL_GENERAL, 0.0F, false, 0.0F, 1.0F,
-                    null, false, false, false, 0, 0, 0.0F);
+                    null, false, false, false, 0, 0, 0.0F, 0.0F);
 
     /** 存盘格式（26.1 起附加数据只接受 MapCodec）。除基础值外都可省略，省略即默认值。 */
     public static final MapCodec<SpellDamageSnapshot> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -62,11 +63,12 @@ public record SpellDamageSnapshot(ResourceKey<DamageType> damageType, float base
             Codec.BOOL.optionalFieldOf("leave_no_iframes", false).forGetter(SpellDamageSnapshot::leaveNoIFrames),
             Codec.INT.optionalFieldOf("fire_ticks", 0).forGetter(SpellDamageSnapshot::fireTicks),
             Codec.INT.optionalFieldOf("freeze_ticks", 0).forGetter(SpellDamageSnapshot::freezeTicks),
-            Codec.FLOAT.optionalFieldOf("lifesteal", 0.0F).forGetter(SpellDamageSnapshot::lifesteal)
+            Codec.FLOAT.optionalFieldOf("lifesteal", 0.0F).forGetter(SpellDamageSnapshot::lifesteal),
+            Codec.FLOAT.optionalFieldOf("spell_penetration", 0.0F).forGetter(SpellDamageSnapshot::spellPenetration)
     ).apply(i, (damageType, baseAmount, canCrit, critChance, critMultiplier, spellId, friendlyFire,
-                ignoreIFrames, leaveNoIFrames, fireTicks, freezeTicks, lifesteal) ->
+                ignoreIFrames, leaveNoIFrames, fireTicks, freezeTicks, lifesteal, spellPenetration) ->
             new SpellDamageSnapshot(damageType, baseAmount, canCrit, critChance, critMultiplier, spellId.orElse(null),
-                    friendlyFire, ignoreIFrames, leaveNoIFrames, fireTicks, freezeTicks, lifesteal)));
+                    friendlyFire, ignoreIFrames, leaveNoIFrames, fireTicks, freezeTicks, lifesteal, spellPenetration)));
 
     public static final Codec<SpellDamageSnapshot> CODEC = MAP_CODEC.codec();
 
@@ -90,6 +92,7 @@ public record SpellDamageSnapshot(ResourceKey<DamageType> damageType, float base
                 buf.writeInt(s.fireTicks());
                 buf.writeInt(s.freezeTicks());
                 buf.writeFloat(s.lifesteal());
+                buf.writeFloat(s.spellPenetration());
             },
             buf -> new SpellDamageSnapshot(
                     DAMAGE_TYPE_STREAM_CODEC.decode(buf),
@@ -103,66 +106,67 @@ public record SpellDamageSnapshot(ResourceKey<DamageType> damageType, float base
                     buf.readBoolean(),
                     buf.readInt(),
                     buf.readInt(),
+                    buf.readFloat(),
                     buf.readFloat()));
 
     /** 用施法时的输入和公式结果生成快照，开关全取默认值。 */
     public static SpellDamageSnapshot of(SpellDamageContext ctx, ResourceKey<DamageType> damageType, float baseAmount) {
         return new SpellDamageSnapshot(damageType, baseAmount, ctx.canCrit(), ctx.critChance(), ctx.critMultiplier(),
-                null, false, false, false, 0, 0, 0.0F);
+                null, false, false, false, 0, 0, 0.0F, ctx.spellPenetration());
     }
 
     /** 基础值乘一个系数，给范围衰减、多段分摊用（比如爆炸边缘 {@code scaled(0.5F)}）。 */
     public SpellDamageSnapshot scaled(float factor) {
         return new SpellDamageSnapshot(this.damageType, this.baseAmount * factor, this.canCrit, this.critChance,
                 this.critMultiplier, this.spellId, this.friendlyFire, this.ignoreIFrames, this.leaveNoIFrames,
-                this.fireTicks, this.freezeTicks, this.lifesteal);
+                this.fireTicks, this.freezeTicks, this.lifesteal, this.spellPenetration);
     }
 
     public SpellDamageSnapshot withDamageType(ResourceKey<DamageType> damageType) {
         return new SpellDamageSnapshot(damageType, this.baseAmount, this.canCrit, this.critChance,
                 this.critMultiplier, this.spellId, this.friendlyFire, this.ignoreIFrames, this.leaveNoIFrames,
-                this.fireTicks, this.freezeTicks, this.lifesteal);
+                this.fireTicks, this.freezeTicks, this.lifesteal, this.spellPenetration);
     }
 
     public SpellDamageSnapshot withSpell(@Nullable Identifier spellId) {
         return new SpellDamageSnapshot(this.damageType, this.baseAmount, this.canCrit, this.critChance,
                 this.critMultiplier, spellId, this.friendlyFire, this.ignoreIFrames, this.leaveNoIFrames,
-                this.fireTicks, this.freezeTicks, this.lifesteal);
+                this.fireTicks, this.freezeTicks, this.lifesteal, this.spellPenetration);
     }
 
     public SpellDamageSnapshot withFriendlyFire(boolean friendlyFire) {
         return new SpellDamageSnapshot(this.damageType, this.baseAmount, this.canCrit, this.critChance,
                 this.critMultiplier, this.spellId, friendlyFire, this.ignoreIFrames, this.leaveNoIFrames,
-                this.fireTicks, this.freezeTicks, this.lifesteal);
+                this.fireTicks, this.freezeTicks, this.lifesteal, this.spellPenetration);
     }
 
     public SpellDamageSnapshot withIgnoreIFrames(boolean ignoreIFrames) {
         return new SpellDamageSnapshot(this.damageType, this.baseAmount, this.canCrit, this.critChance,
                 this.critMultiplier, this.spellId, this.friendlyFire, ignoreIFrames, this.leaveNoIFrames,
-                this.fireTicks, this.freezeTicks, this.lifesteal);
+                this.fireTicks, this.freezeTicks, this.lifesteal, this.spellPenetration);
     }
 
     public SpellDamageSnapshot withLeaveNoIFrames(boolean leaveNoIFrames) {
         return new SpellDamageSnapshot(this.damageType, this.baseAmount, this.canCrit, this.critChance,
                 this.critMultiplier, this.spellId, this.friendlyFire, this.ignoreIFrames, leaveNoIFrames,
-                this.fireTicks, this.freezeTicks, this.lifesteal);
+                this.fireTicks, this.freezeTicks, this.lifesteal, this.spellPenetration);
     }
 
     public SpellDamageSnapshot withFire(int fireTicks) {
         return new SpellDamageSnapshot(this.damageType, this.baseAmount, this.canCrit, this.critChance,
                 this.critMultiplier, this.spellId, this.friendlyFire, this.ignoreIFrames, this.leaveNoIFrames,
-                fireTicks, this.freezeTicks, this.lifesteal);
+                fireTicks, this.freezeTicks, this.lifesteal, this.spellPenetration);
     }
 
     public SpellDamageSnapshot withFreeze(int freezeTicks) {
         return new SpellDamageSnapshot(this.damageType, this.baseAmount, this.canCrit, this.critChance,
                 this.critMultiplier, this.spellId, this.friendlyFire, this.ignoreIFrames, this.leaveNoIFrames,
-                this.fireTicks, freezeTicks, this.lifesteal);
+                this.fireTicks, freezeTicks, this.lifesteal, this.spellPenetration);
     }
 
     public SpellDamageSnapshot withLifesteal(float lifesteal) {
         return new SpellDamageSnapshot(this.damageType, this.baseAmount, this.canCrit, this.critChance,
                 this.critMultiplier, this.spellId, this.friendlyFire, this.ignoreIFrames, this.leaveNoIFrames,
-                this.fireTicks, this.freezeTicks, lifesteal);
+                this.fireTicks, this.freezeTicks, lifesteal, this.spellPenetration);
     }
 }

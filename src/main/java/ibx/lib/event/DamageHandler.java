@@ -23,6 +23,7 @@ import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.phys.EntityHitResult;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
@@ -62,6 +63,7 @@ public final class DamageHandler {
         applyCriticalDamage(event);
         applyAmmoDifficultyScaling(event);
         applySpellResistance(event);
+        applyArmorPenetration(event);
     }
 
     /** 伤害结算完之后（所有减免都做完、已扣血）：只放命中后的附带效果，不再改伤害量。 */
@@ -125,7 +127,8 @@ public final class DamageHandler {
      * <p>公式同 {@code CombatRules#getDamageAfterAbsorb}，法术抗性当护甲点、韧性用原版 {@code armor_toughness}：
      * {@code 减免比例 = clamp(R − 伤害 ÷ (2 + 韧性 ÷ 4), min(R × 0.2, 20), 20) ÷ 25}，最多减 80%。
      * <b>下限必须是 {@code min(R × 0.2, 20)}</b>：法术抗性上限远超原版护甲的 30，R 超过 100 后 {@code R × 0.2} 大于 20，
-     * 而 {@code Mth.clamp} 在下限大于上限时返回下限，减免会超过 80% 乃至 100%（伤害变负）。</p>
+     * 而 {@code Mth.clamp} 在下限大于上限时返回下限，减免会超过 80% 乃至 100%（伤害变负）。
+     * 减免比例再乘 {@code 1 − 法术穿透}，见 {@link #spellPenetration}。</p>
      *
      * <p>放在最后：符合"先基础、再倍率、最后减免"。按标签而不是 {@code instanceof SpellDamageSource} 判断，
      * 别的模组的魔法伤害进了标签也一起减免。原版在本事件之前就做完了难度缩放，这里不覆盖伤害值，不用补。</p>
@@ -143,7 +146,35 @@ public final class DamageHandler {
         float toughness = (float) AttributeUtil.read(target, Attributes.ARMOR_TOUGHNESS);
         float effective = Mth.clamp(resistance - damage / (2.0F + toughness / 4.0F),
                 Math.min(resistance * 0.2F, 20.0F), 20.0F);
-        event.setAmount(damage * (1.0F - effective / 25.0F));
+        event.setAmount(damage * (1.0F - effective * (1.0F - spellPenetration(event.getSource())) / 25.0F));
+    }
+
+    /**
+     * 这次法术伤害的法术穿透：{@link SpellDamageSource} 取快照里施法时读的值；
+     * 别的模组进了标签的魔法伤害没有快照，读攻击者此刻的属性。
+     */
+    private static float spellPenetration(DamageSource source) {
+        if (source instanceof SpellDamageSource spellSource) {
+            return spellSource.snapshot().spellPenetration();
+        }
+        return source.getEntity() instanceof LivingEntity attacker
+                ? (float) AttributeUtil.read(attacker, AttributeRegistry.SPELL_PENETRATION)
+                : 0.0F;
+    }
+
+    /**
+     * 护甲穿透：护甲这一步的减免乘 {@code 1 − 护甲穿透}，属性读攻击者（弹射物读射手）。
+     *
+     * <p>护甲减免在本事件之后才算，所以这里只挂修饰函数，不改伤害值。法术这类无视护甲的伤害，这一步减免本来就是 0，不受影响。</p>
+     */
+    private static void applyArmorPenetration(LivingIncomingDamageEvent event) {
+        if (!(event.getSource().getEntity() instanceof LivingEntity attacker)) {
+            return;
+        }
+        float penetration = (float) AttributeUtil.read(attacker, AttributeRegistry.ARMOR_PENETRATION);
+        if (penetration > 0.0F) {
+            event.addReductionModifier(DamageContainer.Reduction.ARMOR, (container, reduction) -> reduction * (1.0F - penetration));
+        }
     }
 
     /**

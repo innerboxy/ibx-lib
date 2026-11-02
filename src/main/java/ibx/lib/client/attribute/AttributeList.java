@@ -62,8 +62,9 @@ public final class AttributeList {
             "minecraft:oxygen_bonus", "minecraft:water_movement_efficiency", "minecraft:movement_efficiency",
             "minecraft:burning_time", "minecraft:explosion_knockback_resistance", "minecraft:camera_distance",
             "ibx_lib:max_mana", "ibx_lib:mana_regeneration", "ibx_lib:mana_cost_multiplier", "ibx_lib:spell_power",
-            "ibx_lib:spell_resistance", "ibx_lib:spell_cast_speed", "ibx_lib:spell_cooldown_ratio", "ibx_lib:can_spell_crit",
-            "ibx_lib:critical_chance", "ibx_lib:critical_damage", "ibx_lib:ranged_damage", "ibx_lib:draw_speed",
+            "ibx_lib:spell_resistance", "ibx_lib:spell_penetration", "ibx_lib:spell_cast_speed", "ibx_lib:spell_cooldown_ratio",
+            "ibx_lib:can_spell_crit", "ibx_lib:critical_chance", "ibx_lib:critical_damage", "ibx_lib:armor_penetration",
+            "ibx_lib:ranged_damage", "ibx_lib:draw_speed",
             "ibx_lib:draw_time", "ibx_lib:heal_efficiency", "ibx_lib:thorns", "ibx_lib:max_summons");
 
     /** 面板里要列的：去掉设置里关掉的；勾了「隐藏默认值」再去掉还是默认值的。 */
