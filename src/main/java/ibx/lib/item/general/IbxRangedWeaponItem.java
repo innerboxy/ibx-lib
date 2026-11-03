@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 /**
  * 本模组远程武器的公共接口。弓、弩各自继承对应的原版类（Java 单继承），
  * 共享的部分走本接口 + {@link ibx.lib.api.RangedWeaponApi}。
+ * 实现者自动进 {@code #c:tools}、{@code #c:tools/ranged_weapon}（见 {@link ibx.lib.registry.AutoItemTags}）。
  *
  * <p>注意与原版的 {@link net.minecraft.world.item.ProjectileWeaponItem} 区分：那是原版远程武器的
  * <b>抽象基类</b>（弓弩都继承它）；本接口是本模组自己的<b>标记 + 数值入口</b>，

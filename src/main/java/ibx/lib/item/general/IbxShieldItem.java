@@ -20,7 +20,8 @@ import java.util.Optional;
  *   <li>格挡全走原版的 {@code blocks_attacks} 组件，由构造参数烤：举盾延迟、挡掉比例、水平角度，不大于 0 用原版盾的值
  *       （0.25 秒、全挡、90°）；耐久函数、无视格挡的伤害（{@code #minecraft:bypasses_shield}）、格挡音、破碎音都同原版盾。
  *       副手装备位（{@code equippableUnswappable(OFFHAND)}）也在这里挂，注册时只给耐久和修复材料。</li>
- *   <li>自动进 {@code #minecraft:enchantable/durability}、{@code #c:tools}、{@code #c:tools/shield}（见 {@link ibx.lib.registry.AutoItemTags}）。</li>
+ *   <li>自动进 {@code #c:tools}、{@code #c:tools/shield}，子类再进各自的 {@code #c:tools/one_handed_shield}、
+ *       {@code #c:tools/two_handed_shield}（见 {@link ibx.lib.registry.AutoItemTags}）。</li>
  *   <li>继承 {@link ShieldItem}：原版第一人称渲染给"不是 ShieldItem 的格挡物品"额外加一套举剑格挡的位移旋转，
  *       盾会被转出视野；{@code ShieldItem} 本身只多一个按旗帜颜色换名字的 {@code getName}。</li>
  * </ul>

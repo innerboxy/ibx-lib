@@ -45,6 +45,17 @@ public final class TagRegistry {
     /** 法杖（{@link ibx.lib.item.IbxStaffItem}）。 */
     public static final TagKey<Item> TOOLS_STAFF = commonItem("tools/staff");
 
+    /*
+     * 盾牌按单双手分的通用标签。NeoForge 只有 c:tools/shield，这两个是本模组自建的，挂在它下面一层。
+     * 都由 AutoItemTags 按物品类自动填，没有数据文件。
+     */
+
+    /** 单手盾（{@link ibx.lib.item.IbxOneHandedShieldItem}）。 */
+    public static final TagKey<Item> TOOLS_ONE_HANDED_SHIELD = commonItem("tools/one_handed_shield");
+
+    /** 双手盾（{@link ibx.lib.item.IbxTwoHandedShieldItem}）。 */
+    public static final TagKey<Item> TOOLS_TWO_HANDED_SHIELD = commonItem("tools/two_handed_shield");
+
     private static TagKey<Item> commonItem(String path) {
         return TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("c", path));
     }

@@ -38,7 +38,8 @@ import java.util.function.Predicate;
  *   <li>箭速 = {@link #getArrowVelocity} × 蓄力百分比，只管飞行手感，不影响伤害。</li>
  *   <li>低于 {@link #getMinCharge} 不发射、不消耗；只能主手使用。</li>
  *   <li>带 {@code auto_fire} 组件时拉满自动射出，见 {@link RangedWeaponApi#tickAutoFire}。</li>
- *   <li>自动进 {@code #c:tools}、{@code #c:tools/ranged_weapon}、{@code #c:tools/bow}（见 {@link ibx.lib.registry.AutoItemTags}）。</li>
+ *   <li>自动进 {@code #c:tools/bow}，加上 {@link IbxRangedWeaponItem} 的 {@code #c:tools}、{@code #c:tools/ranged_weapon}
+ *       （见 {@link ibx.lib.registry.AutoItemTags}）。</li>
  * </ul>
  * 需要改箭速、门槛、弹药的变种，继承后重写对应的 protected 方法即可；
  * 要在发射时结算额外代价、改这一发的伤害或给箭挂数据，重写 {@link #prepareShot}。

@@ -21,6 +21,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Ibx 法器：所有施法物品的基类，数值由构造参数给定。按法器种类分子类（{@link ibx.lib.item.IbxTomeItem} 法典、{@link ibx.lib.item.IbxStaffItem} 法杖……），
@@ -79,16 +80,27 @@ public class IbxMagicWeaponItem extends Item implements SpellContainer {
      * @param spells        自带法术的 id，按轮盘里的顺序
      */
     public IbxMagicWeaponItem(Item.Properties properties, int durability, float spellPower, float castMoveSpeed, List<Identifier> spells) {
+        this(properties, durability, spellPower, castMoveSpeed, spells, modifiers -> {});
+    }
+
+    /**
+     * 同上，子类追加自己的属性修饰符（比如法杖的攻速）。
+     *
+     * @param extraModifiers 往同一份属性修饰符里追加的，排在法强后面
+     */
+    protected IbxMagicWeaponItem(Item.Properties properties, int durability, float spellPower, float castMoveSpeed, List<Identifier> spells,
+                                 Consumer<ItemAttributeModifiers.Builder> extraModifiers) {
         super(properties.durability(durability).component(DataComponents.USE_EFFECTS,
                 new UseEffects(false, true, castMoveSpeed > 0.0F ? Mth.clamp(castMoveSpeed, 0.0F, 1.0F) : BASELINE_CAST_MOVE_SPEED)));
         this.spellPower = spellPower;
         this.defaultSpellIds = List.copyOf(spells);
         // 这里只存 Holder，不解析属性；物品注册早于属性注册，DeferredHolder 到时候自己会绑定。
-        this.modifiers = ItemAttributeModifiers.builder()
+        ItemAttributeModifiers.Builder builder = ItemAttributeModifiers.builder()
                 .add(AttributeRegistry.SPELL_POWER,
                         new AttributeModifier(AttributeRegistry.BASE_SPELL_POWER_ID, spellPower, AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.MAINHAND)
-                .build();
+                        EquipmentSlotGroup.MAINHAND);
+        extraModifiers.accept(builder);
+        this.modifiers = builder.build();
     }
 
     public float spellPower() {
