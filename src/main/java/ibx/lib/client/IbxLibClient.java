@@ -2,6 +2,7 @@ package ibx.lib.client;
 
 import ibx.lib.IbxLib;
 import ibx.lib.client.attribute.AttributePanel;
+import ibx.lib.client.creativetab.CreativeSubTabStrip;
 import ibx.lib.client.ground.BlockWaveRendering;
 import ibx.lib.client.ground.GroundWarningRendering;
 import ibx.lib.client.hud.TavernHud;
@@ -92,5 +93,7 @@ public final class IbxLibClient {
         JadeCompat.register();
         // 背包左边的属性面板（人物框左下角的卷轴按钮开关）和它的设置界面
         AttributePanel.register(modEventBus);
+        // 创造栏子栏：选中的创造栏建了子栏（CreativeSubTabs）时，创造模式背包左边一列分组图标
+        CreativeSubTabStrip.register();
     }
 }

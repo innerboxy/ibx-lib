@@ -6,7 +6,7 @@
 
 ## Overview
 
-This mod is a library: it holds the frameworks and no content of its own. Spells, summons, target selection, equipment base classes, attributes and visual effects live here, and other mods register their own spells, weapons and mobs on top of it.
+This mod is a library: it holds the frameworks and no content of its own. Spells, summons, target selection, equipment base classes, attributes, visual effects and creative sub-tabs live here, and other mods register their own spells, weapons and mobs on top of it.
 
 ### Spells
 
@@ -44,6 +44,12 @@ Three purely visual effects with no resolution of their own: ground warnings (a 
 
 See [Visual effects](../TUTORIAL/EFFECT_en.md).
 
+### Creative sub-tabs
+
+Splits the items of one creative tab into groups: a column of icons appears left of the creative inventory, clicking a group shows only its items, and clicking it again goes back to the whole tab. Swap the tab's `displayItems` for `CreativeSubTabs` and `add` one group at a time; the search tab and JEI still get every item.
+
+See [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md).
+
 ---
 
 ## Documentation
@@ -56,6 +62,7 @@ See [Visual effects](../TUTORIAL/EFFECT_en.md).
 | [Equipment base classes](../TUTORIAL/EQUIPMENT_en.md) | Base classes for melee, bows and crossbows, implements, shields and curios; `RangedWeaponApi`, `ShieldApi`; automatic item tags |
 | [Attributes](../TUTORIAL/ATTRIBUTE_en.md) | Attribute list, damage and healing order, `CriticalStrikeApi`, attribute types, the attribute panel |
 | [Visual effects](../TUTORIAL/EFFECT_en.md) | `GroundWarnings`, `BlockWave`, `CustomFire` |
+| [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md) | `CreativeSubTabs`, grouping rules |
 | [Configuration](../TUTORIAL/CONFIG_en.md) | Server config, startup config, client config |
 | [Commands](../TUTORIAL/COMMAND_en.md) | `/taverntales mana`, `spell`, `summon` |
 
@@ -72,7 +79,7 @@ See [Visual effects](../TUTORIAL/EFFECT_en.md).
 | [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | Optional | Curio base class, casting items in curio slots, the attribute panel button on the curios screen |
 | [Jade](https://modrinth.com/mod/jade) | Optional (client) | Shows spell resistance after armor in the tooltip; turns Jade's "Show Bosses" off once the first time you join a world so it doesn't duplicate boss bars |
 | [MmmMmmMmmMmm](https://modrinth.com/mod/mmmmmmmmmmmm) (Target Dummy) | Optional | Ranged and spell crits show as crit numbers, and spell damage numbers get their own blue color |
-| [JEI](https://modrinth.com/mod/jei) | Optional (client) | Keeps JEI's bookmark panel clear of the attribute panel and curio slots |
+| [JEI](https://modrinth.com/mod/jei) | Optional (client) | Keeps JEI's bookmark panel clear of the attribute panel, curio slots and creative sub-tabs |
 
 ---
 

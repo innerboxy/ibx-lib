@@ -4,13 +4,13 @@ import ibx.lib.client.UiPalette;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
- * 属性面板和它的设置界面共用的木框画法（同 lib 说明框的配色，见 {@link UiPalette}），都按 GUI 像素画。
+ * 属性面板、它的设置界面和创造栏子栏共用的木框画法（同 lib 说明框的配色，见 {@link UiPalette}），都按 GUI 像素画。
  */
-final class WoodUi {
+public final class WoodUi {
     private WoodUi() {}
 
     /** 面板：胡桃木底、琥珀渐变细边（上亮下暗）、最外圈深色描边，四角各缺一格。 */
-    static void panel(GuiGraphicsExtractor g, int x, int y, int w, int h) {
+    public static void panel(GuiGraphicsExtractor g, int x, int y, int w, int h) {
         g.fill(x + 1, y, x + w - 1, y + h, UiPalette.PANEL_DARK);
         g.fill(x, y + 1, x + w, y + h - 1, UiPalette.PANEL_DARK);
         g.fill(x + 1, y + 1, x + w - 1, y + h - 1, UiPalette.PANEL | 0xFF000000);
@@ -21,7 +21,7 @@ final class WoodUi {
     }
 
     /** 凹进去的一块（列表底）：左 / 上沿暗、右 / 下沿亮。 */
-    static void inset(GuiGraphicsExtractor g, int x, int y, int w, int h) {
+    public static void inset(GuiGraphicsExtractor g, int x, int y, int w, int h) {
         g.fill(x, y, x + w, y + h, UiPalette.INSET);
         g.fill(x, y, x + w, y + 1, UiPalette.PANEL_DARK);
         g.fill(x, y, x + 1, y + h, UiPalette.PANEL_DARK);

@@ -17,6 +17,7 @@
   "client": [
     "AbstractRecipeBookScreenAccessor",
     "ControlsScreenMixin",
+    "CreativeModeInventoryScreenAccessor",
     "FlameFeatureRendererMixin",
     "MinecraftMixin"
   ],

@@ -6,7 +6,7 @@
 
 ## 简介
 
-本模组是一个前置库:只放框架,不放具体内容。法术、召唤物、目标选择、装备基类、属性和特效都在这里,其他模组在它上面注册自己的法术、武器和生物。
+本模组是一个前置库:只放框架,不放具体内容。法术、召唤物、目标选择、装备基类、属性、特效和创造栏子栏都在这里,其他模组在它上面注册自己的法术、武器和生物。
 
 ### 法术
 
@@ -44,6 +44,12 @@
 
 详见 [特效](TUTORIAL/EFFECT.md)。
 
+### 创造栏子栏
+
+把一个创造栏的物品分成几组:创造模式背包左边多一列图标,点一组只显示这一组的物品,再点一次回到整个创造栏。注册创造栏时把 `displayItems` 换成 `CreativeSubTabs`,一组一个 `add`;搜索栏和 JEI 拿到的还是全部物品。
+
+详见 [创造栏子栏](TUTORIAL/CREATIVE_TAB.md)。
+
 ---
 
 ## 文档
@@ -56,6 +62,7 @@
 | [装备基类](TUTORIAL/EQUIPMENT.md) | 近战、弓弩、法器、盾牌、饰品的基类,`RangedWeaponApi`、`ShieldApi`,自动物品标签 |
 | [属性](TUTORIAL/ATTRIBUTE.md) | 属性一览、伤害与治疗的结算顺序、`CriticalStrikeApi`、属性类型、属性面板 |
 | [特效](TUTORIAL/EFFECT.md) | `GroundWarnings`、`BlockWave`、`CustomFire` |
+| [创造栏子栏](TUTORIAL/CREATIVE_TAB.md) | `CreativeSubTabs`、分组规则 |
 | [配置](TUTORIAL/CONFIG.md) | 服务端配置、启动配置、客户端配置 |
 | [指令](TUTORIAL/COMMAND.md) | `/taverntales mana`、`spell`、`summon` |
 
@@ -72,7 +79,7 @@
 | [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | 可选 | 饰品基类、饰品栏里的施法物品、饰品栏界面上的属性面板按钮 |
 | [Jade](https://modrinth.com/mod/jade) | 可选(客户端) | 提示框里在护甲后面显示法术抗性;第一次进世界时关掉一次 Jade 的「显示Boss」,免得和 Boss 血条重复 |
 | [MmmMmmMmmMmm](https://modrinth.com/mod/mmmmmmmmmmmm)(试验假人) | 可选 | 远程、法术暴击显示成暴击数字,法术伤害的数字用专属的蓝色 |
-| [JEI](https://modrinth.com/mod/jei) | 可选(客户端) | 属性面板、饰品槽开着时让 JEI 的书签栏让开 |
+| [JEI](https://modrinth.com/mod/jei) | 可选(客户端) | 属性面板、饰品槽、创造栏子栏显示时让 JEI 的书签栏让开 |
 
 ---
 
