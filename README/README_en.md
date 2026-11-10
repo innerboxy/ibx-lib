@@ -76,7 +76,7 @@ See [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md).
 | Minecraft `26.1.2` | **Required** | — |
 | [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | Optional | Used only by the spell projectile base class `SpellProjectile`, the 3D armor class `IbxGeoArmorItem` and their renderers; mods that register spell projectiles or 3D armor must require it themselves |
 | [Player Animation Library](https://modrinth.com/mod/player-animation-library) `1.2.6+` | Optional (client) | Adds player animations for casting, guarding and shield bashing; without it the arms just don't move. While it plays a first-person animation, 3D armor is hidden the way it hides vanilla armor |
-| [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | Optional | Curio base class, casting items in curio slots, the attribute panel button on the curios screen |
+| [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | Optional | Curio base class, curio trigger hooks, casting items in curio slots, the attribute panel button on the curios screen |
 | [Jade](https://modrinth.com/mod/jade) | Optional (client) | Shows spell resistance after armor in the tooltip; turns Jade's "Show Bosses" off once the first time you join a world so it doesn't duplicate boss bars |
 | [MmmMmmMmmMmm](https://modrinth.com/mod/mmmmmmmmmmmm) (Target Dummy) | Optional | Ranged and spell crits show as crit numbers, and spell damage numbers get their own blue color |
 | [JEI](https://modrinth.com/mod/jei) | Optional (client) | Keeps JEI's bookmark panel clear of the attribute panel, curio slots and creative sub-tabs |

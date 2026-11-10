@@ -6,6 +6,8 @@ import ibx.lib.api.ShieldApi;
 import ibx.lib.command.ManaCommand;
 import ibx.lib.command.SpellCommand;
 import ibx.lib.command.SummonCommand;
+import ibx.lib.compat.CuriosCompat;
+import ibx.lib.compat.curios.CurioTriggerHandler;
 import ibx.lib.config.Config;
 import ibx.lib.config.StartupConfig;
 import ibx.lib.event.DamageHandler;
@@ -63,6 +65,10 @@ public class IbxLib {
         CustomFire.register();
         ShieldApi.register();
         SummonHandler.register();
+        // 饰品的触发钩子（CurioTriggers）：Curios 是可选依赖，装了才注册
+        if (CuriosCompat.isLoaded()) {
+            CurioTriggerHandler.register();
+        }
         ManaCommand.register();
         SpellCommand.register();
         SummonCommand.register();

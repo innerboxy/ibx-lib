@@ -23,6 +23,7 @@ This mod provides a set of item base classes. Other mods use them directly or ex
 | 3D armor (worn look drawn by GeckoLib) | `ibx.lib.item.IbxGeoArmorItem` | [7](#7-3d-armor) |
 | Attributes beyond armor on an armor piece | `ibx.lib.item.general.IbxArmorProperties` | [7](#armor-item-properties) |
 | A curio you can only wear one of | a plain item + `ibx.lib.item.curio.UniqueCurioItem` | [8](#8-curios) |
+| A curio that triggers on attacks, hits, kills or casts | an item class implementing `ibx.lib.item.curio.CurioTriggers` | [8](#trigger-hooks) |
 
 - **Registration is the same for all**: `Item.Properties` must carry the item id before an item can be constructed, so register with `DeferredRegister.Items#registerItem` and use the `Properties` passed into the factory; rarity, fire resistance and so on are set on it too.
 - **Numbers go on the main hand**: the base classes bake their numbers into main-hand attribute modifiers with a "base id", so the tooltip shows them as the dark green merged line vanilla swords use (e.g. "8 Ranged Damage").
@@ -626,7 +627,7 @@ public static final DeferredItem<IbxOneHandedShieldItem> BUCKLER = ITEMS.registe
 3. **`IbxTwoHandedShieldItem#bash`**, in order:
    - `ShieldApi.markBash` records the bash and starts the cooldown (`bashCooldownTicks()`); the state is synced to the player and those nearby;
    - swings the arm and plays a sound;
-   - calls `onBash` while the shield is still raised;
+   - calls `onBash` while the shield is still raised, then passes the mobs hit to the curio trigger hooks (see [8](#trigger-hooks));
    - disables the shield for `bashDisableTicks()` (item cooldown + stop using, without the break sound). If right-click is still held, the shield is raised again by itself once that ends.
 4. **`onBash` by default**: rolls one crit, hits every target from `bashTargets` with `bashHit`, and calls `onBashHit` for those actually hit.
 5. **The client** fires `ShieldBashEvent` when the synced bash state arrives; the bash animation is driven by it.
@@ -652,7 +653,7 @@ Resolution:
 | `protected void onBashHit(ServerPlayer player, ItemStack stack, LivingEntity target, boolean critical)` | Does nothing | Extra effects after one target is hit (damage and knockback already applied), e.g. root, ignite, slow. This is the one most often overridden. |
 | `protected List<LivingEntity> bashTargets(ServerPlayer player)` | Visible enemies in the fan, nearest first; invulnerable entities and ones projectiles can't hit are excluded | Who the bash hits. |
 | `protected boolean bashHit(ServerPlayer player, ItemStack stack, LivingEntity target, boolean critical)` | Damage = the player's attack damage, × (1 + critical damage) on a crit; enchantments, durability and stats as for a normal attack, no sweep. It only counts as a hit if the target actually took damage (not when blocked by a shield or during invulnerability frames); knockback is applied on a hit | Hits one target; returns whether it hit. |
-| `protected void onBash(ServerPlayer player, ItemStack stack)` | All of the above | Override to replace the bash effect entirely. |
+| `protected List<LivingEntity> onBash(ServerPlayer player, ItemStack stack)` | All of the above, returning the mobs hit | Override to replace the bash effect entirely; the return value goes to curios' `onShieldBash`. |
 | `public void bash(ServerPlayer player, ItemStack stack)` | Cooldown, swing, resolution, disabling the shield | The bash framework; usually not overridden. |
 | `public Identifier bashAnimation()` | `ibx_lib:shield.bash` | The player animation played once for a bash. |
 | `public Identifier guardAnimation()` | `ibx_lib:shield.guard` | The player animation looped while the shield is raised in the main hand. |
@@ -857,7 +858,7 @@ Without Player Animation Library both methods return `false` and never touch its
 
 ## 8. Curios
 
-Curios (mod id `curios`) is an optional dependency of this mod. A curio is a plain item; slots and attribute bonuses are set up the Curios way. This mod provides two things.
+Curios (mod id `curios`) is an optional dependency of this mod. A curio is a plain item; slots and attribute bonuses are set up the Curios way. This mod provides the following.
 
 **`ibx.lib.item.curio.UniqueCurioItem`**: only one of the same curio can be worn. If another curio slot already holds the same item, it can't be equipped; putting it back into its own slot doesn't count. Everything else (attribute bonuses etc.) is the Curios default. Without it, several can be worn and each one counts.
 
@@ -878,6 +879,47 @@ modEventBus.addListener(FMLCommonSetupEvent.class, event ->
 > `UniqueCurioItem` and every `CuriosCompat` method except `isLoaded()` touch Curios classes. If Curios is optional for your mod too, check `CuriosCompat.isLoaded()` before calling them, or you get a `NoClassDefFoundError` when Curios isn't installed.
 
 Curios can provide spells too: items in curio slots that carry the `ibx_lib:spells` component count towards the spells a player can cast (see [Spell system](SPELL_en.md)).
+
+### Trigger hooks
+
+**`ibx.lib.item.curio.CurioTriggers`**: combat trigger points for curios. A curio item class implements this interface and overrides the methods it needs; the rest do nothing by default.
+
+```java
+public class VampireFangItem extends Item implements CurioTriggers {
+    public VampireFangItem(Properties properties) {
+        super(properties);
+    }
+
+    @Override
+    public void onDamageDealt(SlotContext slot, ItemStack stack, LivingEntity target, DamageSource source, float amount) {
+        // heal 10% of the damage dealt
+        slot.entity().heal(amount * 0.1F);
+    }
+}
+```
+
+| Method | When | What it can do |
+| --- | --- | --- |
+| `onDealDamage(slot, stack, target, source, amount)` | The wearer hits something: this mod's base damage (ranged damage, ranged crits) is settled, armor and spell resistance are not applied yet | Return the new damage amount |
+| `onTakeDamage(slot, stack, source, amount)` | The wearer is hit, at the same point, after the attacker's curios | Return the new damage amount |
+| `onDamageDealt(slot, stack, target, source, amount)` | After a hit, once damage is resolved and health is taken; `amount` is the final damage, called only when above 0 | Notification only |
+| `onDamageTaken(slot, stack, source, amount)` | After being hit, as above | Notification only |
+| `onKill(slot, stack, victim, source)` | The wearer kills a mob; kills by summons count for the owner | Notification only |
+| `onSpellCastStart(slot, stack, event)` | Before a cast starts, once all conditions passed (`SpellCastEvent.Pre`) | `setManaCost`, `setCooldownTicks`, `setCanceled(true)` |
+| `onSpellCast(slot, stack, event)` | After each time a spell takes effect, every pulse for channeled spells (`SpellCastEvent.Post`) | Notification only |
+| `onSummon(slot, stack, summon)` | After a summon is summoned | Notification only; can give the summon effects |
+| `onBlock(slot, stack, source, blocked)` | A raised shield blocks an attack, vanilla shields and this mod's shields alike; `blocked` is the amount blocked | Notification only |
+| `onShieldBash(slot, stack, shield, hits)` | After a shield bash; `hits` are the mobs hit, possibly empty | Notification only |
+
+- **Server side only**, and only for curios worn in curio slots (cosmetic slots don't count). `slot` is the slot the curio is in, `slot.entity()` is the wearer; `stack` is the curio itself.
+- **Called piece by piece in slot order**: wear several of the same and it is called that many times, and damage changes stack one after another. Use `UniqueCurioItem` above for curios that should not stack.
+- **Cooldowns and trigger chances are up to the curio** (for example `Player#getCooldowns`, `slot.entity().getRandom()`); the framework does not handle them.
+- **Damage**: melee, projectiles (the wearer being the shooter) and spells all go through `onDealDamage` / `onDamageDealt`; tell them apart by `source`. Changed damage is still reduced by armor and spell resistance, like vanilla enchantment damage bonuses. On a killing blow, `onKill` is called before `onDamageDealt`.
+- **Anything canceled by another mod does not trigger**: canceled damage, deaths and blocks are never passed on.
+- **Shield bash**: called from the server flow of `IbxTwoHandedShieldItem`. For shields that override `onBash`, its return value is the `hits` passed here.
+- Dispatch lives in `ibx.lib.compat.curios.CurioTriggerHandler`.
+
+> `CurioTriggers` references Curios classes (`SlotContext`): the mod containing a curio that implements it must require Curios.
 
 ---
 

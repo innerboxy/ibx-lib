@@ -23,6 +23,7 @@
 | 3D 盔甲(穿上的样子由 GeckoLib 画) | `ibx.lib.item.IbxGeoArmorItem` | [7](#7-3d-盔甲) |
 | 给盔甲加护甲以外的属性 | `ibx.lib.item.general.IbxArmorProperties` | [7](#盔甲的物品属性) |
 | 同一种只能戴一个的饰品 | 普通物品 + `ibx.lib.item.curio.UniqueCurioItem` | [8](#8-饰品) |
+| 攻击、挨打、击杀、施法时触发的饰品 | 物品类实现 `ibx.lib.item.curio.CurioTriggers` | [8](#触发钩子) |
 
 - **注册方式都一样**:`Item.Properties` 必须先带上物品 id 才能构造物品,所以用 `DeferredRegister.Items#registerItem` 注册,在工厂里使用传进来的 `Properties`;稀有度、防火等也设在它上面。
 - **数值挂在主手**:基类把数值烤成主手的属性修饰符,用「基础 id」,tooltip 显示成原版剑那样的深绿合并行(比如「8 远程伤害」)。
@@ -626,7 +627,7 @@ public static final DeferredItem<IbxOneHandedShieldItem> BUCKLER = ITEMS.registe
 3. **`IbxTwoHandedShieldItem#bash`** 依次:
    - `ShieldApi.markBash` 记下这次盾击并进冷却(`bashCooldownTicks()`),状态同步给自己和周围玩家;
    - 挥臂、播放音效;
-   - 趁盾还举着调 `onBash` 结算;
+   - 趁盾还举着调 `onBash` 结算,打中的生物再交给饰品的触发钩子(见 [8](#触发钩子));
    - 盾失效 `bashDisableTicks()`(物品冷却 + 停止使用,不响破碎音)。右键还按着的话,失效一过会自动重新举起。
 4. **`onBash` 默认**:掷一次暴击,`bashTargets` 里的每个目标挨一下 `bashHit`,打中的再走 `onBashHit`。
 5. **客户端**收到同步过来的盾击状态时触发 `ShieldBashEvent`,盾击动作靠它放。
@@ -652,7 +653,7 @@ public static final DeferredItem<IbxOneHandedShieldItem> BUCKLER = ITEMS.registe
 | `protected void onBashHit(ServerPlayer player, ItemStack stack, LivingEntity target, boolean critical)` | 什么都不做 | 打中一个目标之后(伤害、击退已结算)的附加效果,比如定身、点燃、减速。最常重写的就是它。 |
 | `protected List<LivingEntity> bashTargets(ServerPlayer player)` | 扇形里看得见的敌方,近的先挨;无敌的、弹射物打不中的不算 | 盾击打到谁。 |
 | `protected boolean bashHit(ServerPlayer player, ItemStack stack, LivingEntity target, boolean critical)` | 伤害 = 玩家的攻击伤害,暴击时 ×(1 + 暴击伤害);附魔、耐久、统计同普通攻击,不带横扫。目标真受了伤才算打中(被盾挡住、无敌帧里不算),打中再给击退 | 打一个目标,返回打中没有。 |
-| `protected void onBash(ServerPlayer player, ItemStack stack)` | 上面那一套 | 要把盾击的效果整个换掉就重写它。 |
+| `protected List<LivingEntity> onBash(ServerPlayer player, ItemStack stack)` | 上面那一套,返回打中的生物 | 要把盾击的效果整个换掉就重写它;返回值交给饰品的 `onShieldBash`。 |
 | `public void bash(ServerPlayer player, ItemStack stack)` | 冷却、挥臂、结算、盾失效 | 盾击的框架,一般不重写。 |
 | `public Identifier bashAnimation()` | `ibx_lib:shield.bash` | 盾击放一遍的玩家动作。 |
 | `public Identifier guardAnimation()` | `ibx_lib:shield.guard` | 主手举盾时循环放的玩家动作。 |
@@ -857,7 +858,7 @@ Player Animation Library 播第一人称动作(比如 Better Combat 的攻击)�
 
 ## 8. 饰品
 
-本模组对 Curios(模组 id `curios`)是可选依赖。饰品本身是普通物品,槽位、属性加成按 Curios 自己的办法配;本模组提供两样东西。
+本模组对 Curios(模组 id `curios`)是可选依赖。饰品本身是普通物品,槽位、属性加成按 Curios 自己的办法配;本模组提供下面几样东西。
 
 **`ibx.lib.item.curio.UniqueCurioItem`**:同一种饰品只能戴一个。饰品栏别的格子里已经有同一物品就不让放;放回自己原来那格不算。其余行为(属性加成等)走 Curios 默认。不挂它就是能戴多个,每个都算加成。
 
@@ -878,6 +879,47 @@ modEventBus.addListener(FMLCommonSetupEvent.class, event ->
 > `UniqueCurioItem` 和 `CuriosCompat` 里除 `isLoaded()` 以外的方法都会碰到 Curios 的类。你的模组如果也把 Curios 当可选依赖,调用前先过 `CuriosCompat.isLoaded()`,否则没装 Curios 时会 `NoClassDefFoundError`。
 
 饰品也能提供法术:饰品栏里带 `ibx_lib:spells` 组件的物品会算进玩家能放的法术(见 [法术系统](SPELL.md))。
+
+### 触发钩子
+
+**`ibx.lib.item.curio.CurioTriggers`**:饰品在战斗里的触发时机。饰品物品类实现这个接口,重写自己需要的方法,其余默认什么都不做。
+
+```java
+public class VampireFangItem extends Item implements CurioTriggers {
+    public VampireFangItem(Properties properties) {
+        super(properties);
+    }
+
+    @Override
+    public void onDamageDealt(SlotContext slot, ItemStack stack, LivingEntity target, DamageSource source, float amount) {
+        // 打中后按伤害的 10% 回血
+        slot.entity().heal(amount * 0.1F);
+    }
+}
+```
+
+| 方法 | 什么时候 | 能做什么 |
+| --- | --- | --- |
+| `onDealDamage(slot, stack, target, source, amount)` | 穿戴者打中别人:本模组的基础伤害(远程伤害、远程暴击)已定,还没算护甲、法术抗性 | 返回新的伤害量 |
+| `onTakeDamage(slot, stack, source, amount)` | 穿戴者挨打,同一时间点,在攻击方的饰品之后 | 返回新的伤害量 |
+| `onDamageDealt(slot, stack, target, source, amount)` | 打中之后,伤害已结算、已扣血;`amount` 是最终伤害,大于 0 才调 | 只通知 |
+| `onDamageTaken(slot, stack, source, amount)` | 挨打之后,同上 | 只通知 |
+| `onKill(slot, stack, victim, source)` | 穿戴者杀死一个生物;召唤物杀的算主人的 | 只通知 |
+| `onSpellCastStart(slot, stack, event)` | 施法开始前,条件都已通过(`SpellCastEvent.Pre`) | `setManaCost`、`setCooldownTicks`、`setCanceled(true)` |
+| `onSpellCast(slot, stack, event)` | 每次施法生效之后,引导每次都调(`SpellCastEvent.Post`) | 只通知 |
+| `onSummon(slot, stack, summon)` | 召唤出一只召唤物之后 | 只通知,可以给召唤物加效果 |
+| `onBlock(slot, stack, source, blocked)` | 举盾挡下一次攻击,原版盾和本模组的盾都算;`blocked` 是挡下的量 | 只通知 |
+| `onShieldBash(slot, stack, shield, hits)` | 打出一次盾击之后;`hits` 是打中的生物,可能为空 | 只通知 |
+
+- **只在服务端调用**,只认戴在饰品栏里的(化妆栏不算)。`slot` 是这件饰品所在的格子,`slot.entity()` 是穿戴者;`stack` 是这件饰品本身。
+- **按槽位顺序逐件调用**:同一种戴了几个就调几次,改伤害的会一件接一件叠上去。不想叠的照上面挂 `UniqueCurioItem`。
+- **冷却、触发几率由饰品自己处理**(比如 `Player#getCooldowns`、`slot.entity().getRandom()`),框架不管。
+- **伤害**:近战、弹射物(穿戴者是射手)、法术都走 `onDealDamage` / `onDamageDealt`,用 `source` 区分。改的伤害会再被护甲、法术抗性减免,和原版附魔的伤害加成一样。致命的那一下,`onKill` 在 `onDamageDealt` 之前调。
+- **被别的模组取消的不触发**:取消了的伤害、死亡、格挡都不会调到。
+- **盾击**:由 `IbxTwoHandedShieldItem` 的服务端流程调用。重写了 `onBash` 的盾,返回值就是交给这里的 `hits`。
+- 分发在 `ibx.lib.compat.curios.CurioTriggerHandler`。
+
+> `CurioTriggers` 引用了 Curios 的类(`SlotContext`):实现它的饰品所在的模组要把 Curios 设成必需。
 
 ---
 

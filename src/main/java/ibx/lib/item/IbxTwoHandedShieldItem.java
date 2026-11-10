@@ -3,6 +3,8 @@ package ibx.lib.item;
 import ibx.lib.IbxLib;
 import ibx.lib.api.CriticalStrikeApi;
 import ibx.lib.api.ShieldApi;
+import ibx.lib.compat.CuriosCompat;
+import ibx.lib.compat.curios.CurioTriggerHandler;
 import ibx.lib.item.general.IbxShieldItem;
 import ibx.lib.target.Faction;
 import ibx.lib.target.TargetApi;
@@ -22,6 +24,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -37,7 +40,7 @@ import java.util.function.Consumer;
  *   <li>盾击：主手举盾中按左键。原版使用物品期间吞掉攻击点击，所以客户端吃掉攻击键发包（{@code client.ShieldInput}），
  *       服务端 {@link ShieldApi#tryBash} 校验后调 {@link #bash}：进独立冷却（{@link #bashCooldownTicks}，不能用物品冷却——
  *       那会让盾举不起来）、挥臂、放动作（{@link #bashAnimation}，默认 lib 的肩顶 {@code shield.bash}）、趁盾还举着结算
- *       {@link #onBash}，最后盾失效 {@link #bashDisableTicks}（物品冷却 + 停止使用，同斧子打掉但不响破碎音；
+ *       {@link #onBash}（打中的生物再交给饰品的盾击钩子），最后盾失效 {@link #bashDisableTicks}（物品冷却 + 停止使用，同斧子打掉但不响破碎音；
  *       右键还按着的话失效一过客户端会自动重新举起）。</li>
  *   <li>默认效果：掷一次暴击（lib 的暴击率 / 暴击伤害），前方 {@link #bashRange} 格、左右各 {@link #bashHalfAngle} 度扇形里看得见的
  *       每个目标挨一下盾的攻击伤害（走原版 {@code stabAttack}）+ 击退。数值都是可重写的取值方法；要换判定、单个目标的结算、
@@ -144,7 +147,10 @@ public class IbxTwoHandedShieldItem extends IbxShieldItem {
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.PLAYER_ATTACK_KNOCKBACK, player.getSoundSource(), 1.0F, 1.0F);
         // 趁盾还举着结算：原版刺击在这只手正在用物品时不按攻击冷却打折
-        this.onBash(player, stack);
+        List<LivingEntity> hits = this.onBash(player, stack);
+        if (CuriosCompat.isLoaded()) {
+            CurioTriggerHandler.onShieldBash(player, stack, hits);
+        }
         // 盾失效：同斧子打掉（物品冷却 + 停止使用），但不走 BlocksAttacks.disable，免得响破碎音
         player.getCooldowns().addCooldown(stack, this.bashDisableTicks());
         player.stopUsingItem();
@@ -154,14 +160,19 @@ public class IbxTwoHandedShieldItem extends IbxShieldItem {
     /**
      * 盾击的效果（冷却、动作已处理；这时盾还举着，结算完才放下）。默认：掷一次暴击，{@link #bashTargets} 里的每个目标挨一下
      * {@link #bashHit}，打中的再走 {@link #onBashHit}。
+     *
+     * @return 打中的生物，交给饰品的盾击钩子（{@link ibx.lib.item.curio.CurioTriggers#onShieldBash}）
      */
-    protected void onBash(ServerPlayer player, ItemStack stack) {
+    protected List<LivingEntity> onBash(ServerPlayer player, ItemStack stack) {
         boolean critical = CriticalStrikeApi.roll(player);
+        List<LivingEntity> hits = new ArrayList<>();
         for (LivingEntity target : this.bashTargets(player)) {
             if (this.bashHit(player, stack, target, critical)) {
                 this.onBashHit(player, stack, target, critical);
+                hits.add(target);
             }
         }
+        return hits;
     }
 
     /** 盾击打到谁：前方 {@link #bashRange} 格、左右各 {@link #bashHalfAngle} 度的扇形里看得见的敌方（{@link TargetApi#inFan}），近的先挨；无敌的、打不中的（{@code canBeHitByProjectile}）不算。 */
