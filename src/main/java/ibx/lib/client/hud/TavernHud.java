@@ -44,8 +44,9 @@ import java.util.Locale;
  *   <li>等级数字挪到经验条正中；原版护甲图标行隐藏。</li>
  * </ul>
  *
- * <p>原版层都是包住而不是删掉：本 HUD 不生效时（切回原版、创造 / 旁观、隐藏 GUI）原样调用，配置能在游戏里随时切换。
- * 当前法术框是功能不是装饰，不受 {@link #isActive()} 管：除旁观外都画，切回原版 HUD 也画。</p>
+ * <p>原版层都是包住而不是删掉：本 HUD 不生效时（用原版 HUD、创造 / 旁观、隐藏 GUI）原样调用，配置能在游戏里随时切换。
+ * 吟唱条、蓝条不看原版 HUD 那一项（{@link #barsVisible()}），用原版 HUD 时照样叠在心形 / 鸡腿（护甲、氧气泡）几行上方；
+ * 当前法术框是功能不是装饰，不受 {@link #isActive()} 管：除旁观外都画，用原版 HUD 也画。</p>
  */
 public final class TavernHud {
     private TavernHud() {}
@@ -104,11 +105,15 @@ public final class TavernHud {
         return ticks;
     }
 
-    /** 本 HUD 当前是否生效：没切回原版、GUI 没隐藏、能受伤的模式（生存 / 冒险）、镜头在玩家身上。 */
+    /** 生命条、饥饿条这一套当前是否生效：没选原版 HUD，且 {@link #barsVisible()}。 */
     public static boolean isActive() {
+        return !ClientConfig.vanillaHud() && barsVisible();
+    }
+
+    /** 吟唱条、蓝条画不画：GUI 没隐藏、能受伤的模式（生存 / 冒险）、镜头在玩家身上。不看原版 HUD 那一项。 */
+    public static boolean barsVisible() {
         Minecraft mc = Minecraft.getInstance();
-        return !ClientConfig.vanillaHud()
-                && !mc.options.hideGui
+        return !mc.options.hideGui
                 && mc.gameMode != null
                 && mc.gameMode.canHurtPlayer()
                 && mc.getCameraEntity() instanceof Player;
@@ -153,9 +158,9 @@ public final class TavernHud {
                 old.render(graphics, deltaTracker);
             }
         });
-        // 两条要叠在生命 / 饥饿（坐骑）这几行上面，所以放在它们之后，读它们累加好的 leftHeight / rightHeight
+        // 两条要叠在生命 / 饥饿（坐骑）这几行上面（原版 HUD 时还有护甲、氧气泡行），所以放在它们之后，读它们累加好的 leftHeight / rightHeight
         event.registerAbove(VanillaGuiLayers.AIR_LEVEL, BARS_LAYER, (graphics, deltaTracker) -> {
-            if (isActive()) {
+            if (barsVisible()) {
                 renderBars(graphics, deltaTracker);
             }
         });

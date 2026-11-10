@@ -55,7 +55,7 @@ adjustVanillaArmors = true
 
 | 选项 | 类型 | 默认 | 说明 |
 | --- | --- | --- | --- |
-| `vanillaHud` | boolean | `false` | 是否完全使用原版 HUD。`false` 时心形 / 鸡腿换成生命条、饥饿条,加上吟唱条、蓝条,隐藏原版护甲行,等级数字挪到经验条正中;和其他改 HUD 的模组冲突时可以打开。 |
+| `vanillaHud` | boolean | `true` | 是否使用原版的生命、饥饿、护甲、氧气、等级显示。`false` 时心形 / 鸡腿换成生命条、饥饿条(氧气画在生命条外框上),隐藏原版护甲行,等级数字挪到经验条正中。吟唱条、蓝条不受这一项影响,两种都显示,叠在生命 / 饥饿那几行上方。 |
 | `alwaysShowManaBar` | boolean | `false` | 蓝条是否常驻。`false` 时蓝不满才显示,回满 3 秒后淡出。 |
 | `replaceFireOverlay` | boolean | `true` | 第一人称着火时,`true` 换成屏幕四角的火焰边框(中间不挡视线);`false` 为原版镜头前的两大片火(见 [特效 4](EFFECT.md#4-换颜色的火))。 |
 | `spellWheelScale` | double(1.0~4.0) | `2.3` | 法术轮盘的大小倍数,以「刚好放得下 16×16 图标」为 1。屏幕放不下时自动缩小,但不小于 1。 |

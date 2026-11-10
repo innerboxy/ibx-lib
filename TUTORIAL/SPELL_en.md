@@ -407,7 +407,7 @@ Neither lists `ibx_lib:dismiss_summons`. `SpellPickerSource.spells(player, stack
 
 - **Right-click casting**: right-click while holding an item in `#ibx_lib:can_cast_spell` to cast the selected spell. Instant spells just swing the hand; other types are held to cast and end on release (cast cancelled, channel stopped, charge fired), and switching items or opening a container also cancels. Cast and channel can each be changed to "Toggle" in Options → Controls (press once to start, again to end); charge is always hold.
 - **Spell wheel**: hold the wheel key (R by default, rebindable in key binds) to bring it up. Its slots are the result of `getSpells`; left-click a slot or release the key to select. The description box next to it shows the spell description, the value lines from `Spell#getTooltip`, and mana cost, cooldown and cast time. The wheel only selects; it never casts.
-- **HUD**: while a casting item is held, the selected spell is shown outside the off-hand slot (with overlays for cooldown and insufficient mana). The cast bar is on the left and the mana bar on the right, stacked above the health and hunger bars. Instant spells have no cast bar.
+- **HUD**: while a casting item is held, the selected spell is shown outside the off-hand slot (with overlays for cooldown and insufficient mana). The cast bar is on the left and the mana bar on the right, stacked above the health and hunger rows (shown whether or not the vanilla HUD is used). Instant spells have no cast bar.
 - **Icons**: a spell's icon is looked up by id at `assets/<namespace>/textures/spell/<path>.png` (16×16), shared by the wheel and the HUD.
 
 For the related client settings see [CONFIG_en.md](CONFIG_en.md).

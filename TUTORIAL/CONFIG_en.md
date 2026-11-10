@@ -55,7 +55,7 @@ Each player's own display and control settings, at `config/ibx_lib-client.toml`,
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `vanillaHud` | boolean | `false` | Whether to use the vanilla HUD entirely. When `false`, hearts / drumsticks become health and hunger bars, a cast bar and mana bar are added, the vanilla armor row is hidden and the level number moves to the middle of the XP bar; turn it on if it conflicts with another HUD mod. |
+| `vanillaHud` | boolean | `true` | Whether to use vanilla's health, hunger, armor, air and level display. When `false`, hearts / drumsticks become health and hunger bars (air is drawn on the health bar's frame), the vanilla armor row is hidden and the level number moves to the middle of the XP bar. The cast bar and mana bar don't depend on this option; they show either way, stacked above the health / hunger rows. |
 | `alwaysShowManaBar` | boolean | `false` | Whether the mana bar is always shown. When `false` it shows only while mana isn't full and fades out 3 seconds after refilling. |
 | `replaceFireOverlay` | boolean | `true` | When burning in first person: `true` shows a fire border at the screen corners (nothing in the middle); `false` shows vanilla's two large sheets of fire (see [Visual effects 4](EFFECT_en.md#4-colored-fire)). |
 | `spellWheelScale` | double (1.0–4.0) | `2.3` | Spell wheel size, where 1 is "just fits 16×16 icons". It shrinks automatically if the screen is too small, but never below 1. |

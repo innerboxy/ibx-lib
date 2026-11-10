@@ -16,10 +16,11 @@ public final class ClientConfig {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
     public static final ModConfigSpec.BooleanValue VANILLA_HUD = BUILDER
-            .comment("是否完全使用原版 HUD。",
-                    "false = 心形 / 鸡腿换成生命条、饥饿条，加上吟唱条、蓝条，隐藏原版护甲行，等级数字挪到经验条正中；",
-                    "true  = 全部原版。和其他改 HUD 的模组冲突时可以打开。")
-            .define("vanillaHud", false);
+            .comment("是否使用原版的生命、饥饿、护甲、氧气、等级显示。",
+                    "true  = 原版的心形、鸡腿、护甲、氧气泡和等级数字；",
+                    "false = 心形 / 鸡腿换成生命条、饥饿条（氧气画在生命条外框上），隐藏原版护甲行，等级数字挪到经验条正中。",
+                    "吟唱条、蓝条不受这一项影响，两种都显示。")
+            .define("vanillaHud", true);
 
     public static final ModConfigSpec.BooleanValue ALWAYS_SHOW_MANA_BAR = BUILDER
             .comment("蓝条是否常驻。",
@@ -143,7 +144,7 @@ public final class ClientConfig {
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     public static boolean vanillaHud() {
-        return SPEC.isLoaded() && VANILLA_HUD.get();
+        return SPEC.isLoaded() ? VANILLA_HUD.get() : VANILLA_HUD.getDefault();
     }
 
     public static double spellWheelScale() {
