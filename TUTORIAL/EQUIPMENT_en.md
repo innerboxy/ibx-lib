@@ -376,12 +376,13 @@ This mod overrides three vanilla enchantment definitions under `data/minecraft/e
 
 ## 4. Changes to vanilla items
 
-Three classes in the `ibx.lib.item.vanilla` package change vanilla items. The first two are controlled by the startup config `config/ibx_lib-startup.toml`; the startup config is not synced, so server and client must be set the same, and changes need a restart (see [Configuration](CONFIG_en.md)).
+Four classes in the `ibx.lib.item.vanilla` package change vanilla items. The first three are controlled by the startup config `config/ibx_lib-startup.toml`; the startup config is not synced, so server and client must be set the same, and changes need a restart (see [Configuration](CONFIG_en.md)).
 
 | Class | What it changes | Switch |
 | --- | --- | --- |
 | `VanillaRangedWeapons` | The vanilla bow and crossbow use this mod's ranged system | `takeOverVanillaRangedWeapons`, default `true` |
 | `VanillaArmors` | Attributes of netherite, golden and copper armor | `adjustVanillaArmors`, default `true` |
+| `VanillaStackSizes` | Items that stack to 16 are raised to 64 | `raiseVanillaStackSizes`, default `true` |
 | `VanillaSpawnEggs` | Wither and Ender Dragon spawn eggs are added to the creative tab | none |
 
 ### Vanilla bow and crossbow
@@ -407,6 +408,22 @@ Only the items `minecraft:bow` and `minecraft:crossbow` themselves are affected;
 | Copper | Removed | 2 / 4 / 3 / 1, its former armor values |
 
 Done the same way as the bow and crossbow: modifiers are baked into the default components, and components overridden per stack still win.
+
+### Stack sizes
+
+Vanilla items that only stack to 16 are raised to 64 (`VanillaStackSizes.STACK_SIZE`). Only these vanilla items themselves are affected; other mods' items are left alone:
+
+| Category | Items |
+| --- | --- |
+| Signs | Signs of the 12 woods (oak, spruce, birch, jungle, acacia, cherry, dark oak, pale oak, mangrove, bamboo, crimson, warped) |
+| Hanging signs | The same 12 |
+| Banners | All 16 colors |
+| Throwables | Snowball, egg, blue egg, brown egg, ender pearl |
+| Others | Bucket (empty), armor stand, honey bottle |
+
+- **Written books are not changed** and stay at 16.
+- Done the same way as the bow and crossbow: the item's default component (`max_stack_size`) is changed, and components overridden per item stack still take priority.
+- Filled buckets (water, lava and so on) already stack to 1 and are not affected.
 
 ### Spawn eggs
 

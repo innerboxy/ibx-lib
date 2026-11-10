@@ -40,5 +40,16 @@ public final class StartupConfig {
                     "服务端与客户端需保持一致；修改后重启游戏生效。")
             .define("adjustVanillaArmors", true);
 
+    /**
+     * 是否把原版里堆叠上限 16 的物品（告示牌、旗帜、雪球、鸡蛋、末影珍珠、空桶等，成书除外）改成 64。
+     * 详见 {@link ibx.lib.item.vanilla.VanillaStackSizes}。
+     */
+    public static final ModConfigSpec.BooleanValue RAISE_VANILLA_STACK_SIZES = BUILDER
+            .comment("是否把原版里堆叠上限为 16 的物品改成 64。",
+                    "true  = 告示牌、悬挂式告示牌、旗帜、雪球、鸡蛋、末影珍珠、空桶、盔甲架、蜂蜜瓶一组叠到 64（成书仍是 16）；",
+                    "false = 保持原版的 16。",
+                    "服务端与客户端需保持一致；修改后重启游戏生效。")
+            .define("raiseVanillaStackSizes", true);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 }

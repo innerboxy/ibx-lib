@@ -28,7 +28,7 @@ See [Target selection](../TUTORIAL/TARGETING_en.md).
 
 ### Equipment base classes
 
-Item base classes for melee weapons, bows, crossbows, staves, tomes, one-handed and two-handed shields, 3D armor, and curios; extend one and write only your own numbers and hooks. Bows and crossbows resolve by attributes (ranged damage, draw time), two-handed shields can bash, 3D armor is drawn by GeckoLib with one model shared by a set, and the vanilla bow and crossbow and a few vanilla armor sets can be taken over too.
+Item base classes for melee weapons, bows, crossbows, staves, tomes, one-handed and two-handed shields, 3D armor, and curios; extend one and write only your own numbers and hooks. Bows and crossbows resolve by attributes (ranged damage, draw time), two-handed shields can bash, 3D armor is drawn by GeckoLib with one model shared by a set, and the vanilla bow and crossbow and a few vanilla armor sets can be taken over too, and vanilla items that only stack to 16 can be raised to 64.
 
 See [Equipment base classes](../TUTORIAL/EQUIPMENT_en.md).
 

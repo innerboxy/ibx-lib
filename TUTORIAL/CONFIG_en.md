@@ -28,22 +28,25 @@ enableVanillaCritical = false
 
 ## 2. Startup config
 
-Config type **STARTUP**, at `config/ibx_lib-startup.toml`. These two options must be settled when items are registered (vanilla items' default attributes are baked in at that point), so they live in the startup config.
+Config type **STARTUP**, at `config/ibx_lib-startup.toml`. These options must be settled when items are registered (vanilla items' default attributes and stack sizes are baked in at that point), so they live in the startup config.
 
 ```toml
 #是否接管原版弓与弩，让它们按本模组的远程属性结算。
 takeOverVanillaRangedWeapons = true
 #是否调整原版盔甲套装的属性。
 adjustVanillaArmors = true
+#是否把原版里堆叠上限为 16 的物品改成 64。
+raiseVanillaStackSizes = true
 ```
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
 | `takeOverVanillaRangedWeapons` | boolean | `true` | Whether to take over the vanilla bow and crossbow. When on, they get ranged damage / draw time attributes, and damage, drawing, loading and crits work like this mod's bows and crossbows; they can't be used from the off hand. Mobs holding vanilla bows and crossbows (skeletons, pillagers…) resolve by attributes too. When off, vanilla behavior is kept (see [Equipment base classes](EQUIPMENT_en.md)). |
 | `adjustVanillaArmors` | boolean | `true` | Whether to adjust vanilla armor sets: netherite gets extra spell resistance equal to its armor value; gold's armor is replaced by spell resistance equal to diamond's armor values (head 3, chest 8, legs 6, feet 3); copper's armor is replaced by the same amount of spell resistance (head 2, chest 4, legs 3, feet 1). |
+| `raiseVanillaStackSizes` | boolean | `true` | Whether to raise vanilla items that stack to 16 up to 64: signs, hanging signs, banners, snowballs, eggs, ender pearls, buckets, armor stands and honey bottles. Written books stay at 16 (see [Equipment base classes](EQUIPMENT_en.md)). |
 
 - **Restart the game** for changes to take effect.
-- **Not synced**: server and client each read their own file. Keep them identical, or the numbers shown on the client (tooltips, draw animation) won't match what the server actually resolves. In multiplayer, modpacks should ship the same file to the server and players.
+- **Not synced**: server and client each read their own file. Keep them identical, or the numbers shown on the client (tooltips, draw animation, stack sizes) won't match what the server actually resolves. In multiplayer, modpacks should ship the same file to the server and players.
 
 ---
 

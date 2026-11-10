@@ -124,6 +124,7 @@
   "ibx_lib.configuration.enableVanillaCritical": "Keep Vanilla Jump Crits",
   "ibx_lib.configuration.takeOverVanillaRangedWeapons": "Take Over Vanilla Bows and Crossbows",
   "ibx_lib.configuration.adjustVanillaArmors": "Adjust Vanilla Armor Stats",
+  "ibx_lib.configuration.raiseVanillaStackSizes": "Raise Vanilla Stack Sizes to 64",
   "ibx_lib.configuration.vanillaHud": "Use Vanilla HUD",
   "ibx_lib.configuration.alwaysShowManaBar": "Always Show Mana Bar",
   "ibx_lib.configuration.replaceFireOverlay": "Fire Overlay at Screen Corners",

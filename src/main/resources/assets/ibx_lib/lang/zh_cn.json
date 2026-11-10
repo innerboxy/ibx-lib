@@ -124,6 +124,7 @@
   "ibx_lib.configuration.enableVanillaCritical": "保留原版跳劈暴击",
   "ibx_lib.configuration.takeOverVanillaRangedWeapons": "接管原版弓弩",
   "ibx_lib.configuration.adjustVanillaArmors": "调整原版盔甲属性",
+  "ibx_lib.configuration.raiseVanillaStackSizes": "原版物品堆叠到 64",
   "ibx_lib.configuration.vanillaHud": "使用原版 HUD",
   "ibx_lib.configuration.alwaysShowManaBar": "蓝条常驻",
   "ibx_lib.configuration.replaceFireOverlay": "着火画面改成四角火焰",

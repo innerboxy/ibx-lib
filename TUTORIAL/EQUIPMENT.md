@@ -376,12 +376,13 @@ public static final DeferredItem<IbxCrossbowItem> ARBALEST = ITEMS.registerItem(
 
 ## 4. 原版物品的改动
 
-`ibx.lib.item.vanilla` 包里的三个类改了原版物品。前两个由启动配置 `config/ibx_lib-startup.toml` 控制;启动配置不同步,服务端和客户端要改成一致,改完重启才生效(见 [配置](CONFIG.md))。
+`ibx.lib.item.vanilla` 包里的四个类改了原版物品。前三个由启动配置 `config/ibx_lib-startup.toml` 控制;启动配置不同步,服务端和客户端要改成一致,改完重启才生效(见 [配置](CONFIG.md))。
 
 | 类 | 改了什么 | 开关 |
 | --- | --- | --- |
 | `VanillaRangedWeapons` | 原版弓、弩走本模组的远程系统 | `takeOverVanillaRangedWeapons`,默认 `true` |
 | `VanillaArmors` | 下界合金、金、铜盔甲的属性 | `adjustVanillaArmors`,默认 `true` |
+| `VanillaStackSizes` | 堆叠上限 16 的物品改成 64 | `raiseVanillaStackSizes`,默认 `true` |
 | `VanillaSpawnEggs` | 凋灵、末影龙刷怪蛋放进创造栏 | 无 |
 
 ### 原版弓弩
@@ -407,6 +408,22 @@ public static final DeferredItem<IbxCrossbowItem> ARBALEST = ITEMS.registerItem(
 | 铜 | 去掉 | 2 / 4 / 3 / 1,它原来的护甲值 |
 
 做法同弓弩:修饰符烤进默认组件,按物品栈覆盖的组件仍然优先。
+
+### 堆叠上限
+
+原版里一组只能叠 16 个的物品改成 64 个(`VanillaStackSizes.STACK_SIZE`)。只认下面这些原版物品本身,别的模组的物品不碰:
+
+| 类别 | 物品 |
+| --- | --- |
+| 告示牌 | 12 种木头的告示牌(橡木、云杉木、白桦木、丛林木、金合欢木、樱花木、深色橡木、苍白橡木、红树木、竹、绯红木、诡异木) |
+| 悬挂式告示牌 | 同上 12 种 |
+| 旗帜 | 16 种颜色 |
+| 投掷物 | 雪球、鸡蛋、蓝色鸡蛋、棕色鸡蛋、末影珍珠 |
+| 其他 | 铁桶(空桶)、盔甲架、蜂蜜瓶 |
+
+- **成书不改**,仍是 16。
+- 做法同弓弩:改的是物品的默认组件(`max_stack_size`),按物品栈覆盖的组件仍然优先。
+- 装了东西的桶(水桶、熔岩桶等)本来就是 1,不受影响。
 
 ### 刷怪蛋
 
