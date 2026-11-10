@@ -8,7 +8,7 @@
 
 ## 1. 简介
 
-本模组提供一组物品基类,别的模组直接用它们或继承它们来注册武器、盾牌、法器和饰品。数值由构造参数给定,属性修饰符、伤害结算、标签、动作这些共用的部分由基类处理。
+本模组提供一组物品基类,别的模组直接用它们或继承它们来注册武器、盾牌、法器、盔甲和饰品。数值由构造参数给定,属性修饰符、伤害结算、标签、动作这些共用的部分由基类处理。
 
 | 想做什么 | 用哪个类 | 见 |
 | --- | --- | --- |
@@ -20,11 +20,13 @@
 | 别的种类的法器 | 继承 `ibx.lib.item.general.IbxMagicWeaponItem` | [5](#5-法器) |
 | 单手盾(只挡) | `ibx.lib.item.IbxOneHandedShieldItem` | [6](#6-盾牌) |
 | 双手盾(能普通攻击和盾击) | `ibx.lib.item.IbxTwoHandedShieldItem` | [6](#6-盾牌) |
-| 同一种只能戴一个的饰品 | 普通物品 + `ibx.lib.item.curio.UniqueCurioItem` | [7](#7-饰品) |
+| 3D 盔甲(穿上的样子由 GeckoLib 画) | `ibx.lib.item.IbxGeoArmorItem` | [7](#7-3d-盔甲) |
+| 给盔甲加护甲以外的属性 | `ibx.lib.item.general.IbxArmorProperties` | [7](#盔甲的物品属性) |
+| 同一种只能戴一个的饰品 | 普通物品 + `ibx.lib.item.curio.UniqueCurioItem` | [8](#8-饰品) |
 
 - **注册方式都一样**:`Item.Properties` 必须先带上物品 id 才能构造物品,所以用 `DeferredRegister.Items#registerItem` 注册,在工厂里使用传进来的 `Properties`;稀有度、防火等也设在它上面。
 - **数值挂在主手**:基类把数值烤成主手的属性修饰符,用「基础 id」,tooltip 显示成原版剑那样的深绿合并行(比如「8 远程伤害」)。
-- **标签自动加**:物品按基类自动进通用标签,data 里不用写(见 [8](#8-自动物品标签))。
+- **标签自动加**:物品按基类自动进通用标签,data 里不用写(见 [9](#9-自动物品标签))。3D 盔甲除外。
 - **能直接用**:普通装备直接 `new` 基类;有自己机制的再继承,重写对应的方法。
 
 不在本文里的:
@@ -733,7 +735,110 @@ public static final DeferredItem<TowerShieldItem> TOWER_SHIELD = ITEMS.registerI
 
 ---
 
-## 7. 饰品
+## 7. 3D 盔甲
+
+`ibx.lib.item.IbxGeoArmorItem`:穿上的样子由 GeckoLib 画的盔甲件。它只管「穿上长什么样」,护甲、耐久、穿戴部位、修复材料照常由注册时的物品属性给,见下面的 [盔甲的物品属性](#盔甲的物品属性)。
+
+> 用它必须装 GeckoLib:本模组对 GeckoLib 是可选依赖,你的模组要自己把它设成必需。
+
+| 构造方法 | 说明 |
+| --- | --- |
+| `IbxGeoArmorItem(properties, model)` | 没有自发光贴图。 |
+| `IbxGeoArmorItem(properties, model, glow)` | `glow` 为 `true` 时再叠一层自发光贴图。 |
+
+| 参数 | 类型 | 说明 |
+| --- | --- | --- |
+| `properties` | `Item.Properties` | 注册时给好材质和部位:`humanoidArmor`,或者用 `IbxArmorProperties`。 |
+| `model` | `Identifier` | 模型 id。一套盔甲的几件传同一个,共用一个模型、一张贴图。 |
+| `glow` | `boolean` | 有没有自发光贴图,不填就是 `false`。没有这张图却传 `true` 会画出缺失贴图。 |
+
+```java
+private static final Identifier PLATE_MODEL = Identifier.fromNamespaceAndPath("examplemod", "bone_plate");
+
+public static final DeferredItem<IbxGeoArmorItem> BONE_HELMET = ITEMS.registerItem("bone_helmet",
+        p -> new IbxGeoArmorItem(p.humanoidArmor(BONE_MATERIAL, ArmorType.HELMET), PLATE_MODEL, true));
+public static final DeferredItem<IbxGeoArmorItem> BONE_CHESTPLATE = ITEMS.registerItem("bone_chestplate",
+        p -> new IbxGeoArmorItem(p.humanoidArmor(BONE_MATERIAL, ArmorType.CHESTPLATE), PLATE_MODEL, true));
+```
+
+### 盔甲的物品属性
+
+`ibx.lib.item.general.IbxArmorProperties`:给一件人形盔甲配物品属性。材质自带护甲、韧性、击退抗性,在这之上逐条加这件自己的属性。它和 3D 盔甲无关,普通盔甲(原版盔甲层画的)也能用。
+
+```java
+public static final DeferredItem<IbxGeoArmorItem> BONE_HELMET = ITEMS.registerItem("bone_helmet",
+        p -> new IbxGeoArmorItem(IbxArmorProperties.of(p, BONE_MATERIAL, ArmorType.HELMET)
+                .add(AttributeRegistry.SPELL_RESISTANCE, 3)
+                .add(Attributes.MAX_HEALTH, 2)
+                .fireResistant()
+                .build(), PLATE_MODEL, true));
+```
+
+| 方法 | 说明 |
+| --- | --- |
+| `IbxArmorProperties.of(properties, material, type)` | 起头:相当于 `properties.humanoidArmor(material, type)`,属性从材质自带的那几条开始。 |
+| `add(attribute, amount)` | 加一条属性,直接加数值。 |
+| `add(attribute, amount, operation)` | 加一条属性,自己指定运算方式(按百分比加的用 `ADD_MULTIPLIED_BASE`)。 |
+| `fireResistant()` | 防火:掉进岩浆、火里不烧。 |
+| `build()` | 得到 `Item.Properties`,后面还可以接着设稀有度等。之后不要再调 `Properties#attributes`,会把上面加的全盖掉。 |
+
+- 加的修饰符 id 都同原版护甲的 `minecraft:armor.<部位>`(一个部位只穿得下一件,不会撞)。所以**一件上同一种属性只能有一条**:材质已经给的护甲、韧性、击退抗性不能再 `add`,重复了会在注册时抛异常。要调护甲值就改材质。
+- 只要属性修饰符、不要 `Item.Properties` 时(比如在 `ModifyDefaultComponentsEvent` 里改已有物品),用 `IbxArmorProperties.modifiers(material, type)`:同样的 `add`,另有 `remove(attribute)` 去掉材质给的某一种属性,`build()` 得到 `ItemAttributeModifiers`。本模组调整原版盔甲(见 [4](#4-原版物品的改动))走的就是它。
+
+### 资源文件
+
+模型 id `examplemod:bone_plate` 对应:
+
+| 文件 | 说明 |
+| --- | --- |
+| `assets/examplemod/geckolib/models/armor/bone_plate.geo.json` | 模型,几件都在这一个文件里。 |
+| `assets/examplemod/textures/armor/bone_plate.png` | 贴图。 |
+| `assets/examplemod/textures/armor/bone_plate_glowmask.png` | 自发光贴图,`glow` 为 `true` 时才用。发光的像素照抄贴图上的颜色,其余透明。 |
+
+骨骼名同 GeckoLib 的盔甲模板,每件只画自己部位的骨骼(连同它下面的子骨骼):
+
+| 物品的部位 | 画的骨骼 |
+| --- | --- |
+| 头盔 | `armorHead` |
+| 胸甲 | `armorBody`、`armorRightArm`、`armorLeftArm` |
+| 护腿 | `armorRightLeg`、`armorLeftLeg` |
+| 靴子 | `armorRightBoot`、`armorLeftBoot` |
+
+- **物品栏图标**是普通的物品模型,和 3D 模型无关,照常写 `items/<物品名>.json` 和物品贴图。
+- **装备资源 id**:`ArmorMaterial` 里的 `assetId` 仍然要填,但原版盔甲层不画这件盔甲,不用写对应的 `equipment/*.json`。盔甲纹饰走的是原版盔甲层,所以纹饰不会显示。
+- **标签**:盔甲不在 [9](#9-自动物品标签) 的自动标签里。要能附魔,在自己的 data 里把物品加进 `#minecraft:head_armor`、`#minecraft:chest_armor`、`#minecraft:leg_armor`、`#minecraft:foot_armor`。
+- **原版第一人称的手臂**上不画盔甲,同原版和 GeckoLib 的默认行为。
+
+### 第一人称动作
+
+Player Animation Library 播第一人称动作(比如 Better Combat 的攻击)时,会把玩家自己的身体临时画出来。它只会藏原版盔甲层画的盔甲,GeckoLib 盔甲不走那条路,不处理的话头盔会糊在镜头上。
+
+渲染器 `ibx.lib.client.renderer.IbxGeoArmorRenderer` 照它对原版盔甲的规矩处理这一遍:
+
+- 头盔、护腿、靴子不画。
+- 胸甲不画身体;手臂只有动作打开了「第一人称显示盔甲」、并且显示那只手时才画。
+- 第三人称、别的玩家、物品栏里的人物预览、睡觉时照常画。没装 Player Animation Library 时没有这一遍,也照常画。
+
+要自己判断这一遍(比如给别的不走原版盔甲层的东西用),用 `ibx.lib.compat.playeranim.PlayerAnimFirstPerson`,只在客户端用:
+
+| 方法 | 说明 |
+| --- | --- |
+| `isFirstPersonPass(state)` | 这份实体渲染状态是不是正被当作第一人称那一遍来画。 |
+| `showsArmArmor(state, arm)` | 那一遍里这只手臂上的盔甲画不画;不是那一遍时返回 `false`。 |
+
+没装 Player Animation Library 时两个方法都返回 `false`,不会碰到它的类,不用先判断装没装。只想问装没装,用 `ibx.lib.compat.PlayerAnimCompat.isLoaded()`。
+
+### 可重写的部分
+
+| 想做什么 | 做法 |
+| --- | --- |
+| 加动画 | 继承 `IbxGeoArmorItem`,重写 `registerControllers` 加动画控制器;动画文件是 `geckolib/animations/armor/<名字>.animation.json`。 |
+| 换画法(加渲染层、改骨骼映射等) | 继承 `IbxGeoArmorRenderer`(构造参数同物品:模型 id、`glow`,`glow` 同样可以不填),再在物品子类里重写 `createGeoRenderer` 用它。 |
+| 改第一人称那一遍画哪些部位 | 重写 `IbxGeoArmorRenderer#firstPersonSegments(wearer, slot, segments)`,返回要画的部位;`segments` 是平时这个部位画的。 |
+
+---
+
+## 8. 饰品
 
 本模组对 Curios(模组 id `curios`)是可选依赖。饰品本身是普通物品,槽位、属性加成按 Curios 自己的办法配;本模组提供两样东西。
 
@@ -759,7 +864,7 @@ modEventBus.addListener(FMLCommonSetupEvent.class, event ->
 
 ---
 
-## 8. 自动物品标签
+## 9. 自动物品标签
 
 用本模组的基类、接口注册的物品(含子类、含别的模组注册的)会自动进下面的标签,各模组的 data 里不用再写。规则在 `ibx.lib.registry.AutoItemTags`,子类同时满足父类的规则。
 
@@ -785,7 +890,7 @@ modEventBus.addListener(FMLCommonSetupEvent.class, event ->
 
 ---
 
-## 9. 数据组件
+## 10. 数据组件
 
 `ibx.lib.registry.DataComponentRegistry` 注册了两个物品数据组件:
 

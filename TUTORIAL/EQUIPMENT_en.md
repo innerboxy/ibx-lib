@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This mod provides a set of item base classes. Other mods use them directly or extend them to register weapons, shields, magic implements and curios. Numbers are given as constructor parameters; the shared parts (attribute modifiers, damage resolution, tags, animations) are handled by the base classes.
+This mod provides a set of item base classes. Other mods use them directly or extend them to register weapons, shields, magic implements, armor and curios. Numbers are given as constructor parameters; the shared parts (attribute modifiers, damage resolution, tags, animations) are handled by the base classes.
 
 | What you want to make | Class to use | See |
 | --- | --- | --- |
@@ -20,11 +20,13 @@ This mod provides a set of item base classes. Other mods use them directly or ex
 | Another kind of magic implement | extend `ibx.lib.item.general.IbxMagicWeaponItem` | [5](#5-magic-implements) |
 | A one-handed shield (blocks only) | `ibx.lib.item.IbxOneHandedShieldItem` | [6](#6-shields) |
 | A two-handed shield (normal attacks and shield bash) | `ibx.lib.item.IbxTwoHandedShieldItem` | [6](#6-shields) |
-| A curio you can only wear one of | a plain item + `ibx.lib.item.curio.UniqueCurioItem` | [7](#7-curios) |
+| 3D armor (worn look drawn by GeckoLib) | `ibx.lib.item.IbxGeoArmorItem` | [7](#7-3d-armor) |
+| Attributes beyond armor on an armor piece | `ibx.lib.item.general.IbxArmorProperties` | [7](#armor-item-properties) |
+| A curio you can only wear one of | a plain item + `ibx.lib.item.curio.UniqueCurioItem` | [8](#8-curios) |
 
 - **Registration is the same for all**: `Item.Properties` must carry the item id before an item can be constructed, so register with `DeferredRegister.Items#registerItem` and use the `Properties` passed into the factory; rarity, fire resistance and so on are set on it too.
 - **Numbers go on the main hand**: the base classes bake their numbers into main-hand attribute modifiers with a "base id", so the tooltip shows them as the dark green merged line vanilla swords use (e.g. "8 Ranged Damage").
-- **Tags are added automatically**: items join common tags according to their base class; nothing to write in data (see [8](#8-automatic-item-tags)).
+- **Tags are added automatically**: items join common tags according to their base class; nothing to write in data (see [9](#9-automatic-item-tags)). 3D armor is the exception.
 - **Usable as they are**: for plain equipment just `new` the base class; extend it and override the relevant methods only when the item has its own mechanics.
 
 Not covered here:
@@ -733,7 +735,110 @@ Apart from first person, the two branches must display the same:
 
 ---
 
-## 7. Curios
+## 7. 3D armor
+
+`ibx.lib.item.IbxGeoArmorItem`: an armor piece whose worn look is drawn by GeckoLib. It only covers "what it looks like when worn"; armor, durability, slot and repair material come from the item properties at registration as usual, see [Armor item properties](#armor-item-properties) below.
+
+> GeckoLib is required to use it: GeckoLib is an optional dependency of this mod, so your mod must require it itself.
+
+| Constructor | Description |
+| --- | --- |
+| `IbxGeoArmorItem(properties, model)` | No glow texture. |
+| `IbxGeoArmorItem(properties, model, glow)` | When `glow` is `true`, a glow texture is layered on top. |
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `properties` | `Item.Properties` | Set the material and slot at registration: `humanoidArmor`, or use `IbxArmorProperties`. |
+| `model` | `Identifier` | Model id. Pieces of one set pass the same id and share one model and one texture. |
+| `glow` | `boolean` | Whether there is a glow texture; `false` when omitted. Passing `true` without that file draws the missing texture. |
+
+```java
+private static final Identifier PLATE_MODEL = Identifier.fromNamespaceAndPath("examplemod", "bone_plate");
+
+public static final DeferredItem<IbxGeoArmorItem> BONE_HELMET = ITEMS.registerItem("bone_helmet",
+        p -> new IbxGeoArmorItem(p.humanoidArmor(BONE_MATERIAL, ArmorType.HELMET), PLATE_MODEL, true));
+public static final DeferredItem<IbxGeoArmorItem> BONE_CHESTPLATE = ITEMS.registerItem("bone_chestplate",
+        p -> new IbxGeoArmorItem(p.humanoidArmor(BONE_MATERIAL, ArmorType.CHESTPLATE), PLATE_MODEL, true));
+```
+
+### Armor item properties
+
+`ibx.lib.item.general.IbxArmorProperties`: builds the item properties of one humanoid armor piece. The material brings armor, toughness and knockback resistance; on top of that you add the piece's own attributes one by one. It is unrelated to 3D armor, so ordinary armor (drawn by the vanilla armor layer) can use it too.
+
+```java
+public static final DeferredItem<IbxGeoArmorItem> BONE_HELMET = ITEMS.registerItem("bone_helmet",
+        p -> new IbxGeoArmorItem(IbxArmorProperties.of(p, BONE_MATERIAL, ArmorType.HELMET)
+                .add(AttributeRegistry.SPELL_RESISTANCE, 3)
+                .add(Attributes.MAX_HEALTH, 2)
+                .fireResistant()
+                .build(), PLATE_MODEL, true));
+```
+
+| Method | Description |
+| --- | --- |
+| `IbxArmorProperties.of(properties, material, type)` | Start: equivalent to `properties.humanoidArmor(material, type)`, with the attributes starting from what the material brings. |
+| `add(attribute, amount)` | Adds one attribute as a flat value. |
+| `add(attribute, amount, operation)` | Adds one attribute with your own operation (use `ADD_MULTIPLIED_BASE` for percentages). |
+| `fireResistant()` | Fire resistant: does not burn in lava or fire. |
+| `build()` | Returns the `Item.Properties`; you can keep setting rarity and so on afterwards. Do not call `Properties#attributes` after it, or everything added above is overwritten. |
+
+- The added modifiers all use the vanilla armor id `minecraft:armor.<slot>` (a slot holds only one piece, so they never clash). That means **a piece can have only one modifier per attribute**: armor, toughness and knockback resistance already come from the material and cannot be `add`ed again; a duplicate throws at registration. To change the armor value, change the material.
+- When you only need the attribute modifiers and not an `Item.Properties` (changing an existing item in `ModifyDefaultComponentsEvent`, for example), use `IbxArmorProperties.modifiers(material, type)`: the same `add`, plus `remove(attribute)` to drop one of the material's attributes, and `build()` returns an `ItemAttributeModifiers`. This mod's vanilla armor adjustments (see [4](#4-changes-to-vanilla-items)) go through it.
+
+### Resource files
+
+The model id `examplemod:bone_plate` maps to:
+
+| File | Description |
+| --- | --- |
+| `assets/examplemod/geckolib/models/armor/bone_plate.geo.json` | The model; all pieces live in this one file. |
+| `assets/examplemod/textures/armor/bone_plate.png` | The texture. |
+| `assets/examplemod/textures/armor/bone_plate_glowmask.png` | The glow texture, used only when `glow` is `true`. Glowing pixels copy the colors of the texture; the rest is transparent. |
+
+Bone names follow GeckoLib's armor template; each piece draws only the bones of its own slot (with their child bones):
+
+| Item slot | Bones drawn |
+| --- | --- |
+| Helmet | `armorHead` |
+| Chestplate | `armorBody`, `armorRightArm`, `armorLeftArm` |
+| Leggings | `armorRightLeg`, `armorLeftLeg` |
+| Boots | `armorRightBoot`, `armorLeftBoot` |
+
+- **The inventory icon** is an ordinary item model, unrelated to the 3D model; write `items/<item name>.json` and the item texture as usual.
+- **Equipment asset id**: the `assetId` in `ArmorMaterial` still has to be filled in, but the vanilla armor layer does not draw this armor, so no `equipment/*.json` is needed. Armor trims go through the vanilla armor layer, so trims are not shown.
+- **Tags**: armor is not among the automatic tags in [9](#9-automatic-item-tags). To make it enchantable, add the items to `#minecraft:head_armor`, `#minecraft:chest_armor`, `#minecraft:leg_armor` and `#minecraft:foot_armor` in your own data.
+- **The vanilla first-person arm** does not show armor, same as vanilla and GeckoLib's default.
+
+### First-person animations
+
+When Player Animation Library plays a first-person animation (Better Combat's attacks, for example), it temporarily draws the player's own body. It only hides armor drawn by the vanilla armor layer; GeckoLib armor does not go through that path, so left alone the helmet ends up plastered over the camera.
+
+The renderer `ibx.lib.client.renderer.IbxGeoArmorRenderer` treats that pass the way the library treats vanilla armor:
+
+- Helmet, leggings and boots are not drawn.
+- The chestplate does not draw the body; an arm is drawn only when the animation turns on "show armor in first person" and shows that arm.
+- Third person, other players, the inventory player preview and sleeping are drawn as usual. Without Player Animation Library there is no such pass, and everything is drawn as usual.
+
+To test for that pass yourself (for anything else that does not go through the vanilla armor layer), use `ibx.lib.compat.playeranim.PlayerAnimFirstPerson`, client side only:
+
+| Method | Description |
+| --- | --- |
+| `isFirstPersonPass(state)` | Whether this entity render state is being drawn as the first-person pass. |
+| `showsArmArmor(state, arm)` | Whether armor on this arm is drawn in that pass; returns `false` outside of it. |
+
+Without Player Animation Library both methods return `false` and never touch its classes, so there is no need to check whether it is installed first. To just ask whether it is installed, use `ibx.lib.compat.PlayerAnimCompat.isLoaded()`.
+
+### What you can override
+
+| What you want | How |
+| --- | --- |
+| Add animations | Extend `IbxGeoArmorItem` and override `registerControllers` to add animation controllers; the animation file is `geckolib/animations/armor/<name>.animation.json`. |
+| Change how it is drawn (extra render layers, a different bone mapping, etc.) | Extend `IbxGeoArmorRenderer` (same constructor parameters as the item: model id, `glow`; `glow` can be omitted here too), then override `createGeoRenderer` in an item subclass to use it. |
+| Change which parts the first-person pass draws | Override `IbxGeoArmorRenderer#firstPersonSegments(wearer, slot, segments)` and return the parts to draw; `segments` is what the slot normally draws. |
+
+---
+
+## 8. Curios
 
 Curios (mod id `curios`) is an optional dependency of this mod. A curio is a plain item; slots and attribute bonuses are set up the Curios way. This mod provides two things.
 
@@ -759,7 +864,7 @@ Curios can provide spells too: items in curio slots that carry the `ibx_lib:spel
 
 ---
 
-## 8. Automatic item tags
+## 9. Automatic item tags
 
 Items registered with this mod's base classes and interfaces (subclasses included, other mods' items included) automatically join the tags below; no mod has to write them in its data. The rules are in `ibx.lib.registry.AutoItemTags`, and a subclass also satisfies its parent's rules.
 
@@ -785,7 +890,7 @@ Items registered with this mod's base classes and interfaces (subclasses include
 
 ---
 
-## 9. Data components
+## 10. Data components
 
 `ibx.lib.registry.DataComponentRegistry` registers two item data components:
 

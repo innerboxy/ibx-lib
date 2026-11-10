@@ -1,11 +1,9 @@
 package ibx.lib.item.vanilla;
 
 import ibx.lib.config.StartupConfig;
+import ibx.lib.item.general.IbxArmorProperties;
 import ibx.lib.registry.AttributeRegistry;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.EquipmentSlotGroup;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -14,9 +12,6 @@ import net.minecraft.world.item.equipment.ArmorMaterial;
 import net.minecraft.world.item.equipment.ArmorMaterials;
 import net.minecraft.world.item.equipment.ArmorType;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 原版盔甲套装的属性调整：给几套原版盔甲加上 / 换成法术抗性（{@link AttributeRegistry#SPELL_RESISTANCE}）。
@@ -64,16 +59,10 @@ public final class VanillaArmors {
     }
 
     private static ItemAttributeModifiers modifiers(ArmorMaterial material, boolean keepArmor, ArmorMaterial resistanceOf, ArmorType type) {
-        List<ItemAttributeModifiers.Entry> entries = new ArrayList<>();
-        for (ItemAttributeModifiers.Entry entry : material.createAttributes(type).modifiers()) {
-            if (keepArmor || !entry.attribute().is(Attributes.ARMOR)) {
-                entries.add(entry);
-            }
+        IbxArmorProperties.Modifiers modifiers = IbxArmorProperties.modifiers(material, type);
+        if (!keepArmor) {
+            modifiers.remove(Attributes.ARMOR);
         }
-        // id 同原版护甲修饰符（minecraft:armor.<部位>），一个部位只穿得下一件，不会撞
-        AttributeModifier resistance = new AttributeModifier(Identifier.withDefaultNamespace("armor." + type.getName()),
-                resistanceOf.defense().getOrDefault(type, 0), AttributeModifier.Operation.ADD_VALUE);
-        entries.add(new ItemAttributeModifiers.Entry(AttributeRegistry.SPELL_RESISTANCE, resistance, EquipmentSlotGroup.bySlot(type.getSlot())));
-        return new ItemAttributeModifiers(entries);
+        return modifiers.add(AttributeRegistry.SPELL_RESISTANCE, resistanceOf.defense().getOrDefault(type, 0)).build();
     }
 }

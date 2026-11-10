@@ -28,7 +28,7 @@
 
 ### 装备基类
 
-近战武器、弓、弩、法杖、法典、单手盾、双手盾和饰品的物品基类,继承后只写自己的数值和钩子。弓弩走属性结算(远程伤害、拉弦时间),双手盾带盾击,原版弓弩和几套原版盔甲也可以一并接管。
+近战武器、弓、弩、法杖、法典、单手盾、双手盾、3D 盔甲和饰品的物品基类,继承后只写自己的数值和钩子。弓弩走属性结算(远程伤害、拉弦时间),双手盾带盾击,3D 盔甲由 GeckoLib 画、一套共用一个模型,原版弓弩和几套原版盔甲也可以一并接管。
 
 详见 [装备基类](TUTORIAL/EQUIPMENT.md)。
 
@@ -59,7 +59,7 @@
 | [法术系统](TUTORIAL/SPELL.md) | 注册法术、施法流程、法术容器、法术伤害、法力、法术实体基类、事件 |
 | [召唤物](TUTORIAL/SUMMON.md) | `SummonApi`、名额与寿命、`Summoned` 接口、AI 目标、事件 |
 | [目标选择](TUTORIAL/TARGETING.md) | `TargetApi`、阵营、瞄准方式、选取时机、读条提示、法术和物品里怎么用 |
-| [装备基类](TUTORIAL/EQUIPMENT.md) | 近战、弓弩、法器、盾牌、饰品的基类,`RangedWeaponApi`、`ShieldApi`,自动物品标签 |
+| [装备基类](TUTORIAL/EQUIPMENT.md) | 近战、弓弩、法器、盾牌、3D 盔甲、饰品的基类,`RangedWeaponApi`、`ShieldApi`,自动物品标签 |
 | [属性](TUTORIAL/ATTRIBUTE.md) | 属性一览、伤害与治疗的结算顺序、`CriticalStrikeApi`、属性类型、属性面板 |
 | [特效](TUTORIAL/EFFECT.md) | `GroundWarnings`、`BlockWave`、`CustomFire` |
 | [创造栏子栏](TUTORIAL/CREATIVE_TAB.md) | `CreativeSubTabs`、分组规则 |
@@ -74,8 +74,8 @@
 | --- | --- | --- |
 | NeoForge `26.1.2.112+` | **必需** | — |
 | Minecraft `26.1.2` | **必需** | — |
-| [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | 可选 | 只有法术弹射物基类 `SpellProjectile` 和它的渲染器用到;注册法术弹射物的模组自己要把它设成必需 |
-| [Player Animation Library](https://modrinth.com/mod/player-animation-library) `1.2.6+` | 可选(客户端) | 装了才有施法、格挡和盾击时的玩家动作,没装只是手臂不动 |
+| [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | 可选 | 只有法术弹射物基类 `SpellProjectile`、3D 盔甲 `IbxGeoArmorItem` 和它们的渲染器用到;注册法术弹射物或 3D 盔甲的模组自己要把它设成必需 |
+| [Player Animation Library](https://modrinth.com/mod/player-animation-library) `1.2.6+` | 可选(客户端) | 装了才有施法、格挡和盾击时的玩家动作,没装只是手臂不动;它播第一人称动作时,3D 盔甲照它对原版盔甲的规矩藏起来 |
 | [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | 可选 | 饰品基类、饰品栏里的施法物品、饰品栏界面上的属性面板按钮 |
 | [Jade](https://modrinth.com/mod/jade) | 可选(客户端) | 提示框里在护甲后面显示法术抗性;第一次进世界时关掉一次 Jade 的「显示Boss」,免得和 Boss 血条重复 |
 | [MmmMmmMmmMmm](https://modrinth.com/mod/mmmmmmmmmmmm)(试验假人) | 可选 | 远程、法术暴击显示成暴击数字,法术伤害的数字用专属的蓝色 |

@@ -15,13 +15,13 @@ import ibx.lib.client.spell.SpellPickerInput;
 import ibx.lib.client.spell.SpellWheel;
 import ibx.lib.client.target.TargetIndicatorRendering;
 import ibx.lib.client.target.TargetModeSync;
+import ibx.lib.compat.PlayerAnimCompat;
 import ibx.lib.compat.jade.JadeCompat;
 import ibx.lib.config.ClientConfig;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
@@ -33,13 +33,10 @@ import net.neoforged.neoforge.common.NeoForge;
  */
 @Mod(value = IbxLib.MODID, dist = Dist.CLIENT)
 public final class IbxLibClient {
-    /** Player Animation Library 的模组 id：可选依赖，装了才注册施法、盾击动作。 */
-    private static final String PLAYER_ANIMATION_LIBRARY = "player_animation_library";
-
     public IbxLibClient(IEventBus modEventBus, ModContainer modContainer) {
         modContainer.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
         // Player Animation Library 是可选依赖：没装时动作相关的类（CastAnimations、ShieldAnimations、PlayerAnimLayers）一个都不加载
-        boolean playerAnimationsLoaded = ModList.get().isLoaded(PLAYER_ANIMATION_LIBRARY);
+        boolean playerAnimationsLoaded = PlayerAnimCompat.isLoaded();
         // 模组列表里的「配置」按钮：NeoForge 自带的配置界面，游戏里直接改（名字见语言文件 ibx_lib.configuration.*，说明取配置注释）
         modContainer.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
 

@@ -28,7 +28,7 @@ See [Target selection](../TUTORIAL/TARGETING_en.md).
 
 ### Equipment base classes
 
-Item base classes for melee weapons, bows, crossbows, staves, tomes, one-handed and two-handed shields, and curios; extend one and write only your own numbers and hooks. Bows and crossbows resolve by attributes (ranged damage, draw time), two-handed shields can bash, and the vanilla bow and crossbow and a few vanilla armor sets can be taken over too.
+Item base classes for melee weapons, bows, crossbows, staves, tomes, one-handed and two-handed shields, 3D armor, and curios; extend one and write only your own numbers and hooks. Bows and crossbows resolve by attributes (ranged damage, draw time), two-handed shields can bash, 3D armor is drawn by GeckoLib with one model shared by a set, and the vanilla bow and crossbow and a few vanilla armor sets can be taken over too.
 
 See [Equipment base classes](../TUTORIAL/EQUIPMENT_en.md).
 
@@ -59,7 +59,7 @@ See [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md).
 | [Spell system](../TUTORIAL/SPELL_en.md) | Registering spells, the cast flow, spell containers, spell damage, mana, spell entity base classes, events |
 | [Summons](../TUTORIAL/SUMMON_en.md) | `SummonApi`, slots and lifetime, the `Summoned` interface, AI goals, events |
 | [Target selection](../TUTORIAL/TARGETING_en.md) | `TargetApi`, factions, targeting declarations, pick timing, casting indicators, using it in spells and items |
-| [Equipment base classes](../TUTORIAL/EQUIPMENT_en.md) | Base classes for melee, bows and crossbows, implements, shields and curios; `RangedWeaponApi`, `ShieldApi`; automatic item tags |
+| [Equipment base classes](../TUTORIAL/EQUIPMENT_en.md) | Base classes for melee, bows and crossbows, implements, shields, 3D armor and curios; `RangedWeaponApi`, `ShieldApi`; automatic item tags |
 | [Attributes](../TUTORIAL/ATTRIBUTE_en.md) | Attribute list, damage and healing order, `CriticalStrikeApi`, attribute types, the attribute panel |
 | [Visual effects](../TUTORIAL/EFFECT_en.md) | `GroundWarnings`, `BlockWave`, `CustomFire` |
 | [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md) | `CreativeSubTabs`, grouping rules |
@@ -74,8 +74,8 @@ See [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md).
 | --- | --- | --- |
 | NeoForge `26.1.2.112+` | **Required** | — |
 | Minecraft `26.1.2` | **Required** | — |
-| [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | Optional | Used only by the spell projectile base class `SpellProjectile` and its renderer; mods that register spell projectiles must require it themselves |
-| [Player Animation Library](https://modrinth.com/mod/player-animation-library) `1.2.6+` | Optional (client) | Adds player animations for casting, guarding and shield bashing; without it the arms just don't move |
+| [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | Optional | Used only by the spell projectile base class `SpellProjectile`, the 3D armor class `IbxGeoArmorItem` and their renderers; mods that register spell projectiles or 3D armor must require it themselves |
+| [Player Animation Library](https://modrinth.com/mod/player-animation-library) `1.2.6+` | Optional (client) | Adds player animations for casting, guarding and shield bashing; without it the arms just don't move. While it plays a first-person animation, 3D armor is hidden the way it hides vanilla armor |
 | [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | Optional | Curio base class, casting items in curio slots, the attribute panel button on the curios screen |
 | [Jade](https://modrinth.com/mod/jade) | Optional (client) | Shows spell resistance after armor in the tooltip; turns Jade's "Show Bosses" off once the first time you join a world so it doesn't duplicate boss bars |
 | [MmmMmmMmmMmm](https://modrinth.com/mod/mmmmmmmmmmmm) (Target Dummy) | Optional | Ranged and spell crits show as crit numbers, and spell damage numbers get their own blue color |
