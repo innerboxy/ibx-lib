@@ -13,6 +13,7 @@ import ibx.lib.event.HealHandler;
 import ibx.lib.event.ManaHandler;
 import ibx.lib.item.vanilla.VanillaArmors;
 import ibx.lib.item.vanilla.VanillaRangedWeapons;
+import ibx.lib.item.vanilla.VanillaSpawnEggs;
 import ibx.lib.network.LibNetwork;
 import ibx.lib.registry.AttachmentRegistry;
 import ibx.lib.registry.AttributeRegistry;
@@ -49,6 +50,7 @@ public class IbxLib {
         LibNetwork.register(modEventBus);
         modEventBus.addListener(VanillaRangedWeapons::onModifyDefaultComponents);
         modEventBus.addListener(VanillaArmors::onModifyDefaultComponents);
+        modEventBus.addListener(VanillaSpawnEggs::onBuildCreativeModeTabContents);
 
         // GAME 总线：统一的伤害、治疗、法力与施法结算，召唤物框架，以及法力、法术、召唤物指令。
         DamageHandler.register();
