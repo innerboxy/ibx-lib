@@ -27,5 +27,22 @@ public final class Config {
                     "两种情况下暴击倍率都取 critical_damage，而非原版写死的 1.5 倍。")
             .define("enableVanillaCritical", false);
 
+    /**
+     * 隐身的生物是否连盔甲、头上戴的和手里的物品也一起藏起来（原版隐身只藏身体）。
+     *
+     * <p>客户端画面上的效果，按同步过来的服务端值算，所以由服务器统一决定、玩家不能自己关掉。</p>
+     */
+    public static final ModConfigSpec.BooleanValue HIDE_EQUIPMENT_WHEN_INVISIBLE = BUILDER
+            .comment("隐身时是否连装备一起隐藏。",
+                    "true  = 看不见的生物，身上的盔甲、鞘翅、头上戴的南瓜 / 头颅、手里的物品也都不显示；",
+                    "false = 原版：只藏身体，装备和手里的物品照常显示。",
+                    "旁观者、开了「看见隐身队友」的队友两种情况下都看得见；盔甲架不受影响。")
+            .define("hideEquipmentWhenInvisible", true);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
+
+    /** 开关类配置的当前值；没加载（不在存档里）时取默认值。 */
+    public static boolean get(ModConfigSpec.BooleanValue value) {
+        return SPEC.isLoaded() ? value.get() : value.getDefault();
+    }
 }

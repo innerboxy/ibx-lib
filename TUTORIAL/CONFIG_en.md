@@ -16,11 +16,17 @@ Config type **SERVER**, saved with the world at `<world>/serverconfig/ibx_lib-se
 #true  = 跳劈仍必定暴击，平地攻击另按 critical_chance 判定。
 #两种情况下暴击倍率都取 critical_damage，而非原版写死的 1.5 倍。
 enableVanillaCritical = false
+#隐身时是否连装备一起隐藏。
+#true  = 看不见的生物，身上的盔甲、鞘翅、头上戴的南瓜 / 头颅、手里的物品也都不显示；
+#false = 原版：只藏身体，装备和手里的物品照常显示。
+#旁观者、开了「看见隐身队友」的队友两种情况下都看得见；盔甲架不受影响。
+hideEquipmentWhenInvisible = true
 ```
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
 | `enableVanillaCritical` | boolean | `false` | Whether to keep vanilla's guaranteed jump crit. When on, jump attacks always crit and other attacks still roll critical chance (either one counts). Either way the crit multiplier is `critical_damage` (see [Attributes 3](ATTRIBUTE_en.md#3-damage-and-healing-order)). |
+| `hideEquipmentWhenInvisible` | boolean | `true` | Whether invisible mobs and players also hide their armor, elytra, worn pumpkins / heads and held items; `false` is vanilla, which only hides the body. Viewers who can see invisible entities (spectators, teammates with "see friendly invisibles") still see them as in vanilla; armor stands are not affected; your own held item in first person still shows. The server's value is used, so players cannot change it on their side. |
 
 > SERVER configs are only available after a world is loaded. Developers must read `Config` only while the game is running, never during registration or class initialization, or it throws.
 

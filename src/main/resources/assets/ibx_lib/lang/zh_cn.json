@@ -122,6 +122,7 @@
   "tooltip.ibx_lib.spells": "法术：",
   "config.jade.plugin_ibx_lib.spell_resistance": "实体魔法抗性",
   "ibx_lib.configuration.enableVanillaCritical": "保留原版跳劈暴击",
+  "ibx_lib.configuration.hideEquipmentWhenInvisible": "隐身时连装备一起隐藏",
   "ibx_lib.configuration.takeOverVanillaRangedWeapons": "接管原版弓弩",
   "ibx_lib.configuration.adjustVanillaArmors": "调整原版盔甲属性",
   "ibx_lib.configuration.raiseVanillaStackSizes": "原版物品堆叠到 64",

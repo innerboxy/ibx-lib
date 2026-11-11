@@ -40,7 +40,7 @@ See [Attributes](../TUTORIAL/ATTRIBUTE_en.md).
 
 ### Visual effects
 
-Three purely visual effects with no resolution of their own: ground warnings (a circle or strip marked on the ground), block waves (surface blocks popping up like a wave) and colored fire (a different fire texture on an entity and on the screen). One call on the server; the client draws the rest.
+Three purely visual effects with no resolution of their own: ground warnings (a circle or strip marked on the ground), block waves (surface blocks popping up like a wave) and colored fire (a different fire texture on an entity and on the screen). One call on the server; the client draws the rest. Also, invisible mobs and players hide their armor and held items too (vanilla only hides the body; the server config can switch back to vanilla).
 
 See [Visual effects](../TUTORIAL/EFFECT_en.md).
 

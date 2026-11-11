@@ -122,6 +122,7 @@
   "tooltip.ibx_lib.spells": "Spells:",
   "config.jade.plugin_ibx_lib.spell_resistance": "Entity Spell Resistance",
   "ibx_lib.configuration.enableVanillaCritical": "Keep Vanilla Jump Crits",
+  "ibx_lib.configuration.hideEquipmentWhenInvisible": "Hide Equipment When Invisible",
   "ibx_lib.configuration.takeOverVanillaRangedWeapons": "Take Over Vanilla Bows and Crossbows",
   "ibx_lib.configuration.adjustVanillaArmors": "Adjust Vanilla Armor Stats",
   "ibx_lib.configuration.raiseVanillaStackSizes": "Raise Vanilla Stack Sizes to 64",
