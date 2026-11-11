@@ -1,6 +1,7 @@
 package ibx.lib.item.vanilla;
 
 import ibx.lib.config.StartupConfig;
+import ibx.lib.item.general.IbxArmorMaterial;
 import ibx.lib.item.general.IbxArmorProperties;
 import ibx.lib.registry.AttributeRegistry;
 import net.minecraft.core.component.DataComponents;
@@ -59,10 +60,10 @@ public final class VanillaArmors {
     }
 
     private static ItemAttributeModifiers modifiers(ArmorMaterial material, boolean keepArmor, ArmorMaterial resistanceOf, ArmorType type) {
-        IbxArmorProperties.Modifiers modifiers = IbxArmorProperties.modifiers(material, type);
+        IbxArmorProperties.Modifiers modifiers = IbxArmorProperties.modifiers(IbxArmorMaterial.of(material, resistanceOf.defense()), type);
         if (!keepArmor) {
             modifiers.remove(Attributes.ARMOR);
         }
-        return modifiers.add(AttributeRegistry.SPELL_RESISTANCE, resistanceOf.defense().getOrDefault(type, 0)).build();
+        return modifiers.build();
     }
 }

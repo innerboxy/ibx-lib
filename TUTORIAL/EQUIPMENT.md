@@ -21,7 +21,8 @@
 | 单手盾(只挡) | `ibx.lib.item.IbxOneHandedShieldItem` | [6](#6-盾牌) |
 | 双手盾(能普通攻击和盾击) | `ibx.lib.item.IbxTwoHandedShieldItem` | [6](#6-盾牌) |
 | 3D 盔甲(穿上的样子由 GeckoLib 画) | `ibx.lib.item.IbxGeoArmorItem` | [7](#7-3d-盔甲) |
-| 给盔甲加护甲以外的属性 | `ibx.lib.item.general.IbxArmorProperties` | [7](#盔甲的物品属性) |
+| 带法术抗性的盔甲材质 | `ibx.lib.item.general.IbxArmorMaterial` | [7](#盔甲材质) |
+| 给盔甲加材质以外的属性 | `ibx.lib.item.general.IbxArmorProperties` | [7](#盔甲的物品属性) |
 | 同一种只能戴一个的饰品 | 普通物品 + `ibx.lib.item.curio.UniqueCurioItem` | [8](#8-饰品) |
 | 攻击、挨打、击杀、施法时触发的饰品 | 物品类实现 `ibx.lib.item.curio.CurioTriggers` | [8](#触发钩子) |
 | 鞘翅放在饰品栏里也能滑翔 | 给 Curios 槽位 `elytra` 加格数(默认 0 格) | [8](#鞘翅槽) |
@@ -756,7 +757,7 @@ public static final DeferredItem<TowerShieldItem> TOWER_SHIELD = ITEMS.registerI
 
 ## 7. 3D 盔甲
 
-`ibx.lib.item.IbxGeoArmorItem`:穿上的样子由 GeckoLib 画的盔甲件。它只管「穿上长什么样」,护甲、耐久、穿戴部位、修复材料照常由注册时的物品属性给,见下面的 [盔甲的物品属性](#盔甲的物品属性)。
+`ibx.lib.item.IbxGeoArmorItem`:穿上的样子由 GeckoLib 画的盔甲件。它只管「穿上长什么样」,护甲、耐久、穿戴部位、修复材料照常由注册时的物品属性给,见下面的 [盔甲材质](#盔甲材质) 和 [盔甲的物品属性](#盔甲的物品属性)。
 
 > 用它必须装 GeckoLib:本模组对 GeckoLib 是可选依赖,你的模组要自己把它设成必需。
 
@@ -767,7 +768,7 @@ public static final DeferredItem<TowerShieldItem> TOWER_SHIELD = ITEMS.registerI
 
 | 参数 | 类型 | 说明 |
 | --- | --- | --- |
-| `properties` | `Item.Properties` | 注册时给好材质和部位:`humanoidArmor`,或者用 `IbxArmorProperties`。 |
+| `properties` | `Item.Properties` | 注册时给好材质和部位:用 `IbxArmorProperties`,或者原版的 `humanoidArmor`。 |
 | `model` | `Identifier` | 模型 id。一套盔甲的几件传同一个,共用一个模型、一张贴图。 |
 | `glow` | `boolean` | 有没有自发光贴图,不填就是 `false`。没有这张图却传 `true` 会画出缺失贴图。 |
 
@@ -775,19 +776,58 @@ public static final DeferredItem<TowerShieldItem> TOWER_SHIELD = ITEMS.registerI
 private static final Identifier PLATE_MODEL = Identifier.fromNamespaceAndPath("examplemod", "bone_plate");
 
 public static final DeferredItem<IbxGeoArmorItem> BONE_HELMET = ITEMS.registerItem("bone_helmet",
-        p -> new IbxGeoArmorItem(p.humanoidArmor(BONE_MATERIAL, ArmorType.HELMET), PLATE_MODEL, true));
+        p -> new IbxGeoArmorItem(IbxArmorProperties.of(p, BONE_MATERIAL, ArmorType.HELMET).build(), PLATE_MODEL, true));
 public static final DeferredItem<IbxGeoArmorItem> BONE_CHESTPLATE = ITEMS.registerItem("bone_chestplate",
-        p -> new IbxGeoArmorItem(p.humanoidArmor(BONE_MATERIAL, ArmorType.CHESTPLATE), PLATE_MODEL, true));
+        p -> new IbxGeoArmorItem(IbxArmorProperties.of(p, BONE_MATERIAL, ArmorType.CHESTPLATE).build(), PLATE_MODEL, true));
 ```
+
+### 盔甲材质
+
+`ibx.lib.item.general.IbxArmorMaterial`:一套盔甲共用的材质。原版 `ArmorMaterial` 的那几项都在,护甲后面多一项每个部位的法术抗性。原版材质是 record、继承不了,所以这是单独的一个类,参数顺序照原版。
+
+```java
+public static final IbxArmorMaterial BONE_MATERIAL = new IbxArmorMaterial(
+        37,                                       // durability
+        IbxArmorMaterial.pieces(3, 8, 6, 3),      // defense
+        IbxArmorMaterial.pieces(3, 8, 6, 3),      // spellResistance
+        15,                                       // enchantmentValue
+        SoundEvents.ARMOR_EQUIP_NETHERITE,        // equipSound
+        3.0F,                                     // toughness
+        0.1F,                                     // knockbackResistance
+        ItemTags.REPAIRS_NETHERITE_ARMOR,         // repairIngredient
+        ResourceKey.create(EquipmentAssets.ROOT_ID,
+                Identifier.fromNamespaceAndPath("examplemod", "bone_plate")));  // assetId
+```
+
+| 参数 | 类型 | 说明 |
+| --- | --- | --- |
+| `durability` | `int` | 耐久倍率:每件耐久 = 部位基数(头 11、胸 16、腿 15、脚 13)× 本值。 |
+| `defense` | `Map<ArmorType, Integer>` | 各部位的护甲值。 |
+| `spellResistance` | `Map<ArmorType, Integer>` | 各部位的法术抗性。没填或填 0 的部位不带这条属性。 |
+| `enchantmentValue` | `int` | 附魔能力。 |
+| `equipSound` | `Holder<SoundEvent>` | 穿戴音效。 |
+| `toughness` | `float` | 盔甲韧性,每件都是这个值。 |
+| `knockbackResistance` | `float` | 击退抗性,每件都是这个值。0 就不带这条属性。 |
+| `repairIngredient` | `TagKey<Item>` | 修复材料。 |
+| `assetId` | `ResourceKey<EquipmentAsset>` | 装备资源 id。 |
+
+| 方法 | 说明 |
+| --- | --- |
+| `IbxArmorMaterial.pieces(helmet, chestplate, leggings, boots)` | 四个部位各一个数值,填 `defense`、`spellResistance` 都用它。 |
+| `IbxArmorMaterial.of(material, spellResistance)` | 照一个原版 `ArmorMaterial`,再给每个部位配上法术抗性。 |
+| `toVanilla()` | 去掉法术抗性的原版 `ArmorMaterial`,别处要原版材质时用。 |
+| `createAttributes(type)` | 这个部位的属性修饰符。 |
+
+- **tooltip 的顺序**:护甲、法术抗性、韧性、击退抗性。
+- 只用来注册人形盔甲。狼铠、马铠这类走原版 `Item.Properties` 的方法,传 `toVanilla()`,法术抗性不会带上。
 
 ### 盔甲的物品属性
 
-`ibx.lib.item.general.IbxArmorProperties`:给一件人形盔甲配物品属性。材质自带护甲、韧性、击退抗性,在这之上逐条加这件自己的属性。它和 3D 盔甲无关,普通盔甲(原版盔甲层画的)也能用。
+`ibx.lib.item.general.IbxArmorProperties`:给一件人形盔甲配物品属性。材质自带护甲、法术抗性、韧性、击退抗性,在这之上逐条加这件自己的属性。它和 3D 盔甲无关,普通盔甲(原版盔甲层画的)也能用。
 
 ```java
 public static final DeferredItem<IbxGeoArmorItem> BONE_HELMET = ITEMS.registerItem("bone_helmet",
         p -> new IbxGeoArmorItem(IbxArmorProperties.of(p, BONE_MATERIAL, ArmorType.HELMET)
-                .add(AttributeRegistry.SPELL_RESISTANCE, 3)
                 .add(Attributes.MAX_HEALTH, 2)
                 .fireResistant()
                 .build(), PLATE_MODEL, true));
@@ -795,14 +835,14 @@ public static final DeferredItem<IbxGeoArmorItem> BONE_HELMET = ITEMS.registerIt
 
 | 方法 | 说明 |
 | --- | --- |
-| `IbxArmorProperties.of(properties, material, type)` | 起头:相当于 `properties.humanoidArmor(material, type)`,属性从材质自带的那几条开始。 |
+| `IbxArmorProperties.of(properties, material, type)` | 起头:相当于 `properties.humanoidArmor(material, type)`,属性从材质自带的那几条开始。`material` 传 `IbxArmorMaterial`,也可以传原版的 `ArmorMaterial`(没有法术抗性)。 |
 | `add(attribute, amount)` | 加一条属性,直接加数值。 |
 | `add(attribute, amount, operation)` | 加一条属性,自己指定运算方式(按百分比加的用 `ADD_MULTIPLIED_BASE`)。 |
 | `fireResistant()` | 防火:掉进岩浆、火里不烧。 |
 | `build()` | 得到 `Item.Properties`,后面还可以接着设稀有度等。之后不要再调 `Properties#attributes`,会把上面加的全盖掉。 |
 
-- 加的修饰符 id 都同原版护甲的 `minecraft:armor.<部位>`(一个部位只穿得下一件,不会撞)。所以**一件上同一种属性只能有一条**:材质已经给的护甲、韧性、击退抗性不能再 `add`,重复了会在注册时抛异常。要调护甲值就改材质。
-- 只要属性修饰符、不要 `Item.Properties` 时(比如在 `ModifyDefaultComponentsEvent` 里改已有物品),用 `IbxArmorProperties.modifiers(material, type)`:同样的 `add`,另有 `remove(attribute)` 去掉材质给的某一种属性,`build()` 得到 `ItemAttributeModifiers`。本模组调整原版盔甲(见 [4](#4-原版物品的改动))走的就是它。
+- 加的修饰符 id 都同原版护甲的 `minecraft:armor.<部位>`(一个部位只穿得下一件,不会撞)。所以**一件上同一种属性只能有一条**:材质已经给的护甲、法术抗性、韧性、击退抗性不能再 `add`,重复了会在注册时抛异常。要调这几项就改材质。
+- 只要属性修饰符、不要 `Item.Properties` 时(比如在 `ModifyDefaultComponentsEvent` 里改已有物品),用 `IbxArmorProperties.modifiers(material, type)`(`material` 同样两种都收):同样的 `add`,另有 `remove(attribute)` 去掉材质给的某一种属性,`build()` 得到 `ItemAttributeModifiers`。本模组调整原版盔甲(见 [4](#4-原版物品的改动))走的就是它。
 
 ### 资源文件
 
@@ -824,7 +864,7 @@ public static final DeferredItem<IbxGeoArmorItem> BONE_HELMET = ITEMS.registerIt
 | 靴子 | `armorRightBoot`、`armorLeftBoot` |
 
 - **物品栏图标**是普通的物品模型,和 3D 模型无关,照常写 `items/<物品名>.json` 和物品贴图。
-- **装备资源 id**:`ArmorMaterial` 里的 `assetId` 仍然要填,但原版盔甲层不画这件盔甲,不用写对应的 `equipment/*.json`。盔甲纹饰走的是原版盔甲层,所以纹饰不会显示。
+- **装备资源 id**:材质里的 `assetId` 仍然要填,但原版盔甲层不画这件盔甲,不用写对应的 `equipment/*.json`。盔甲纹饰走的是原版盔甲层,所以纹饰不会显示。
 - **标签**:盔甲不在 [9](#9-自动物品标签) 的自动标签里。要能附魔,在自己的 data 里把物品加进 `#minecraft:head_armor`、`#minecraft:chest_armor`、`#minecraft:leg_armor`、`#minecraft:foot_armor`。
 - **原版第一人称的手臂**上不画盔甲,同原版和 GeckoLib 的默认行为。
 

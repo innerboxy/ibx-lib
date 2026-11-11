@@ -28,7 +28,7 @@ See [Target selection](../TUTORIAL/TARGETING_en.md).
 
 ### Equipment base classes
 
-Item base classes for melee weapons, bows, crossbows, staves, tomes, one-handed and two-handed shields, 3D armor, and curios; extend one and write only your own numbers and hooks. Bows and crossbows resolve by attributes (ranged damage, draw time), two-handed shields can bash, 3D armor is drawn by GeckoLib with one model shared by a set, and the vanilla bow and crossbow and a few vanilla armor sets can be taken over too, and vanilla items that only stack to 16 can be raised to 64. With Curios installed there is also an elytra slot: an elytra in it glides like one worn in the chest slot; it has 0 slots by default and mods that want it add their own.
+Item base classes for melee weapons, bows, crossbows, staves, tomes, one-handed and two-handed shields, 3D armor, and curios; extend one and write only your own numbers and hooks. Bows and crossbows resolve by attributes (ranged damage, draw time), two-handed shields can bash, 3D armor is drawn by GeckoLib with one model shared by a set, armor materials can carry per-slot spell resistance, and the vanilla bow and crossbow and a few vanilla armor sets can be taken over too, and vanilla items that only stack to 16 can be raised to 64. With Curios installed there is also an elytra slot: an elytra in it glides like one worn in the chest slot; it has 0 slots by default and mods that want it add their own.
 
 See [Equipment base classes](../TUTORIAL/EQUIPMENT_en.md).
 

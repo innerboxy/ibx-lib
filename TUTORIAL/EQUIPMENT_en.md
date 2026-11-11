@@ -21,7 +21,8 @@ This mod provides a set of item base classes. Other mods use them directly or ex
 | A one-handed shield (blocks only) | `ibx.lib.item.IbxOneHandedShieldItem` | [6](#6-shields) |
 | A two-handed shield (normal attacks and shield bash) | `ibx.lib.item.IbxTwoHandedShieldItem` | [6](#6-shields) |
 | 3D armor (worn look drawn by GeckoLib) | `ibx.lib.item.IbxGeoArmorItem` | [7](#7-3d-armor) |
-| Attributes beyond armor on an armor piece | `ibx.lib.item.general.IbxArmorProperties` | [7](#armor-item-properties) |
+| Armor material with spell resistance | `ibx.lib.item.general.IbxArmorMaterial` | [7](#armor-material) |
+| Attributes beyond the material on an armor piece | `ibx.lib.item.general.IbxArmorProperties` | [7](#armor-item-properties) |
 | A curio you can only wear one of | a plain item + `ibx.lib.item.curio.UniqueCurioItem` | [8](#8-curios) |
 | A curio that triggers on attacks, hits, kills or casts | an item class implementing `ibx.lib.item.curio.CurioTriggers` | [8](#trigger-hooks) |
 | Elytra that also glide from a curio slot | add slots to the Curios slot `elytra` (0 by default) | [8](#elytra-slot) |
@@ -756,7 +757,7 @@ Apart from first person, the two branches must display the same:
 
 ## 7. 3D armor
 
-`ibx.lib.item.IbxGeoArmorItem`: an armor piece whose worn look is drawn by GeckoLib. It only covers "what it looks like when worn"; armor, durability, slot and repair material come from the item properties at registration as usual, see [Armor item properties](#armor-item-properties) below.
+`ibx.lib.item.IbxGeoArmorItem`: an armor piece whose worn look is drawn by GeckoLib. It only covers "what it looks like when worn"; armor, durability, slot and repair material come from the item properties at registration as usual, see [Armor material](#armor-material) and [Armor item properties](#armor-item-properties) below.
 
 > GeckoLib is required to use it: GeckoLib is an optional dependency of this mod, so your mod must require it itself.
 
@@ -767,7 +768,7 @@ Apart from first person, the two branches must display the same:
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| `properties` | `Item.Properties` | Set the material and slot at registration: `humanoidArmor`, or use `IbxArmorProperties`. |
+| `properties` | `Item.Properties` | Set the material and slot at registration: use `IbxArmorProperties`, or vanilla `humanoidArmor`. |
 | `model` | `Identifier` | Model id. Pieces of one set pass the same id and share one model and one texture. |
 | `glow` | `boolean` | Whether there is a glow texture; `false` when omitted. Passing `true` without that file draws the missing texture. |
 
@@ -775,19 +776,58 @@ Apart from first person, the two branches must display the same:
 private static final Identifier PLATE_MODEL = Identifier.fromNamespaceAndPath("examplemod", "bone_plate");
 
 public static final DeferredItem<IbxGeoArmorItem> BONE_HELMET = ITEMS.registerItem("bone_helmet",
-        p -> new IbxGeoArmorItem(p.humanoidArmor(BONE_MATERIAL, ArmorType.HELMET), PLATE_MODEL, true));
+        p -> new IbxGeoArmorItem(IbxArmorProperties.of(p, BONE_MATERIAL, ArmorType.HELMET).build(), PLATE_MODEL, true));
 public static final DeferredItem<IbxGeoArmorItem> BONE_CHESTPLATE = ITEMS.registerItem("bone_chestplate",
-        p -> new IbxGeoArmorItem(p.humanoidArmor(BONE_MATERIAL, ArmorType.CHESTPLATE), PLATE_MODEL, true));
+        p -> new IbxGeoArmorItem(IbxArmorProperties.of(p, BONE_MATERIAL, ArmorType.CHESTPLATE).build(), PLATE_MODEL, true));
 ```
+
+### Armor material
+
+`ibx.lib.item.general.IbxArmorMaterial`: the material shared by one armor set. It has everything the vanilla `ArmorMaterial` has, plus per-slot spell resistance right after armor. The vanilla material is a record and cannot be extended, so this is a class of its own, with the parameters in vanilla's order.
+
+```java
+public static final IbxArmorMaterial BONE_MATERIAL = new IbxArmorMaterial(
+        37,                                       // durability
+        IbxArmorMaterial.pieces(3, 8, 6, 3),      // defense
+        IbxArmorMaterial.pieces(3, 8, 6, 3),      // spellResistance
+        15,                                       // enchantmentValue
+        SoundEvents.ARMOR_EQUIP_NETHERITE,        // equipSound
+        3.0F,                                     // toughness
+        0.1F,                                     // knockbackResistance
+        ItemTags.REPAIRS_NETHERITE_ARMOR,         // repairIngredient
+        ResourceKey.create(EquipmentAssets.ROOT_ID,
+                Identifier.fromNamespaceAndPath("examplemod", "bone_plate")));  // assetId
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `durability` | `int` | Durability multiplier: each piece's durability = slot base (head 11, chest 16, legs 15, feet 13) x this value. |
+| `defense` | `Map<ArmorType, Integer>` | Armor value per slot. |
+| `spellResistance` | `Map<ArmorType, Integer>` | Spell resistance per slot. A slot that is missing or 0 does not get this attribute. |
+| `enchantmentValue` | `int` | Enchantability. |
+| `equipSound` | `Holder<SoundEvent>` | Equip sound. |
+| `toughness` | `float` | Armor toughness, the same on every piece. |
+| `knockbackResistance` | `float` | Knockback resistance, the same on every piece. 0 leaves this attribute out. |
+| `repairIngredient` | `TagKey<Item>` | Repair material. |
+| `assetId` | `ResourceKey<EquipmentAsset>` | Equipment asset id. |
+
+| Method | Description |
+| --- | --- |
+| `IbxArmorMaterial.pieces(helmet, chestplate, leggings, boots)` | One value for each of the four slots; use it for both `defense` and `spellResistance`. |
+| `IbxArmorMaterial.of(material, spellResistance)` | Copies a vanilla `ArmorMaterial` and adds per-slot spell resistance. |
+| `toVanilla()` | The vanilla `ArmorMaterial` without spell resistance, for places that need a vanilla material. |
+| `createAttributes(type)` | The attribute modifiers of this slot. |
+
+- **Tooltip order**: armor, spell resistance, toughness, knockback resistance.
+- It is only for registering humanoid armor. Wolf armor, horse armor and the like go through the vanilla `Item.Properties` methods with `toVanilla()`, which carries no spell resistance.
 
 ### Armor item properties
 
-`ibx.lib.item.general.IbxArmorProperties`: builds the item properties of one humanoid armor piece. The material brings armor, toughness and knockback resistance; on top of that you add the piece's own attributes one by one. It is unrelated to 3D armor, so ordinary armor (drawn by the vanilla armor layer) can use it too.
+`ibx.lib.item.general.IbxArmorProperties`: builds the item properties of one humanoid armor piece. The material brings armor, spell resistance, toughness and knockback resistance; on top of that you add the piece's own attributes one by one. It is unrelated to 3D armor, so ordinary armor (drawn by the vanilla armor layer) can use it too.
 
 ```java
 public static final DeferredItem<IbxGeoArmorItem> BONE_HELMET = ITEMS.registerItem("bone_helmet",
         p -> new IbxGeoArmorItem(IbxArmorProperties.of(p, BONE_MATERIAL, ArmorType.HELMET)
-                .add(AttributeRegistry.SPELL_RESISTANCE, 3)
                 .add(Attributes.MAX_HEALTH, 2)
                 .fireResistant()
                 .build(), PLATE_MODEL, true));
@@ -795,14 +835,14 @@ public static final DeferredItem<IbxGeoArmorItem> BONE_HELMET = ITEMS.registerIt
 
 | Method | Description |
 | --- | --- |
-| `IbxArmorProperties.of(properties, material, type)` | Start: equivalent to `properties.humanoidArmor(material, type)`, with the attributes starting from what the material brings. |
+| `IbxArmorProperties.of(properties, material, type)` | Start: equivalent to `properties.humanoidArmor(material, type)`, with the attributes starting from what the material brings. `material` is an `IbxArmorMaterial`, or a vanilla `ArmorMaterial` (no spell resistance). |
 | `add(attribute, amount)` | Adds one attribute as a flat value. |
 | `add(attribute, amount, operation)` | Adds one attribute with your own operation (use `ADD_MULTIPLIED_BASE` for percentages). |
 | `fireResistant()` | Fire resistant: does not burn in lava or fire. |
 | `build()` | Returns the `Item.Properties`; you can keep setting rarity and so on afterwards. Do not call `Properties#attributes` after it, or everything added above is overwritten. |
 
-- The added modifiers all use the vanilla armor id `minecraft:armor.<slot>` (a slot holds only one piece, so they never clash). That means **a piece can have only one modifier per attribute**: armor, toughness and knockback resistance already come from the material and cannot be `add`ed again; a duplicate throws at registration. To change the armor value, change the material.
-- When you only need the attribute modifiers and not an `Item.Properties` (changing an existing item in `ModifyDefaultComponentsEvent`, for example), use `IbxArmorProperties.modifiers(material, type)`: the same `add`, plus `remove(attribute)` to drop one of the material's attributes, and `build()` returns an `ItemAttributeModifiers`. This mod's vanilla armor adjustments (see [4](#4-changes-to-vanilla-items)) go through it.
+- The added modifiers all use the vanilla armor id `minecraft:armor.<slot>` (a slot holds only one piece, so they never clash). That means **a piece can have only one modifier per attribute**: armor, spell resistance, toughness and knockback resistance already come from the material and cannot be `add`ed again; a duplicate throws at registration. To change them, change the material.
+- When you only need the attribute modifiers and not an `Item.Properties` (changing an existing item in `ModifyDefaultComponentsEvent`, for example), use `IbxArmorProperties.modifiers(material, type)` (`material` takes the same two kinds): the same `add`, plus `remove(attribute)` to drop one of the material's attributes, and `build()` returns an `ItemAttributeModifiers`. This mod's vanilla armor adjustments (see [4](#4-changes-to-vanilla-items)) go through it.
 
 ### Resource files
 
@@ -824,7 +864,7 @@ Bone names follow GeckoLib's armor template; each piece draws only the bones of 
 | Boots | `armorRightBoot`, `armorLeftBoot` |
 
 - **The inventory icon** is an ordinary item model, unrelated to the 3D model; write `items/<item name>.json` and the item texture as usual.
-- **Equipment asset id**: the `assetId` in `ArmorMaterial` still has to be filled in, but the vanilla armor layer does not draw this armor, so no `equipment/*.json` is needed. Armor trims go through the vanilla armor layer, so trims are not shown.
+- **Equipment asset id**: the `assetId` in the material still has to be filled in, but the vanilla armor layer does not draw this armor, so no `equipment/*.json` is needed. Armor trims go through the vanilla armor layer, so trims are not shown.
 - **Tags**: armor is not among the automatic tags in [9](#9-automatic-item-tags). To make it enchantable, add the items to `#minecraft:head_armor`, `#minecraft:chest_armor`, `#minecraft:leg_armor` and `#minecraft:foot_armor` in your own data.
 - **The vanilla first-person arm** does not show armor, same as vanilla and GeckoLib's default.
 
