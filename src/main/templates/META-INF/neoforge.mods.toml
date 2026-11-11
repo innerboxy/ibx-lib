@@ -24,6 +24,11 @@ TODO: mod description.
     config="${mod_id}.dummmmmmy.mixins.json"
     requiredMods=["dummmmmmy"]
 
+# Curios 联动：饰品栏鞘翅槽里的鞘翅也能滑翔。只在装了 Curios 时加载。
+[[mixins]]
+    config="${mod_id}.curios.mixins.json"
+    requiredMods=["curios"]
+
 [[dependencies."${mod_id}"]] #optional
     modId="neoforge" #mandatory
     type="required" #mandatory

@@ -151,5 +151,7 @@
   "ibx_lib.configuration.attributePanelHideDefault": "属性面板：隐藏默认值的属性",
   "ibx_lib.configuration.attributePanelSort": "属性面板：排序",
   "ibx_lib.configuration.attributePanelOrder": "属性面板：自定义顺序",
-  "ibx_lib.configuration.attributePanelHidden": "属性面板：不显示的属性"
+  "ibx_lib.configuration.attributePanelHidden": "属性面板：不显示的属性",
+  "curios.identifier.elytra": "鞘翅",
+  "curios.modifiers.elytra": "佩戴鞘翅时："
 }

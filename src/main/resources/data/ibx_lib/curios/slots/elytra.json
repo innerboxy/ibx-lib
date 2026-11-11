@@ -1,0 +1,11 @@
+{
+  "size": 0,
+  "order": 80,
+  "icon": "ibx_lib:slot/empty_elytra_slot",
+  "validators": [
+    "curios:tag"
+  ],
+  "entities": [
+    "minecraft:player"
+  ]
+}

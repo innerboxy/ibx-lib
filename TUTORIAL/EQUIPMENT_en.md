@@ -24,6 +24,7 @@ This mod provides a set of item base classes. Other mods use them directly or ex
 | Attributes beyond armor on an armor piece | `ibx.lib.item.general.IbxArmorProperties` | [7](#armor-item-properties) |
 | A curio you can only wear one of | a plain item + `ibx.lib.item.curio.UniqueCurioItem` | [8](#8-curios) |
 | A curio that triggers on attacks, hits, kills or casts | an item class implementing `ibx.lib.item.curio.CurioTriggers` | [8](#trigger-hooks) |
+| Elytra that also glide from a curio slot | add slots to the Curios slot `elytra` (0 by default) | [8](#elytra-slot) |
 
 - **Registration is the same for all**: `Item.Properties` must carry the item id before an item can be constructed, so register with `DeferredRegister.Items#registerItem` and use the `Properties` passed into the factory; rarity, fire resistance and so on are set on it too.
 - **Numbers go on the main hand**: the base classes bake their numbers into main-hand attribute modifiers with a "base id", so the tooltip shows them as the dark green merged line vanilla swords use (e.g. "8 Ranged Damage").
@@ -920,6 +921,31 @@ public class VampireFangItem extends Item implements CurioTriggers {
 - Dispatch lives in `ibx.lib.compat.curios.CurioTriggerHandler`.
 
 > `CurioTriggers` references Curios classes (`SlotContext`): the mod containing a curio that implements it must require Curios.
+
+### Elytra slot
+
+This mod registers the Curios slot `elytra`: an elytra in it glides and loses durability just like one worn in the chest slot.
+
+**0 slots by default**: this mod only provides the slot and the behavior, so players don't see it. A mod that wants it adds the slots itself, either way:
+
+- Write `data/<your mod id>/curios/slots/elytra.json` in your data. When several mods set `size`, the largest wins, so 1 means one slot:
+
+  ```json
+  {
+    "size": 1
+  }
+  ```
+
+- Use a Curios slot modifier per player, e.g. `ICuriosItemHandler#addPermanentSlotModifier("elytra", id, 1, AttributeModifier.Operation.ADD_VALUE)`.
+
+Rules:
+
+- **What fits is decided by tags, like other Curios slots**: items in `#curios:elytra` fit, and so do items in `#curios:curio` (which fit every slot). This mod puts the vanilla elytra in `#curios:elytra` (`data/curios/tags/item/elytra.json`); other mods add their own elytra to that tag, and can take the vanilla one out with `"remove"`.
+- **Only gliders fly**: an item in the slot glides only if it has the `minecraft:glider` component, which the vanilla elytra and modded elytra built the vanilla way have; anything else just sits in the slot.
+- **Gliding as in vanilla**: you can't take off on the ground, while riding, while levitating or while flying in creative; an elytra one point from breaking doesn't count (as in vanilla, an elytra never actually breaks).
+- **Durability**: with usable elytra in both the chest slot and the elytra slot, each durability tick picks one of them at random, the same way vanilla handles several glider items. Mending still repairs it (Curios handles that).
+- **Looks**: an elytra in the elytra slot is drawn on the player's back the vanilla way (enchantment glint, skin elytra textures and cape patterns included), and the cape is hidden while it is drawn. If the slot's cosmetic slot holds something, that is drawn instead; otherwise the slot's render toggle decides. With an elytra in the chest slot too, only the chest one is drawn; when invisible it is hidden along with other equipment per the hide-equipment-when-invisible config. The empty slot icon is `ibx_lib:slot/empty_elytra_slot` (`assets/ibx_lib/textures/slot/empty_elytra_slot.png`).
+- The slot is only opened for players. The slot file is `data/ibx_lib/curios/slots/elytra.json`; the code is `ibx.lib.compat.curios.ElytraCurioSlot` (slot id `SLOT`, `isGlider`, `usableElytras`, `canGlide`), `ibx.lib.mixin.curios.LivingEntityElytraSlotMixin` hooks it into vanilla gliding, and `ibx.lib.compat.curios.ElytraCurioRendering` draws it on the back (`CapeLayerMixin` hides the cape); all of it is only loaded when Curios is installed.
 
 ---
 

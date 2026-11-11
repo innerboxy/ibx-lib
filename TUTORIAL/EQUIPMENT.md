@@ -24,6 +24,7 @@
 | 给盔甲加护甲以外的属性 | `ibx.lib.item.general.IbxArmorProperties` | [7](#盔甲的物品属性) |
 | 同一种只能戴一个的饰品 | 普通物品 + `ibx.lib.item.curio.UniqueCurioItem` | [8](#8-饰品) |
 | 攻击、挨打、击杀、施法时触发的饰品 | 物品类实现 `ibx.lib.item.curio.CurioTriggers` | [8](#触发钩子) |
+| 鞘翅放在饰品栏里也能滑翔 | 给 Curios 槽位 `elytra` 加格数(默认 0 格) | [8](#鞘翅槽) |
 
 - **注册方式都一样**:`Item.Properties` 必须先带上物品 id 才能构造物品,所以用 `DeferredRegister.Items#registerItem` 注册,在工厂里使用传进来的 `Properties`;稀有度、防火等也设在它上面。
 - **数值挂在主手**:基类把数值烤成主手的属性修饰符,用「基础 id」,tooltip 显示成原版剑那样的深绿合并行(比如「8 远程伤害」)。
@@ -920,6 +921,31 @@ public class VampireFangItem extends Item implements CurioTriggers {
 - 分发在 `ibx.lib.compat.curios.CurioTriggerHandler`。
 
 > `CurioTriggers` 引用了 Curios 的类(`SlotContext`):实现它的饰品所在的模组要把 Curios 设成必需。
+
+### 鞘翅槽
+
+本模组注册了 Curios 槽位 `elytra`(鞘翅):放在里面的鞘翅和穿在胸甲栏里一样能滑翔、滑翔时一样掉耐久。
+
+**默认 0 格**:本模组只提供槽位和功能,玩家身上看不到这一格。要用的模组自己加格数,两种办法任选:
+
+- 在自己的 data 里写 `data/<你的模组 id>/curios/slots/elytra.json`。几个模组都写了 `size` 时取最大的,写 1 就是 1 格:
+
+  ```json
+  {
+    "size": 1
+  }
+  ```
+
+- 用 Curios 的槽位修饰符按人加,比如 `ICuriosItemHandler#addPermanentSlotModifier("elytra", id, 1, AttributeModifier.Operation.ADD_VALUE)`。
+
+规则:
+
+- **能放什么按标签,同 Curios 别的槽位**:`#curios:elytra` 里的物品能放,`#curios:curio`(所有槽位都能放)里的也能放。本模组在 `#curios:elytra` 里放了原版鞘翅(`data/curios/tags/item/elytra.json`);别的模组的鞘翅自己加进这个标签,不想让原版鞘翅放进来就用 `"remove"` 去掉。
+- **带滑翔组件的才能飞**:放进来的物品带 `minecraft:glider` 组件才能滑翔,原版鞘翅和照原版做的模组鞘翅都带;别的东西放进来只是占着格子。
+- **滑翔同原版**:在地上、骑着东西、飘浮、创造模式飞行时不能起飞;再掉一点耐久就坏的鞘翅不算(同原版,鞘翅不会真的碎掉)。
+- **掉耐久**:胸甲栏和鞘翅槽都有能用的鞘翅时,每次掉的耐久在它们里面随机挑一件扣,同原版身上有几件滑翔装备时的做法。经验修补照样修得到(Curios 自己处理)。
+- **外观**:鞘翅槽里的鞘翅画在玩家背上,画法同原版(附魔光效、皮肤自带的鞘翅图、披风图案都照原版),背上画了鞘翅就不画披风。这一格的化妆栏有东西就画化妆栏的,没有就看这一格的显示开关;胸甲栏已经有鞘翅时只画胸甲栏那件;隐身时按「隐身连装备一起藏」的配置一起藏。空格子的图标是 `ibx_lib:slot/empty_elytra_slot`(`assets/ibx_lib/textures/slot/empty_elytra_slot.png`)。
+- 只给玩家开这个槽位。槽位文件在 `data/ibx_lib/curios/slots/elytra.json`;代码在 `ibx.lib.compat.curios.ElytraCurioSlot`(槽位 id `SLOT`、`isGlider`、`usableElytras`、`canGlide`),接进原版滑翔判定的是 `ibx.lib.mixin.curios.LivingEntityElytraSlotMixin`,画在背上的是 `ibx.lib.compat.curios.ElytraCurioRendering`(披风让开靠 `CapeLayerMixin`),都只在装了 Curios 时加载。
 
 ---
 

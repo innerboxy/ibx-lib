@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "ibx.lib.mixin.curios",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "LivingEntityElytraSlotMixin"
+  ],
+  "client": [
+    "CapeLayerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -15,8 +15,10 @@ import ibx.lib.client.spell.SpellPickerInput;
 import ibx.lib.client.spell.SpellWheel;
 import ibx.lib.client.target.TargetIndicatorRendering;
 import ibx.lib.client.target.TargetModeSync;
+import ibx.lib.compat.CuriosCompat;
+import ibx.lib.compat.JadeCompat;
 import ibx.lib.compat.PlayerAnimCompat;
-import ibx.lib.compat.jade.JadeCompat;
+import ibx.lib.compat.curios.ElytraCurioRendering;
 import ibx.lib.config.ClientConfig;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
@@ -76,6 +78,10 @@ public final class IbxLibClient {
         NeoForge.EVENT_BUS.addListener(CustomFireRendering::onClientTick);
         // 隐身：看不见的生物连盔甲、头上戴的、手里拿的也不画（原版只藏身体）
         modEventBus.addListener(InvisibilityRendering::onRegisterRenderStateModifiers);
+        // 饰品栏鞘翅槽里的鞘翅画在背上（Curios 可选，装了才注册）
+        if (CuriosCompat.isLoaded()) {
+            ElytraCurioRendering.register(modEventBus);
+        }
         // 选目标：读条时地上的提示（锁定的目标脚下的方形、范围的圆 / 扇形）；进服时和客户端配置重载时把选取时机设置告诉服务端
         TargetIndicatorRendering.register(modEventBus);
         // 地面预警（Boss 招式落点之类，同目标提示的画法）、地面起伏（浪经过的方块弹起来）

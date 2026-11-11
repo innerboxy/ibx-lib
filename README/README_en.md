@@ -28,7 +28,7 @@ See [Target selection](../TUTORIAL/TARGETING_en.md).
 
 ### Equipment base classes
 
-Item base classes for melee weapons, bows, crossbows, staves, tomes, one-handed and two-handed shields, 3D armor, and curios; extend one and write only your own numbers and hooks. Bows and crossbows resolve by attributes (ranged damage, draw time), two-handed shields can bash, 3D armor is drawn by GeckoLib with one model shared by a set, and the vanilla bow and crossbow and a few vanilla armor sets can be taken over too, and vanilla items that only stack to 16 can be raised to 64.
+Item base classes for melee weapons, bows, crossbows, staves, tomes, one-handed and two-handed shields, 3D armor, and curios; extend one and write only your own numbers and hooks. Bows and crossbows resolve by attributes (ranged damage, draw time), two-handed shields can bash, 3D armor is drawn by GeckoLib with one model shared by a set, and the vanilla bow and crossbow and a few vanilla armor sets can be taken over too, and vanilla items that only stack to 16 can be raised to 64. With Curios installed there is also an elytra slot: an elytra in it glides like one worn in the chest slot; it has 0 slots by default and mods that want it add their own.
 
 See [Equipment base classes](../TUTORIAL/EQUIPMENT_en.md).
 
@@ -76,7 +76,7 @@ See [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md).
 | Minecraft `26.1.2` | **Required** | — |
 | [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | Optional | Used only by the spell projectile base class `SpellProjectile`, the 3D armor class `IbxGeoArmorItem` and their renderers; mods that register spell projectiles or 3D armor must require it themselves |
 | [Player Animation Library](https://modrinth.com/mod/player-animation-library) `1.2.6+` | Optional (client) | Adds player animations for casting, guarding and shield bashing; without it the arms just don't move. While it plays a first-person animation, 3D armor is hidden the way it hides vanilla armor |
-| [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | Optional | Curio base class, curio trigger hooks, casting items in curio slots, the attribute panel button on the curios screen |
+| [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | Optional | Curio base class, curio trigger hooks, the elytra slot, casting items in curio slots, the attribute panel button on the curios screen |
 | [Jade](https://modrinth.com/mod/jade) | Optional (client) | Shows spell resistance after armor in the tooltip; turns Jade's "Show Bosses" off once the first time you join a world so it doesn't duplicate boss bars |
 | [MmmMmmMmmMmm](https://modrinth.com/mod/mmmmmmmmmmmm) (Target Dummy) | Optional | Ranged and spell crits show as crit numbers, and spell damage numbers get their own blue color |
 | [JEI](https://modrinth.com/mod/jei) | Optional (client) | Keeps JEI's bookmark panel clear of the attribute panel, curio slots and creative sub-tabs |

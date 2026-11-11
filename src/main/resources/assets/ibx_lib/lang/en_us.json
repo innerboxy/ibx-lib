@@ -151,5 +151,7 @@
   "ibx_lib.configuration.attributePanelHideDefault": "Attribute Panel: Hide Default Values",
   "ibx_lib.configuration.attributePanelSort": "Attribute Panel: Sort",
   "ibx_lib.configuration.attributePanelOrder": "Attribute Panel: Custom Order",
-  "ibx_lib.configuration.attributePanelHidden": "Attribute Panel: Hidden Attributes"
+  "ibx_lib.configuration.attributePanelHidden": "Attribute Panel: Hidden Attributes",
+  "curios.identifier.elytra": "Elytra",
+  "curios.modifiers.elytra": "When worn as elytra:"
 }

@@ -34,9 +34,18 @@ public final class InvisibilityRendering {
     /** MOD 总线：所有生物渲染器抽取状态之后执行。 */
     public static void onRegisterRenderStateModifiers(RegisterRenderStateModifiersEvent event) {
         event.registerEntityModifier(new TypeToken<LivingEntityRenderer<LivingEntity, LivingEntityRenderState, ?>>() {}, (entity, state) -> {
-            if (!state.isInvisibleToPlayer || entity instanceof ArmorStand || !Config.get(Config.HIDE_EQUIPMENT_WHEN_INVISIBLE)) return;
-            hideEquipment(state);
+            if (hidesEquipment(entity, state)) {
+                hideEquipment(state);
+            }
         });
+    }
+
+    /**
+     * 这个生物现在要不要连装备一起藏：看不见它、不是盔甲架、配置开着。
+     * 另外画在身上的东西（比如饰品栏鞘翅槽里的鞘翅）也按这个判断，不要自己再写一遍条件。
+     */
+    public static boolean hidesEquipment(LivingEntity entity, LivingEntityRenderState state) {
+        return state.isInvisibleToPlayer && !(entity instanceof ArmorStand) && Config.get(Config.HIDE_EQUIPMENT_WHEN_INVISIBLE);
     }
 
     private static void hideEquipment(LivingEntityRenderState state) {
