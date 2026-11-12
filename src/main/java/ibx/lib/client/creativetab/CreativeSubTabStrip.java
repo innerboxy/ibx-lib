@@ -271,7 +271,12 @@ public final class CreativeSubTabStrip extends AbstractWidget {
             return;
         }
         int x = this.getX(), y = this.getY();
-        WoodUi.panel(g, x, y, this.getWidth(), this.getHeight());
+        boolean vanilla = this.subTabs.style() == CreativeSubTabs.Style.VANILLA;
+        if (vanilla) {
+            vanillaPanel(g, x, y, this.getWidth(), this.getHeight());
+        } else {
+            WoodUi.panel(g, x, y, this.getWidth(), this.getHeight());
+        }
         int selected = this.selected();
         int hovered = this.subTabAt(mouseX, mouseY);
         int scroll = this.scroll();
@@ -279,7 +284,13 @@ public final class CreativeSubTabStrip extends AbstractWidget {
         for (int row = 0; row < rows; row++) {
             int index = this.shown[scroll + row];
             int cx = x + PAD_X, cy = y + PAD_Y + row * PITCH;
-            if (index == selected) {
+            if (vanilla) {
+                if (index == selected) {
+                    vanillaSelectedCell(g, cx, cy);
+                } else {
+                    vanillaSlot(g, cx, cy);
+                }
+            } else if (index == selected) {
                 selectedCell(g, cx, cy);
             } else {
                 WoodUi.inset(g, cx, cy, CELL, CELL);
@@ -288,18 +299,23 @@ public final class CreativeSubTabStrip extends AbstractWidget {
                 }
             }
             g.item(this.subTabs.subTabs().get(index).icon(), cx + 1, cy + 1);
+            if (vanilla && index == hovered && index != selected) {
+                // 同原版物品格的指着高亮：盖在图标上的半透明白
+                g.fill(cx + 1, cy + 1, cx + CELL - 1, cy + CELL - 1, VANILLA_HOVER);
+            }
         }
         int mid = x + W / 2;
+        int arrow = vanilla ? VANILLA_TEXT : UiPalette.ACCENT;
         if (scroll > 0) {
-            g.fill(mid, y + 2, mid + 1, y + 3, UiPalette.ACCENT);
-            g.fill(mid - 1, y + 3, mid + 2, y + 4, UiPalette.ACCENT);
-            g.fill(mid - 2, y + 4, mid + 3, y + 5, UiPalette.ACCENT);
+            g.fill(mid, y + 2, mid + 1, y + 3, arrow);
+            g.fill(mid - 1, y + 3, mid + 2, y + 4, arrow);
+            g.fill(mid - 2, y + 4, mid + 3, y + 5, arrow);
         }
         if (scroll + rows < this.shown.length) {
             int bottom = y + this.getHeight();
-            g.fill(mid, bottom - 3, mid + 1, bottom - 2, UiPalette.ACCENT);
-            g.fill(mid - 1, bottom - 4, mid + 2, bottom - 3, UiPalette.ACCENT);
-            g.fill(mid - 2, bottom - 5, mid + 3, bottom - 4, UiPalette.ACCENT);
+            g.fill(mid, bottom - 3, mid + 1, bottom - 2, arrow);
+            g.fill(mid - 1, bottom - 4, mid + 2, bottom - 3, arrow);
+            g.fill(mid - 2, bottom - 5, mid + 3, bottom - 4, arrow);
         }
         if (hovered >= 0) {
             g.setTooltipForNextFrame(Minecraft.getInstance().font, this.subTabs.subTabs().get(hovered).title(), mouseX, mouseY);
@@ -312,6 +328,38 @@ public final class CreativeSubTabStrip extends AbstractWidget {
         g.fill(x - 1, y - 1, x + CELL, y + CELL, UiPalette.WHEEL_SELECT_LIGHT);
         g.fill(x, y, x + CELL, y + CELL, UiPalette.ACCENT);
         g.fill(x + 1, y + 1, x + CELL - 1, y + CELL - 1, UiPalette.EDGE);
+    }
+
+    // ---- 原版风格（CreativeSubTabs.Style.VANILLA）：颜色取自原版容器界面
+    /** 界面底色、亮边、暗边、黑描边。 */
+    private static final int VANILLA_BG = 0xFFC6C6C6, VANILLA_LIGHT = 0xFFFFFFFF, VANILLA_SHADOW = 0xFF555555, VANILLA_OUTLINE = 0xFF000000;
+    /** 物品格的底色、左上暗边。 */
+    private static final int VANILLA_SLOT = 0xFF8B8B8B, VANILLA_SLOT_SHADOW = 0xFF373737;
+    /** 指着物品格的半透明白、界面上的深灰字色（翻页小三角用）。 */
+    private static final int VANILLA_HOVER = 0x80FFFFFF, VANILLA_TEXT = 0xFF404040;
+
+    /** 同原版容器界面的面板：黑描边（四角留空做圆角），里面一圈左上白、右下暗灰，中间浅灰。 */
+    private static void vanillaPanel(GuiGraphicsExtractor g, int x, int y, int w, int h) {
+        g.fill(x + 1, y, x + w - 1, y + h, VANILLA_OUTLINE);
+        g.fill(x, y + 1, x + w, y + h - 1, VANILLA_OUTLINE);
+        g.fill(x + 1, y + 1, x + w - 1, y + h - 1, VANILLA_SHADOW);
+        g.fill(x + 1, y + 1, x + w - 2, y + h - 2, VANILLA_LIGHT);
+        g.fill(x + 2, y + 2, x + w - 2, y + h - 2, VANILLA_BG);
+    }
+
+    /** 没选中的格子：同原版物品格，凹下去（左上暗、右下白，中间灰）。 */
+    private static void vanillaSlot(GuiGraphicsExtractor g, int x, int y) {
+        g.fill(x, y, x + CELL, y + CELL, VANILLA_LIGHT);
+        g.fill(x, y, x + CELL - 1, y + CELL - 1, VANILLA_SLOT_SHADOW);
+        g.fill(x + 1, y + 1, x + CELL - 1, y + CELL - 1, VANILLA_SLOT);
+    }
+
+    /** 选中的格子：凸起来（黑框，里面左上白、右下暗灰，中间同界面底色），像原版选中的创造栏标签那样和面板连成一片。 */
+    private static void vanillaSelectedCell(GuiGraphicsExtractor g, int x, int y) {
+        g.fill(x - 1, y - 1, x + CELL + 1, y + CELL + 1, VANILLA_OUTLINE);
+        g.fill(x, y, x + CELL, y + CELL, VANILLA_SHADOW);
+        g.fill(x, y, x + CELL - 1, y + CELL - 1, VANILLA_LIGHT);
+        g.fill(x + 1, y + 1, x + CELL - 1, y + CELL - 1, VANILLA_BG);
     }
 
     // ---------------------------------------------------------------- 鼠标

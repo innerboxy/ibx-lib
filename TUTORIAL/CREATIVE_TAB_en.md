@@ -27,6 +27,7 @@ Splits the items of one creative tab into groups. When that tab is open, a colum
 | --- | --- |
 | `CreativeSubTabs.of(tabId)` | Creates the sub-tabs of the creative tab with id `tabId` and returns them for chaining `add`. Call it while registering that tab, once per tab. |
 | `add(title, icon, items)` | Adds a group after the existing ones. `title` is the name shown when hovering the icon (`Component`); `icon` is the icon (`Supplier<ItemStack>`, read the first time it is drawn); `items` are the group's items, written the same way as a tab's `displayItems`. |
+| `style(style)` | Look of the sub-tab column: `CreativeSubTabs.Style.WOOD` (default, this mod's wooden UI) or `Style.VANILLA` (light gray panel and sunken item slots like vanilla container screens; the selected cell is raised). |
 | `CreativeSubTabs.get(tabId)` | The sub-tabs of a creative tab, or `null` if it has none. |
 | `subTabs()` | All groups in `add` order; each has `title()`, `icon()` and `items()` (the items the group put in the last time the tab's contents were built). |
 

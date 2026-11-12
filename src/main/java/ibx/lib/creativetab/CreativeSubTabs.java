@@ -33,14 +33,24 @@ import java.util.function.Supplier;
  * <ul>
  *   <li>别的模组用 {@code BuildCreativeModeTabContentsEvent} 往这个创造栏加的物品不属于任何一组，只在整个创造栏里看得到。</li>
  *   <li>一组里没有物品（被功能开关关掉之类）时不显示它的图标。</li>
+ *   <li>子栏列默认是本模组的木色；想和原版界面一致用 {@code .style(CreativeSubTabs.Style.VANILLA)}（浅灰底、凹陷物品格）。</li>
  * </ul>
  */
 public final class CreativeSubTabs implements CreativeModeTab.DisplayItemsGenerator {
     private static final Map<Identifier, CreativeSubTabs> BY_TAB = new ConcurrentHashMap<>();
 
     private final List<SubTab> subTabs = new ArrayList<>();
+    private Style style = Style.WOOD;
 
     private CreativeSubTabs() {}
+
+    /** 子栏列的外观。 */
+    public enum Style {
+        /** 本模组界面的木色（默认）。 */
+        WOOD,
+        /** 同原版容器界面的浅灰底、凹陷物品格。 */
+        VANILLA
+    }
 
     /** 给 id 为 {@code tabId} 的创造栏建子栏，在注册这个创造栏时调用。 */
     public static CreativeSubTabs of(Identifier tabId) {
@@ -64,6 +74,16 @@ public final class CreativeSubTabs implements CreativeModeTab.DisplayItemsGenera
     public CreativeSubTabs add(Component title, Supplier<ItemStack> icon, CreativeModeTab.DisplayItemsGenerator items) {
         this.subTabs.add(new SubTab(title, icon, items));
         return this;
+    }
+
+    /** 子栏列的外观，不设就是 {@link Style#WOOD}。 */
+    public CreativeSubTabs style(Style style) {
+        this.style = style;
+        return this;
+    }
+
+    public Style style() {
+        return this.style;
     }
 
     public List<SubTab> subTabs() {

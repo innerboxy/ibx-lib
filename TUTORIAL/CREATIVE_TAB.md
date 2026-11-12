@@ -27,6 +27,7 @@
 | --- | --- |
 | `CreativeSubTabs.of(tabId)` | 给 id 为 `tabId` 的创造栏建子栏,返回它自己,接着 `add`。在注册这个创造栏时调用,一个创造栏调一次。 |
 | `add(title, icon, items)` | 加一组,排在已有的后面。`title` 是指着图标时显示的名字(`Component`);`icon` 是图标(`Supplier<ItemStack>`,第一次画的时候才取);`items` 是这一组的物品,写法和创造栏的 `displayItems` 一样。 |
+| `style(style)` | 子栏列的外观:`CreativeSubTabs.Style.WOOD`(默认,本模组界面的木色)或 `Style.VANILLA`(同原版容器界面的浅灰底、凹陷物品格,选中的格子凸起)。 |
 | `CreativeSubTabs.get(tabId)` | 某个创造栏的子栏,没建就是 `null`。 |
 | `subTabs()` | 全部组,按 `add` 的顺序;每组有 `title()`、`icon()`、`items()`(上次生成创造栏内容时这一组放进去的物品)。 |
 
