@@ -182,16 +182,24 @@ public abstract class SpellBeam extends Entity implements TraceableEntity {
 
     /**
      * 方向（不必归一化）：默认从起点对准施法者准星指着的地方（{@link #aimPoint}），远近都打在准星上；
-     * 生物瞄 AI 直接给的对象，没给就瞄攻击目标（{@link TargetApi#aimEntity}）的身体正中；施法者实现了 {@link SpellOrigin}
+     * 服务端有要对准的生物（{@link #aimTarget}）时对准它的身体正中；施法者实现了 {@link SpellOrigin}
      * 并给了瞄准点时对准那里。起点和准星重合、算不出方向时退回视线。
      */
     protected Vec3 direction(LivingEntity owner, Vec3 start, float partialTick) {
         Vec3 custom = owner instanceof SpellOrigin origin ? origin.getSpellAimPoint() : null;
-        LivingEntity target = owner.level().isClientSide() ? null : TargetApi.aimEntity(owner);
+        LivingEntity target = owner.level().isClientSide() ? null : this.aimTarget(owner);
         Vec3 point = custom != null ? custom
                 : target != null ? target.getBoundingBox().getCenter() : this.aimPoint(owner, partialTick);
         Vec3 aim = point.subtract(start);
         return aim.lengthSqr() > 1.0E-8 ? aim : owner.getViewVector(partialTick);
+    }
+
+    /**
+     * 射线要对准的生物，只在服务端调；null = 按准星 / 视线。默认是 AI 直接给的对象，没给时生物瞄自己的攻击目标、
+     * 玩家为 null（{@link TargetApi#aimEntity}）。对准别的对象（比如治疗射线对准友方）的重写它。
+     */
+    protected @Nullable LivingEntity aimTarget(LivingEntity owner) {
+        return TargetApi.aimEntity(owner);
     }
 
     /** 准星指着的地方（{@link TargetApi#aimPoint}，射线自己不算）。 */

@@ -3,7 +3,7 @@ package ibx.lib.compat.jei;
 import ibx.lib.IbxLib;
 import ibx.lib.client.attribute.AttributePanel;
 import ibx.lib.client.creativetab.CreativeSubTabStrip;
-import ibx.lib.compat.curios.CuriosScreens;
+import ibx.lib.compat.curios.client.CuriosScreens;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.gui.handlers.IGuiContainerHandler;

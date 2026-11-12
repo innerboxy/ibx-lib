@@ -23,7 +23,7 @@ import java.util.function.Predicate;
  *
  * <pre>{@code
  * event.registerEntityRenderer(FIREBALL.get(), ctx -> new SpellProjectileRenderer<>(ctx,
- *         Identifier.fromNamespaceAndPath("taverntales_2me", "textures/entity/spell/fireball.png"), 0.5F, true));
+ *         Identifier.fromNamespaceAndPath("examplemod", "textures/entity/spell/fireball.png"), 0.5F, true));
  *
  * // 同一种弹射物有几种样子（同步数据决定）：按实体选贴图和要不要发光
  * event.registerEntityRenderer(BILE.get(), ctx -> new SpellProjectileRenderer<>(ctx,

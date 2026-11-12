@@ -22,10 +22,10 @@ import java.util.function.BiConsumer;
 /**
  * 法力指令（需要 2 级权限）：
  * <pre>
- * /taverntales mana get &lt;目标&gt;
- * /taverntales mana set &lt;目标们&gt; &lt;数值&gt;
- * /taverntales mana add &lt;目标们&gt; &lt;数值&gt;   （可为负数，走 ManaApi.add，会触发获得事件）
- * /taverntales mana fill &lt;目标们&gt;
+ * /ibx mana get &lt;目标&gt;
+ * /ibx mana set &lt;目标们&gt; &lt;数值&gt;
+ * /ibx mana add &lt;目标们&gt; &lt;数值&gt;   （可为负数，走 ManaApi.add，会触发获得事件）
+ * /ibx mana fill &lt;目标们&gt;
  * </pre>
  * 目标里不是生物的实体会被忽略。
  */
@@ -42,8 +42,8 @@ public final class ManaCommand {
     }
 
     private static void onRegisterCommands(RegisterCommandsEvent event) {
-        // 权限挂在 mana 这一层：taverntales 根节点可能被本系列别的模组共用，合并时以先注册的为准。
-        event.getDispatcher().register(Commands.literal("taverntales")
+        // 权限挂在 mana 这一层：ibx 根节点可能和别的模组共用，合并时以先注册的为准。
+        event.getDispatcher().register(Commands.literal("ibx")
                 .then(Commands.literal("mana")
                         .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.literal("get")

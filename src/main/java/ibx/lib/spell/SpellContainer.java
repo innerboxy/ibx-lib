@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * 提供法术的物品（法典、卷轴、法杖、护甲、饰品……）。玩家能放的法术就是身上所有容器的并集，
- * 见 {@link SpellCasting#getSpells}；玩家本身不会"学会"法术。
+ * 见 {@link PlayerSpells#getSpells}；玩家本身不会"学会"法术。
  *
  * <p>带数据组件 {@code ibx_lib:spells} 的物品默认就是容器，不用实现本接口。
  * 想按状态变化（充能、镶嵌……）的物品类自己实现本接口，返回值优先于组件。</p>

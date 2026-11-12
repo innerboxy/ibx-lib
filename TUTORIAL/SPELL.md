@@ -12,7 +12,7 @@ ibx_lib 的法术系统把「放一个法术」拆成几块,各管各的:
 
 - **法术**(`ibx.lib.spell.Spell`):注册行只写数值(耗蓝、冷却、吟唱时间),效果写在法术类的钩子里(见 [3](#3-法术))。
 - **施法**(`SpellCasting`):唯一的入口。检查、选目标、读条、扣蓝、冷却、同步都由它做,玩家和生物走同一套(见 [4](#4-施法))。
-- **法术容器**:玩家不会「学会」法术,能放的法术就是身上物品提供的那些(见 [5](#5-法术容器))。
+- **法术容器**:玩家不会「学会」法术,能放的法术就是身上物品提供的那些,列表和选中在 `PlayerSpells`(见 [5](#5-法术容器))。
 - **法术伤害**(`SpellDamageApi`):施法瞬间把伤害算成快照,命中时结算;友伤、暴击、法术抗性、点燃 / 冰冻 / 吸血都由框架做(见 [8](#8-法术伤害))。
 - **法术实体基类**:弹射物、范围效果、射线三种,只写自己不一样的部分(见 [9](#9-法术实体基类))。
 - **法力**(`ManaApi`):当前值、消耗、回复(见 [10](#10-法力))。
@@ -121,13 +121,12 @@ lib 自己只注册了一个法术 `ibx_lib:dismiss_summons`(解散召唤物,见
 | `minCharge(float)` | `0.1` | 蓄力比例(0~1)低于它松手算取消。 |
 | `interruptible(boolean)` | `true` | 吟唱中受击是否打断。 |
 | `castAnimation(Identifier)` | 无 | 专属施法动作,盖过法器的默认动作(见 [12](#12-施法动作))。 |
-| `summonCount(int)` | `0` | 一次召几只;写了就是召唤法术(见 [SUMMON.md](SUMMON.md))。 |
-| `summonCost(int)` | `1` | 召唤法术:每只占几个召唤物名额。 |
-| `summonDuration(float 秒)` | `0` | 召唤法术:限时召唤物的寿命,0 为常驻。 |
+
+召唤法术继承 `SummonSpell`,一次召几只、每只占几个名额写在它的构造参数里,不在这里(见 [SUMMON.md](SUMMON.md))。
 
 > 引导法术打多段伤害时注意无敌帧:法术伤害默认吃原版无敌帧,间隔小于等于 10 tick 时会随机丢伤害。在快照上开 `withLeaveNoIFrames(true)`(见 [8](#8-法术伤害)),命中频率交给 `tickInterval` 控制。
 
-`Spell` 上有同名的读取方法(`manaCost()`、`cooldown()`、`castTime()`、`castType()`、`tickInterval()`、`minCharge()`、`interruptible()`、`castAnimation()`、`isSummon()`、`summonCount()`、`summonCost()`、`summonDuration()`),返回注册行写的原值。按施法者算出的实际值用 `SpellCasting.getCastTicks` / `getCooldownTicks` 和 `ManaApi.getActualCost`。
+`Spell` 上有同名的读取方法(`manaCost()`、`cooldown()`、`castTime()`、`castType()`、`tickInterval()`、`minCharge()`、`interruptible()`、`castAnimation()`),返回注册行写的原值。按施法者算出的实际值用 `SpellCasting.getCastTicks` / `getCooldownTicks` 和 `ManaApi.getActualCost`。
 
 其他读取方法:
 
@@ -215,7 +214,6 @@ public float castTime(LivingEntity caster) {   // 秒;默认返回 castTime()
 | `cast(caster, spell, target)` | 生物 AI 直接给对象施法(见 [7](#7-生物怎么施法))。 |
 | `cast(caster, spell, source)` | 指定施法来源。 |
 | `cast(caster, spell, source, triggerItem, sourceItem)` | 同上,带上施法物品和提供法术的物品;没有就传 `ItemStack.EMPTY`。还有一个末尾多 `target` 参数的版本。 |
-| `castSelected(player, hand)` | 放玩家当前选中的法术,来源 `ITEM`。右键施法物品时 lib 自己会调。 |
 | `isCasting(caster)` | 是否正在施法。两端都能问。 |
 | `getCurrentCast(caster)` | 正在施的那一次的 `CastContext`;没在施法为 null。两端都能问。 |
 | `getLastEndReason(caster)` | 上一次施法是怎么结束的;正在施法或还没施过法为 null。 |
@@ -224,7 +222,7 @@ public float castTime(LivingEntity caster) {   // 秒;默认返回 castTime()
 | `getCastTicks(caster, spell)` | 实际吟唱 / 满蓄 tick = `castTime(caster)` × 20 ÷ `spell_cast_speed`,最少 1;瞬发、引导为 0。 |
 | `getCooldownTicks(caster, spell)` | 实际冷却 tick = `cooldown(caster)` × 20 × `spell_cooldown_ratio`。 |
 
-玩家法术列表和选中相关的方法见 [5](#5-法术容器)。
+玩家的法术列表、选中,以及放当前选中的法术(`castSelected`)在 `PlayerSpells` 里,见 [5](#5-法术容器)。
 
 ### 流程与结果
 
@@ -236,11 +234,10 @@ public float castTime(LivingEntity caster) {   // 秒;默认返回 castTime()
 | 2 | 冷却(只有会进冷却的来源才查) | `ON_COOLDOWN` |
 | 3 | 法力(只有会扣蓝的来源才查) | `NOT_ENOUGH_MANA` |
 | 4 | 按法术的瞄准方式选目标,没有目标 | `CONDITION_FAILED` |
-| 5 | 法术自己的 `canCast` | `CONDITION_FAILED` |
-| 6 | 召唤法术:召唤物名额不够 | `CONDITION_FAILED` |
-| 7 | `SpellCastEvent.Pre` 被取消 | `CONDITION_FAILED` |
+| 5 | 法术自己的 `canCast`(召唤法术在这里查召唤物名额,见 [SUMMON.md](SUMMON.md)) | `CONDITION_FAILED` |
+| 6 | `SpellCastEvent.Pre` 被取消 | `CONDITION_FAILED` |
 
-全部通过返回 `SUCCESS`:瞬发是已经生效,其余类型是已经开始读条。`NO_SPELL` 只有 `castSelected` 会返回(身上没有任何法术)。瞬发在施法前事件把耗蓝改高后付不起,也返回 `NOT_ENOUGH_MANA`。
+全部通过返回 `SUCCESS`:瞬发是已经生效,其余类型是已经开始读条。`NO_SPELL` 只有 `PlayerSpells.castSelected` 会返回(身上没有任何法术)。瞬发在施法前事件把耗蓝改高后付不起,也返回 `NOT_ENOUGH_MANA`。
 
 - 失败时玩家在 action bar 看到原因(语言键 `message.ibx_lib.cast.<结果小写名>`,或者 `ctx.fail` 给的原因),并听到一声失败提示音,调用方不用再提示。被事件取消的那种不提示。
 - `CastResult.isSuccess()` 判断是否成功。
@@ -350,13 +347,13 @@ lib 的法器基类 `IbxMagicWeaponItem`(法典 `IbxTomeItem`、法杖 `IbxStaff
 
 ### 玩家的法术列表
 
-`SpellCasting.getSpells(player)` 按固定顺序扫描身上的容器:
+`ibx.lib.spell.PlayerSpells.getSpells(player)` 按固定顺序扫描身上的容器:
 
 **主手 → 副手 → 饰品栏(装了 Curios 才扫)→ 头 → 胸 → 腿 → 脚**
 
 同一法术只列第一次出现;最后发 `SpellListEvent`,监听可以增删(见 [11](#11-事件))。卸下装备,它提供的法术就没了。
 
-| 方法 | 说明 |
+| `PlayerSpells` 的方法(都是静态的) | 说明 |
 | --- | --- |
 | `getSpells(player)` | 玩家现在能放的法术,每条是一个 `SpellEntry`。两端都能调。 |
 | `getSpellsExcept(player, excluded)` | 同上,但不算 `excluded` 这一个物品栈。 |
@@ -364,6 +361,7 @@ lib 的法器基类 `IbxMagicWeaponItem`(法典 `IbxTomeItem`、法杖 `IbxStaff
 | `getSelectedSpell(player)` | 当前会放的那一条:选中的还在列表里就是它,否则列表第一个;身上没有法术为 null。 |
 | `resolveSelected(player, spells)` | 同上,用已经算好的列表。 |
 | `select(player, id)` | 改选:法术在该玩家的列表里才写入,返回是否成功。只在服务端生效。 |
+| `castSelected(player, hand)` | 放当前选中的法术,来源 `ITEM`,施法物品是 `hand` 上的那件。右键施法物品时 lib 自己会调。客户端调用只做判断。 |
 
 - `SpellEntry` 是一条记录:`spell()`(`Holder<Spell>`)、`sourceItem()`(提供它的物品,由事件加进来、不来自物品的为 `ItemStack.EMPTY`)、`value()`(直接取 `Spell`)。
 - 选中的是**法术 id**(`SelectedSpell`),不是下标:换一件装备列表顺序会变。存盘,死亡后保留。
@@ -592,7 +590,7 @@ if (this.hits.tryHit(target)) {                       // 现在能打就记下�
 
 ### 弹射物 `SpellProjectile`
 
-> **`SpellProjectile` 需要 GeckoLib**:它实现了 GeckoLib 的 `GeoEntity`。GeckoLib 对 ibx_lib 是可选依赖,lib 里只有这个类和它的渲染器用到;你的模组要注册法术弹射物,就在自己的 `neoforge.mods.toml` 里把 GeckoLib 写成必需依赖。
+> 只用一张贴图的弹射物继承 `SpellProjectile`,不需要 GeckoLib。要 GeckoLib 3D 模型的继承它的子类 `GeoSpellProjectile`(见下面):GeckoLib 对 ibx_lib 是可选依赖,你的模组用了它就在自己的 `neoforge.mods.toml` 里把 GeckoLib 写成必需依赖。
 
 ```java
 public class FireBolt extends SpellProjectile {
@@ -637,7 +635,6 @@ public static final DeferredHolder<EntityType<?>, EntityType<FireBolt>> FIRE_BOL
 | `getPierce()` | `0` | 能穿过几个目标;0 为打中第一个就结束。同一个目标只打一次。 |
 | `getHomingStrength()` | `0` | 追踪强度:每 tick 把速度方向往目标转多少(0~1),0 为不追踪。追前方 60° 内最近的可作用生物。 |
 | `getHomingRange()` | `16.0` | 追踪找目标的距离(格)。 |
-| `flyAnimation()` | `null` | 用 3D 模型渲染时,飞行中循环播的 GeckoLib 动画。 |
 
 | 钩子 | 时机 |
 | --- | --- |
@@ -647,6 +644,14 @@ public static final DeferredHolder<EntityType<?>, EntityType<FireBolt>> FIRE_BOL
 | `trailParticles()` | 客户端每 tick:尾迹粒子。 |
 | `impactParticles()` | 客户端:命中结束时的粒子。 |
 
+想在半路主动结束(空中引爆、到点自爆)就调 `impact()`:同撞到东西一样调 `onImpact`(收到的是落在当前位置、什么也没打中的结果)、播命中粒子,然后消失。只在服务端调。
+
+**3D 模型的弹射物**继承 `GeoSpellProjectile`,参数、钩子、构造函数都同 `SpellProjectile`,多一个参数:
+
+| 参数(重写) | 默认 | 说明 |
+| --- | --- | --- |
+| `flyAnimation()` | `null` | 飞行中循环播的 GeckoLib 动画。 |
+
 渲染器(`ibx.lib.client.renderer`)在 `EntityRenderersEvent.RegisterRenderers` 里注册:
 
 ```java
@@ -654,7 +659,7 @@ public static final DeferredHolder<EntityType<?>, EntityType<FireBolt>> FIRE_BOL
 event.registerEntityRenderer(ExampleEntities.FIRE_BOLT.get(), ctx -> new SpellProjectileRenderer<>(ctx,
         Identifier.fromNamespaceAndPath("examplemod", "textures/entity/spell/fire_bolt.png"), 0.5F, true));
 
-// GeckoLib 3D 模型,顺着飞行方向;文件走 GeckoLib 的默认路径
+// GeckoLib 3D 模型,顺着飞行方向;实体要继承 GeoSpellProjectile,文件走 GeckoLib 的默认路径
 event.registerEntityRenderer(ExampleEntities.ICE_SHARD.get(), ctx -> new GeoSpellProjectileRenderer<>(ctx,
         Identifier.fromNamespaceAndPath("examplemod", "spell/ice_shard")));
 ```
@@ -705,6 +710,7 @@ public final class FireFieldSpell extends Spell {
 | `getRadiusPerTick()` | `0` | 半径每 tick 变化多少(扩散为正、收缩为负);缩到 0.5 格以下就提前结束。 |
 | `leavesNoIFrames()` | `true` | 打完不留无敌帧:节奏由 `getHitInterval()` 决定,持续伤害也不会挡掉别的攻击。 |
 | `getParticle()` | 女巫的紫色粒子 | 客户端在圆盘上随机冒的粒子。 |
+| `particleDensity()` | `0.3` | 生效时每 tick 每平方格冒几个粒子(零头按概率);0 为不冒粒子。 |
 
 | 钩子 | 说明 |
 | --- | --- |
@@ -712,18 +718,24 @@ public final class FireFieldSpell extends Spell {
 | `canAffect(target)` | 这个目标该不该作用:默认不打施法者,其余看 `affects()`。 |
 | `affect(target)` | 作用一次:默认造成快照伤害,返回是否打中。治疗圈改成 `SpellDamageApi.heal`。 |
 | `onAffect(target, hit)` | 作用一次之后(附带效果)。`hit` 为 false 表示被挡掉了。 |
-| `onExpire()` | 持续时间到了,或者半径缩没了。之后实体消失。 |
-| `ambientParticles()` | 客户端每 tick 的粒子;要完全自己画就重写它。 |
+| `onActivate()` | 开始生效的那一刻(预警结束后的第一个 tick),在第一次作用目标之前调一次。出手的声音、粒子放这里。 |
+| `onActiveTick()` | 生效期间每 tick,在作用目标之前(`affects()` 是 `Faction.NONE` 的也调)。自己按时间放东西的写在这里。 |
+| `onExpire()` | 持续时间到了、半径缩没了,或者调了 `finish()`。之后实体消失。 |
+| `ambientParticles()` | 客户端每 tick 的粒子:按 `particleDensity()` 在圆盘上随机挑点,每个点调 `spawnParticle`;要完全自己画就重写它。 |
+| `spawnParticle(x, z)` | 客户端:在圆盘上这一点冒一个粒子;要改高度、速度就重写它。 |
 
 | 方法 | 说明 |
 | --- | --- |
 | `getRadius()` / `setRadius(radius)` | 半径,同步给客户端,最大 32。 |
 | `setWaitTime(ticks)` | 先「预警」多久再生效,放进世界之前设。预警期间不作用,粒子稀疏。 |
 | `isWaiting()` | 是否还在预警。 |
+| `activeTicks()` | 已经生效了多少 tick:预警期间是 0,开始生效的那一 tick 是 1。只在服务端有意义。 |
+| `finish()` | 提前结束:调 `onExpire()` 再消失。直接 `discard()` 会跳过收尾钩子。只在服务端。 |
 | `getOwner()` / `snapshot()` | 施法者 / 伤害快照,都可能为 null。 |
 
 - 还有一个不带快照的构造函数 `(type, caster, pos, radius, durationTicks)`,配合 `affects()` 返回 `Faction.NONE` 用。
 - `durationTicks` 是生效多久,不含预警。
+- 生效后每 tick 的顺序:(第一次)`onActivate()` → 按 `getRadiusPerTick()` 改半径 → `onActiveTick()` → 找圆柱里的生物作用。自己按时间放东西的(比如一场箭雨)写在 `onActiveTick()` 里,配合 `affects()` 返回 `Faction.NONE`。
 - 没有模型,实体渲染器注册原版的 `NoopRenderer::new` 即可。注册实体类型时的 `sized` 随便填,碰撞箱会跟着半径变。
 - 伤害的来源位置是圆心:正面朝圆心举盾能挡。
 - 存盘;施法者下线或被卸载后照样生效,只是不做友伤判定。
@@ -794,7 +806,8 @@ public static final DeferredHolder<EntityType<?>, EntityType<FrostBeam>> FROST_B
 | 钩子 | 说明 |
 | --- | --- |
 | `origin(owner, partialTick)` | 起点。默认胸口(离脚 0.65 倍身高);施法者实现了 `SpellOrigin` 就用它给的点。 |
-| `direction(owner, start, partialTick)` | 方向。默认从起点对准准星指着的地方;生物对准 AI 给的对象或攻击目标的身体正中。 |
+| `direction(owner, start, partialTick)` | 方向。默认从起点对准 `aimTarget` 的身体正中,没有就对准准星指着的地方。 |
+| `aimTarget(owner)` | 服务端:射线要对准的生物,null 为按准星。默认是 AI 给的对象,没给时生物瞄攻击目标、玩家为 null。要对准别的对象(比如治疗射线对准友方)就重写它。 |
 | `aimPoint(owner, partialTick)` | 准星指着的地方。 |
 | `affects()` / `canAffect(target)` / `affect(target)` / `onAffect(target, hit)` | 同 `SpellAoe`。 |
 | `onBlockHit(hit)` | 每 tick 射线停在方块上时。 |
@@ -886,7 +899,7 @@ if (ManaApi.tryConsume(player, 20.0F)) {
 | `SpellCastStateEvent.Start` | 否 | 客户端 | 某个生物开始施法(施法状态同步到达时),自己和周围生物的都会收到。瞬发也有,紧接着就是结束。 | 只通知。 |
 | `SpellCastStateEvent.End` | 否 | 客户端 | 某个生物结束施法,`getReason()` 是结束原因。 | 只通知。 |
 | `SpellDamageEvent` | 是 | 服务端 | 法术伤害命中前(`SpellDamageApi.hurt`,目标是生物时):友伤判定已通过、暴击已掷完(伤害量已乘暴击倍率),还没进原版受伤流程。 | `setAmount`;`getSource()` 取 `SpellDamageSource`(快照、是否暴击)。 |
-| `SpellListEvent` | 否 | 两端 | 玩家的法术列表聚合完之后(`SpellCasting.getSpells`)。 | `add(spell, sourceItem)`、`remove(spell)`、`contains(spell)`,或直接改 `getSpells()`。 |
+| `SpellListEvent` | 否 | 两端 | 玩家的法术列表聚合完之后(`PlayerSpells.getSpells`)。 | `add(spell, sourceItem)`、`remove(spell)`、`contains(spell)`,或直接改 `getSpells()`。 |
 | `ManaEvent.Consume` | 是 | 服务端 | 消耗法力前(`ManaApi.tryConsume`)。取消后这次消耗失败、不扣。创造模式不触发。 | `setCost`(收到的值已经乘过法力消耗倍率)。 |
 | `ManaEvent.Gain` | 否 | 服务端 | 获得法力前(`ManaApi.add`)。自然回复不触发。 | `setAmount`,负数为扣减。 |
 | `ManaEvent.Changed` | 否 | 服务端 | 法力变化后,包括自然回复——回复中每 tick 都可能来一次。`getOldValue()` / `getNewValue()`。 | 只通知。 |

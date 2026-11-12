@@ -37,7 +37,7 @@ public final class CastContext {
     /** 还没扣的耐久零头：施法物品按蓝量掉耐久时四舍五入剩下的，留给同一次施法的下一跳（引导）。 */
     float pendingWear;
     @Nullable Component failure;
-    /** 由"放当前选中"发起（{@link SpellCasting#castSelected}）：提供它的装备被卸下时要取消。只在服务端有意义。 */
+    /** 由"放当前选中"发起（{@link PlayerSpells#castSelected}）：提供它的装备被卸下时要取消。只在服务端有意义。 */
     boolean fromSelection;
     /** 由右键施法物品发起并挂着原版"使用物品"：松手结算、物品离手取消、结束时停用。只在服务端有意义。 */
     boolean heldByUse;

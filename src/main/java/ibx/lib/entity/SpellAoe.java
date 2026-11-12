@@ -59,8 +59,9 @@ import org.jspecify.annotations.Nullable;
  *   <li>同一目标 10 tick 一下（每秒两下），打完不留无敌帧；</li>
  *   <li>高 1 格，半径不变；</li>
  *   <li>可以先"预警"一段时间再生效（{@link #setWaitTime}，默认 0）：预警期间不作用，粒子稀疏；</li>
- *   <li>持续时间到了调 {@link #onExpire()} 后消失；</li>
- *   <li>客户端每 tick 在圆盘上随机冒 {@link #getParticle()}（默认女巫的紫色粒子），多少按面积算。没有模型，
+ *   <li>开始生效那一刻调 {@link #onActivate()}，之后每 tick 调 {@link #onActiveTick()}（已生效多久见 {@link #activeTicks()}）；</li>
+ *   <li>持续时间到了调 {@link #onExpire()} 后消失，想提前结束调 {@link #finish()}；</li>
+ *   <li>客户端每 tick 在圆盘上随机冒 {@link #getParticle()}（默认女巫的紫色粒子），多少按面积和 {@link #particleDensity()} 算。没有模型，
  *       实体渲染器注册原版的 {@code NoopRenderer::new} 即可。</li>
  * </ul>
  *
@@ -77,6 +78,7 @@ public abstract class SpellAoe extends Entity implements TraceableEntity {
     private int duration = 100;
     private int waitTime;
     private int age;
+    private boolean activated;
     private @Nullable HitTracker hits;
 
     /** 实体类型的工厂用（读档、客户端生成），不要在法术里用。 */
@@ -132,6 +134,11 @@ public abstract class SpellAoe extends Entity implements TraceableEntity {
         return ParticleTypes.WITCH;
     }
 
+    /** 客户端粒子的密度：生效时每 tick 每平方格冒几个。0 = 不冒粒子（预警时零星的那几个也不冒）。 */
+    protected float particleDensity() {
+        return 0.3F;
+    }
+
     // ---------------------------------------------------------------- 钩子（子类重写，都只在服务端调，粒子除外）
 
     /**
@@ -165,21 +172,48 @@ public abstract class SpellAoe extends Entity implements TraceableEntity {
     protected void onAffect(LivingEntity target, boolean hit) {
     }
 
-    /** 持续时间到了，或者半径缩没了。之后实体消失。 */
+    /** 开始生效的那一刻：预警结束后的第一个 tick（没有预警就是第一个 tick），在第一次作用目标之前调一次。出手的声音、粒子放这里。 */
+    protected void onActivate() {
+    }
+
+    /**
+     * 生效期间每 tick 调一次，在作用目标之前（{@link #affects} 是 {@link Faction#NONE} 的也调）。
+     * 自己按时间放东西的范围效果写在这里，已生效多久见 {@link #activeTicks()}。
+     */
+    protected void onActiveTick() {
+    }
+
+    /** 持续时间到了、半径缩没了，或者被 {@link #finish()} 提前结束。之后实体消失。 */
     protected void onExpire() {
     }
 
-    /** 客户端每 tick：在圆盘上随机冒粒子，生效时每平方格约 0.3 个，预警时只有零星几个。 */
+    /**
+     * 客户端每 tick：在圆盘上随机挑几个点冒粒子（{@link #spawnParticle}），生效时每平方格 {@link #particleDensity()} 个
+     * （不足一个的零头按概率），预警时只有零星几个。
+     */
     protected void ambientParticles() {
+        float density = this.particleDensity();
+        if (density <= 0.0F) {
+            return;
+        }
         float radius = this.getRadius();
-        int count = this.isWaiting() ? (this.random.nextInt(4) == 0 ? 1 : 0) : Mth.ceil(Mth.PI * radius * radius * 0.3F);
+        int count;
+        if (this.isWaiting()) {
+            count = this.random.nextInt(4) == 0 ? 1 : 0;
+        } else {
+            float expected = Mth.PI * radius * radius * density;
+            count = Mth.floor(expected) + (this.random.nextFloat() < expected - Mth.floor(expected) ? 1 : 0);
+        }
         for (int i = 0; i < count; i++) {
             float angle = this.random.nextFloat() * Mth.TWO_PI;
             float distance = Mth.sqrt(this.random.nextFloat()) * radius;
-            this.level().addParticle(this.getParticle(),
-                    this.getX() + Mth.cos(angle) * distance, this.getY() + 0.1, this.getZ() + Mth.sin(angle) * distance,
-                    0.0, 0.02, 0.0);
+            this.spawnParticle(this.getX() + Mth.cos(angle) * distance, this.getZ() + Mth.sin(angle) * distance);
         }
+    }
+
+    /** 客户端：在圆盘上 ({@code x}, {@code z}) 这一点冒一个粒子。想改高度、速度的重写它。 */
+    protected void spawnParticle(double x, double z) {
+        this.level().addParticle(this.getParticle(), x, this.getY() + 0.1, z, 0.0, 0.02, 0.0);
     }
 
     // ---------------------------------------------------------------- 读写
@@ -208,6 +242,20 @@ public abstract class SpellAoe extends Entity implements TraceableEntity {
         return this.entityData.get(DATA_WAITING);
     }
 
+    /** 已经生效了多少 tick：预警期间是 0，开始生效的那一 tick 是 1。只在服务端有意义。 */
+    protected int activeTicks() {
+        return Math.max(0, this.age - this.waitTime);
+    }
+
+    /** 提前结束：照常调 {@link #onExpire()} 再消失。只在服务端生效；已经没了的不再调。 */
+    public void finish() {
+        if (this.level().isClientSide() || this.isRemoved()) {
+            return;
+        }
+        this.onExpire();
+        this.discard();
+    }
+
     @Override
     public @Nullable LivingEntity getOwner() {
         return EntityReference.getLivingEntity(this.owner, this.level());
@@ -223,7 +271,7 @@ public abstract class SpellAoe extends Entity implements TraceableEntity {
             return;
         }
         if (this.age++ >= this.waitTime + this.duration) {
-            this.expire();
+            this.finish();
             return;
         }
         boolean waiting = this.age <= this.waitTime;
@@ -233,14 +281,25 @@ public abstract class SpellAoe extends Entity implements TraceableEntity {
         if (waiting) {
             return;
         }
+        if (!this.activated) {
+            this.activated = true;
+            this.onActivate();
+            if (this.isRemoved()) {
+                return;
+            }
+        }
         float perTick = this.getRadiusPerTick();
         if (perTick != 0.0F) {
             float radius = this.getRadius() + perTick;
             if (radius < 0.5F) {
-                this.expire();
+                this.finish();
                 return;
             }
             this.setRadius(radius);
+        }
+        this.onActiveTick();
+        if (this.isRemoved()) {
+            return;
         }
 
         if (this.affects() == Faction.NONE) {
@@ -256,11 +315,6 @@ public abstract class SpellAoe extends Entity implements TraceableEntity {
         }
     }
 
-    private void expire() {
-        this.onExpire();
-        this.discard();
-    }
-
     // ---------------------------------------------------------------- 实体杂项
 
     @Override
@@ -269,7 +323,7 @@ public abstract class SpellAoe extends Entity implements TraceableEntity {
         builder.define(DATA_WAITING, false);
     }
 
-    /** 半径变了跟着改碰撞箱（找目标用它）。 */
+    /** 半径变了跟着改碰撞箱。 */
     @Override
     public void onSyncedDataUpdated(EntityDataAccessor<?> accessor) {
         if (DATA_RADIUS.equals(accessor)) {
@@ -306,6 +360,7 @@ public abstract class SpellAoe extends Entity implements TraceableEntity {
     @Override
     protected void addAdditionalSaveData(ValueOutput output) {
         output.putInt("Age", this.age);
+        output.putBoolean("Activated", this.activated);
         output.putInt("Duration", this.duration);
         output.putInt("WaitTime", this.waitTime);
         output.putFloat("Radius", this.getRadius());
@@ -315,6 +370,7 @@ public abstract class SpellAoe extends Entity implements TraceableEntity {
     @Override
     protected void readAdditionalSaveData(ValueInput input) {
         this.age = input.getIntOr("Age", 0);
+        this.activated = input.getBooleanOr("Activated", false);
         this.duration = input.getIntOr("Duration", 100);
         this.waitTime = input.getIntOr("WaitTime", 0);
         this.setRadius(input.getFloatOr("Radius", 1.0F));

@@ -40,7 +40,7 @@ public final class DataComponentRegistry {
     /**
      * 物品提供的法术（法典、卷轴、法杖、护甲、饰品……），按轮盘里的顺序。带它的物品就是法术容器，
      * 见 {@link ibx.lib.spell.SpellContainer}；玩家能放的法术是身上所有容器的并集。
-     * 存的是法术 id，例如 {@code /give @s minecraft:book[ibx_lib:spells=["taverntales_2me:fireball"]]}。
+     * 存的是法术 id，例如 {@code /give @s minecraft:book[ibx_lib:spells=["examplemod:fireball"]]}。
      */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<Holder<Spell>>>> SPELLS =
             DATA_COMPONENTS.registerComponentType("spells",

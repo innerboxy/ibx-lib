@@ -174,7 +174,7 @@ public final class AttributeSettingsScreen extends Screen {
     }
 
     private static Component sortLabel() {
-        AttributeSort sort = ClientConfig.SPEC.isLoaded() ? ClientConfig.ATTRIBUTE_PANEL_SORT.get() : AttributeSort.DEFAULT;
+        AttributeSort sort = ClientConfig.get(ClientConfig.ATTRIBUTE_PANEL_SORT);
         return Component.translatable("gui.ibx_lib.attribute_panel.sort." + sort.name().toLowerCase(java.util.Locale.ROOT));
     }
 
@@ -199,7 +199,7 @@ public final class AttributeSettingsScreen extends Screen {
         }
         if (inside(mx, my, this.x + SORT_X, this.sortY(), SORT_W, SORT_H)) {
             AttributeSort[] all = AttributeSort.values();
-            set(ClientConfig.ATTRIBUTE_PANEL_SORT, all[(ClientConfig.ATTRIBUTE_PANEL_SORT.get().ordinal() + 1) % all.length]);
+            set(ClientConfig.ATTRIBUTE_PANEL_SORT, all[(ClientConfig.get(ClientConfig.ATTRIBUTE_PANEL_SORT).ordinal() + 1) % all.length]);
             return this.clicked();
         }
         int by = this.y + H - 8 - BUTTON_H;
@@ -264,7 +264,7 @@ public final class AttributeSettingsScreen extends Screen {
     // ---------------------------------------------------------------- 改设置
 
     private void toggleHidden(Holder<Attribute> attribute) {
-        List<String> hidden = new ArrayList<>(ClientConfig.ATTRIBUTE_PANEL_HIDDEN.get());
+        List<String> hidden = new ArrayList<>(ClientConfig.get(ClientConfig.ATTRIBUTE_PANEL_HIDDEN));
         String id = AttributeList.id(attribute);
         if (!hidden.remove(id)) {
             hidden.add(id);
@@ -283,7 +283,7 @@ public final class AttributeSettingsScreen extends Screen {
         if (i < 0 || j < 0 || j >= order.size()) {
             return;
         }
-        if (ClientConfig.ATTRIBUTE_PANEL_GROUP_BY_MOD.get() && !Objects.equals(namespace(order.get(i)), namespace(order.get(j)))) {
+        if (ClientConfig.get(ClientConfig.ATTRIBUTE_PANEL_GROUP_BY_MOD) && !Objects.equals(namespace(order.get(i)), namespace(order.get(j)))) {
             return;
         }
         Collections.swap(order, i, j);
@@ -297,7 +297,7 @@ public final class AttributeSettingsScreen extends Screen {
         }
         set(ClientConfig.ATTRIBUTE_PANEL_SORT, AttributeSort.DEFAULT);
         set(ClientConfig.ATTRIBUTE_PANEL_ORDER, List.of());
-        set(ClientConfig.ATTRIBUTE_PANEL_HIDDEN, ClientConfig.ATTRIBUTE_PANEL_HIDDEN.getDefault());
+        set(ClientConfig.ATTRIBUTE_PANEL_HIDDEN, AttributePanelLayout.defaultHidden());
     }
 
     private static <T> void set(ModConfigSpec.ConfigValue<T> value, T newValue) {

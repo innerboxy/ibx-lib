@@ -5,7 +5,7 @@ import ibx.lib.client.attribute.AttributePanel;
 import ibx.lib.client.creativetab.CreativeSubTabStrip;
 import ibx.lib.client.ground.BlockWaveRendering;
 import ibx.lib.client.ground.GroundWarningRendering;
-import ibx.lib.client.hud.TavernHud;
+import ibx.lib.client.hud.IbxHud;
 import ibx.lib.client.spell.CastAnimations;
 import ibx.lib.client.spell.IsCastingProperty;
 import ibx.lib.client.spell.SpellCastInput;
@@ -19,7 +19,9 @@ import ibx.lib.compat.CuriosCompat;
 import ibx.lib.compat.InventoryHudCompat;
 import ibx.lib.compat.JadeCompat;
 import ibx.lib.compat.PlayerAnimCompat;
-import ibx.lib.compat.curios.ElytraCurioRendering;
+import ibx.lib.compat.curios.client.ElytraCurioRendering;
+import ibx.lib.compat.inventoryhud.ArmorHudArea;
+import ibx.lib.compat.jade.JadeBossHiding;
 import ibx.lib.config.ClientConfig;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
@@ -48,8 +50,8 @@ public final class IbxLibClient {
         modEventBus.addListener(EventPriority.LOWEST, CrossbowArmPose::onRegisterClientExtensions);
 
         // HUD：副手栏外侧的当前法术、吟唱条、蓝条、经验条正中的等级数字；隐藏原版护甲行
-        modEventBus.addListener(TavernHud::onRegisterGuiLayers);
-        NeoForge.EVENT_BUS.addListener(TavernHud::onClientTick);
+        modEventBus.addListener(IbxHud::onRegisterGuiLayers);
+        NeoForge.EVENT_BUS.addListener(IbxHud::onClientTick);
         // 法术轮盘：按住轮盘键弹出、左键点选；法术图标资源重载时重新找
         modEventBus.addListener(SpellWheel::onRegisterKeyMappings);
         modEventBus.addListener(SpellWheel::onRegisterGuiLayers);
@@ -71,7 +73,7 @@ public final class IbxLibClient {
             CastAnimations.register();
         }
         modEventBus.addListener(IsCastingProperty::onRegister);
-        // 着火：换颜色的火（翠焰的绿火）身上的火苗；第一人称屏幕上的火改成四周的边框（原版火、换色火都是）
+        // 着火：换颜色的火身上的火苗；第一人称屏幕上的火改成四周的边框（原版火、换色火都是）
         modEventBus.addListener(CustomFireRendering::onRegisterRenderStateModifiers);
         modEventBus.addListener(CustomFireRendering::onRegisterGuiLayers);
         modEventBus.addListener(CustomFireRendering::onAddReloadListeners);
@@ -96,9 +98,13 @@ public final class IbxLibClient {
         }
         NeoForge.EVENT_BUS.addListener(ShieldInput::onClientTick);
         // Jade（装了才有）：首次进世界关掉它的「显示Boss」；提示框里的魔抗由 Jade 插件 IbxJadePlugin 自己注册
-        JadeCompat.register();
+        if (JadeCompat.isLoaded()) {
+            JadeBossHiding.register();
+        }
         // InventoryHUD+（装了才有）：当前法术框让开它贴着快捷栏画的盔甲栏 HUD（箭数那一格正好压在法术框上）
-        InventoryHudCompat.register();
+        if (InventoryHudCompat.isLoaded()) {
+            ArmorHudArea.register();
+        }
         // 背包左边的属性面板（人物框左下角的卷轴按钮开关）和它的设置界面
         AttributePanel.register(modEventBus);
         // 创造栏子栏：选中的创造栏建了子栏（CreativeSubTabs）时，创造模式背包左边一列分组图标

@@ -5,8 +5,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 /**
  * 本模组的服务端配置（随存档保存，会同步给客户端）。
  *
- * <p>注意读取时机：SERVER 配置在存档加载后才可用，<b>只能在游戏运行中读</b>，
- * 不要在注册期或类初始化时读，否则会抛异常。</p>
+ * <p>读都走 {@link #get}：SERVER 配置在存档加载后才可用，没加载时（注册期、主菜单）{@link #get} 取默认值，
+ * 直接调配置项的 {@code get()} 会抛异常。</p>
  */
 public final class Config {
     private Config() {}
@@ -41,8 +41,8 @@ public final class Config {
 
     public static final ModConfigSpec SPEC = BUILDER.build();
 
-    /** 开关类配置的当前值；没加载（不在存档里）时取默认值。 */
-    public static boolean get(ModConfigSpec.BooleanValue value) {
+    /** 配置项的当前值；没加载（不在存档里）时取默认值。 */
+    public static <T> T get(ModConfigSpec.ConfigValue<T> value) {
         return SPEC.isLoaded() ? value.get() : value.getDefault();
     }
 }

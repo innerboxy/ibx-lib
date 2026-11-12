@@ -2,7 +2,7 @@ package ibx.lib.client.attribute;
 
 import ibx.lib.IbxLib;
 import ibx.lib.client.UiPalette;
-import ibx.lib.compat.curios.CuriosScreens;
+import ibx.lib.compat.curios.client.CuriosScreens;
 import ibx.lib.config.ClientConfig;
 import ibx.lib.mixin.AbstractRecipeBookScreenAccessor;
 import net.minecraft.client.Minecraft;

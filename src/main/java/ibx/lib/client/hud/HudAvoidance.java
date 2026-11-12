@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 
 /**
  * HUD 自动避让：别的模组画在 HUD 上的东西由联动类报到这里（这一帧占的矩形，GUI 坐标），
- * 本模组的 HUD 元素摆之前先问一下，压到了就横着往外挪开。现在用它的是当前法术框（{@link TavernHud}）。
+ * 本模组的 HUD 元素摆之前先问一下，压到了就横着往外挪开。现在用它的是当前法术框（{@link IbxHud}）。
  *
  * <p>来源在客户端入口里 {@link #register} 进来（InventoryHUD+ 见 {@code compat.InventoryHudCompat}）。
  * 每帧现算、不缓存：别的模组的 HUD 会随手里拿的东西、它自己的设置变。

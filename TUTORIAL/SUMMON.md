@@ -25,7 +25,7 @@
 | `ibx.lib.api.SummonApi` | 入口:召唤、离场、查询、换主人、标记目标、身板快照、找落点(见 [4](#4-summonapi)) |
 | `ibx.lib.summon.Summoned` | 召唤物实体实现的接口(见 [5](#5-召唤物实体)) |
 | `ibx.lib.summon.goal` | 召唤物的 AI 目标(见 [6](#6-ai-目标)) |
-| `Spell.props().summonCount(...)` 等 | 把法术声明成召唤法术(见 [7](#7-召唤法术)) |
+| `ibx.lib.summon.SummonSpell` | 召唤法术的基类:一次召几只、每只占几个名额,放之前查名额(见 [7](#7-召唤法术)) |
 | `ibx.lib.api.event.SummonEvent` | 召唤、换主人、离场的事件(见 [8](#8-事件)) |
 | `ibx.lib.summon.SummonData` / `OwnerSummons` | 存在召唤物和主人身上的数据(见 [9](#9-附加数据)) |
 
@@ -92,12 +92,12 @@ public static final DeferredHolder<EntityType<?>, EntityType<SpiritHoundEntity>>
 event.put(SPIRIT_HOUND.get(), SpiritHoundEntity.createAttributes().build());
 ```
 
-**法术**:在 `onCast` 里 `create` 实体、摆好位置、用 `setStat` 写好身板,最后交给 `SummonApi.summon`。名额和时长由注册行的数值决定。
+**法术**:继承 `SummonSpell`,在 `onCast` 里 `create` 实体、摆好位置、用 `setStat` 写好身板,最后交给 `SummonApi.summon`。名额按构造时给的数值算。
 
 ```java
-public final class SummonSpiritHoundSpell extends Spell {
-    public SummonSpiritHoundSpell(Properties properties) {
-        super(properties);
+public final class SummonSpiritHoundSpell extends SummonSpell {
+    public SummonSpiritHoundSpell(Properties properties, int summonCount, int summonCost) {
+        super(properties, summonCount, summonCost);
     }
 
     @Override
@@ -121,12 +121,12 @@ public final class SummonSpiritHoundSpell extends Spell {
 }
 ```
 
-**注册行**:写了 `summonCount` 就是召唤法术。
+**注册行**:数值照常写在 `Spell.props()` 里,后面跟一次召几只、每只占几个名额。
 
 ```java
 public static final DeferredRegister<Spell> SPELLS = DeferredRegister.create(SpellRegistries.SPELL_KEY, "examplemod");
 public static final DeferredHolder<Spell, SummonSpiritHoundSpell> SUMMON_SPIRIT_HOUND = SPELLS.register("summon_spirit_hound",
-        () -> new SummonSpiritHoundSpell(Spell.props().manaCost(30).cooldown(10.0F).castTime(1.5F).summonCount(1).summonCost(1)));
+        () -> new SummonSpiritHoundSpell(Spell.props().manaCost(30).cooldown(10.0F).castTime(1.5F), 1, 1));
 ```
 
 **不通过法术召唤**(比如 Boss 的招式):直接调五个参数的 `summon`,法术填 `null`。生物当主人时默认名额也是 1,要多召就在它的属性里把 `ibx_lib:max_summons` 调高。
@@ -146,7 +146,7 @@ SummonApi.summon(boss, minion, null, 0, 1);
 ### 名额
 
 - 总名额是主人的属性 `ibx_lib:max_summons`(`AttributeRegistry.MAX_SUMMONS`,译名「召唤物上限」)向下取整。默认 1,范围 0 ~ 1024,所有生物都有这个属性。
-- 每只召唤物占几个名额在召唤时给定:法术召的是注册行的 `summonCost`(默认 1),直接调 `summon` 的是参数 `cost`。可以是 0,不占名额。
+- 每只召唤物占几个名额在召唤时给定:法术召的是召唤法术的 `summonCost()`,直接调 `summon` 的是参数 `cost`。可以是 0,不占名额。
 - 已用名额是主人名单里所有召唤物的名额之和,暂时没加载的也算。
 - 召唤时名额不够,就从**最早召唤的**开始挤掉(离场原因 `REPLACED`),直到放得下。
 - 单只的名额就超过总名额时召不出来,`summon` 返回 `false`,不会挤掉任何召唤物。
@@ -155,7 +155,7 @@ SummonApi.summon(boss, minion, null, 0, 1);
 ### 寿命与离场
 
 - **常驻**:默认没有时限。召唤时会给实体设上「不自然消失」。
-- **限时**:`summon` 的 `durationTicks` 大于 0,或法术注册行写了 `summonDuration`,就是限时召唤物,到点以 `EXPIRED` 离场。到期时刻按世界时刻算,没加载的时间也算。
+- **限时**:`summon` 的 `durationTicks` 大于 0 就是限时召唤物,到点以 `EXPIRED` 离场。到期时刻按世界时刻算,没加载的时间也算。
 - **主人死亡**:全部离场(`OWNER_DIED`)。
 - **玩家主人下线**:全部离场(`OWNER_LEFT`)。
 - **找不到主人**:召唤物每秒查一次主人。连续 3 次找不到(主人被移除、所在区块没加载),或者主人的名单里已经没有它,就离场(`OWNER_GONE`)。
@@ -244,7 +244,7 @@ SummonApi.summon(boss, minion, null, 0, 1);
 
 | 方法 | 返回 | 说明 |
 | --- | --- | --- |
-| `summon(owner, summon, spell)` | `boolean` | 按法术注册行的 `summonCost` 和 `summonDuration` 召唤(没写时长 = 常驻)。召唤法术的 `onCast` 里用这个。 |
+| `summon(owner, summon, spell)` | `boolean` | `spell` 是 `SummonSpell`:按它的 `summonCost()` 召唤,常驻。召唤法术的 `onCast` 里用这个。 |
 | `summon(owner, summon, spell, durationTicks, cost)` | `boolean` | 把 `summon` 作为 `owner` 的召唤物放进主人所在的世界。`spell` 不是法术召的填 null;`durationTicks` 小于等于 0 = 常驻;`cost` 最少 0。 |
 
 调 `summon` 之前,召唤物要已经 `create` 好(**在主人所在的世界里**)、摆好位置、写好身板,但还没放进世界——放进世界由 `summon` 来做。它依次:检查单只的名额不超过总名额 → 发 `SummonEvent.Pre` → 名额不够就挤掉最早的 → 写上召唤物数据、设成不自然消失、放进世界 → 记进主人名单 → 发 `SummonEvent.Post`。
@@ -375,26 +375,30 @@ SummonGoals.addTargetGoals(this, this.targetSelector, 1);
 
 ## 7. 召唤法术
 
-法术通过注册行(`Spell.props()`)的三个数值声明自己是召唤法术。法术系统的其他内容见 [SPELL.md](SPELL.md)。
+召唤法术继承 `ibx.lib.summon.SummonSpell`(`Spell` 的子类),一次召几只、每只占几个名额写在构造参数里。法术系统的其他内容见 [SPELL.md](SPELL.md)。
 
-| 注册行 | 默认 | 说明 |
-| --- | --- | --- |
-| `summonCount(int)` | `0` | 一次召几只。**写了(大于 0)就是召唤法术。** |
-| `summonCost(int)` | `1` | 每只占几个名额,最少 0。 |
-| `summonDuration(float)` | `0` | 召唤物的寿命(秒),0 = 常驻。 |
+| 构造参数 / 读取方法 | 说明 |
+| --- | --- |
+| `summonCount` / `summonCount()` | 一次召几只,最少 1。 |
+| `summonCost` / `summonCost()` | 每只占几个名额,最少 0。 |
 
-法术类里对应的读取方法:`isSummon()`、`summonCount()`、`summonCost()`、`summonDuration()`。
+还有一个带瞄准方式的构造函数 `(properties, targeting, summonCount, summonCost)`,给召在准星落点这类要选目标的召唤法术用(见 [TARGETING.md](TARGETING.md))。
 
-写了 `summonCount` 之后框架替你做的:
+| 方法 | 说明 |
+| --- | --- |
+| `fits(caster)` | 施法者的总名额放不放得下一只(只看总名额,不看已用)。两端都能问。 |
+| `overCapacityMessage(caster)` | 名额不够时给玩家看的提示「召唤物上限不够」(`message.ibx_lib.cast.summon_over_capacity`)。 |
 
-- **施法前查名额**:开始施法时,如果 `summonCost` 超过施法者的总名额,这次施法失败,不扣蓝、不进冷却,玩家在 action bar 看到「召唤物上限不够」(`message.ibx_lib.cast.summon_over_capacity`)。
-- **说明框多几行**:法术轮盘的说明里多一行「召唤 N 只,每只占 M 个名额」;写了 `summonDuration` 再多一行「持续 X 秒」;`summonCost` 超过总名额时多一行「召唤物上限不够」的提示。
+`SummonSpell` 替你做的:
 
-**召唤本身要自己写**在 `onCast` 里:循环 `summonCount()` 次,每只 `create`、摆位置、`setStat`,再调 `SummonApi.summon(caster, mob, this)`(见 [2](#2-快速上手))。`summon` 按这个法术的 `summonCost` 和 `summonDuration` 记名额和时长。`CastContext` 没有召唤专用的方法。
+- **查名额**:它的 `canCast` 看 `summonCost` 有没有超过施法者的总名额,超了就放不出来,不扣蓝、不进冷却,玩家在 action bar 看到「召唤物上限不够」。`canCast` 在开始施法和生效前各调一次,所以读条中上限降到不够,这次施法也会取消。重写 `canCast` 加别的条件时先调 `super.canCast(ctx)`,否则名额就不查了。
+- **说明框多几行**:法术轮盘的说明里多一行「召唤 N 只,每只占 M 个名额」;`summonCost` 超过总名额时多一行「召唤物上限不够」的提示。
+
+**召唤本身要自己写**在 `onCast` 里:循环 `summonCount()` 次,每只 `create`、摆位置、`setStat`,再调 `SummonApi.summon(caster, mob, this)`(见 [2](#2-快速上手))。`summon` 按这个法术的 `summonCost()` 记名额,召出来的常驻;要限时就调五个参数的 `summon`,自己给 `durationTicks`。`CastContext` 没有召唤专用的方法。
 
 注意:
 
-- 施法前查的是**单只**的名额,不是 `summonCount × summonCost`。一次召多只而名额不够时,后召的会把先召的挤掉。
+- 查的是**单只**的名额,不是 `summonCount × summonCost`。一次召多只而名额不够时,后召的会把先召的挤掉。
 - `summon` 可能返回 `false`(比如被 `SummonEvent.Pre` 取消),之后要给这只召唤物放粒子、音效的话先看返回值。
 - 强度要在说明框里显示(「生命 40」之类),重写法术的 `getTooltip(caster)`。
 

@@ -33,8 +33,8 @@ import java.util.Set;
  * 属性面板和它的设置界面列的东西：玩家身上有的全部属性（原版、本模组、其他模组），按设置排序、分组、筛选。
  *
  * <ul>
- *   <li>默认顺序：原版按 {@link #DEFAULT_ORDER}（生命、防御、攻击、移动……），本模组同理，没列到的按注册顺序接在各自后面；
- *       其他模组排在本模组之后，NeoForge 自己的放最后。</li>
+ *   <li>默认顺序：原版按 {@link AttributePanelLayout} 里的顺序（生命、防御、攻击、移动……），本模组同理，别的模组可以在那里登记自己的；
+ *       没登记的按注册顺序接在各自后面。其他模组排在本模组之后，NeoForge 自己的放最后。</li>
  *   <li>按名称：按当前语言的显示名（中文按拼音）。自定义：设置界面里 ▲▼ 调出来的顺序，没调到的按默认顺序接在后面。</li>
  *   <li>分组：按属性 id 的命名空间分，组名优先用语言文件 {@code gui.ibx_lib.attribute_panel.mod.<命名空间>}，没有就用模组显示名。</li>
  * </ul>
@@ -52,23 +52,9 @@ public final class AttributeList {
     private static @Nullable Collator collator;
     private static @Nullable String collatorLanguage;
 
-    private static final List<String> DEFAULT_ORDER = List.of(
-            "minecraft:max_health", "minecraft:max_absorption", "minecraft:armor", "minecraft:armor_toughness",
-            "minecraft:knockback_resistance", "minecraft:attack_damage", "minecraft:attack_speed", "minecraft:attack_knockback",
-            "minecraft:sweeping_damage_ratio", "minecraft:movement_speed", "minecraft:sneaking_speed", "minecraft:jump_strength",
-            "minecraft:step_height", "minecraft:gravity", "minecraft:safe_fall_distance", "minecraft:fall_damage_multiplier",
-            "minecraft:scale", "minecraft:luck", "minecraft:block_interaction_range", "minecraft:entity_interaction_range",
-            "minecraft:block_break_speed", "minecraft:mining_efficiency", "minecraft:submerged_mining_speed",
-            "minecraft:oxygen_bonus", "minecraft:water_movement_efficiency", "minecraft:movement_efficiency",
-            "minecraft:burning_time", "minecraft:explosion_knockback_resistance", "minecraft:camera_distance",
-            "ibx_lib:max_mana", "ibx_lib:mana_regeneration", "ibx_lib:mana_cost_multiplier", "ibx_lib:spell_power",
-            "ibx_lib:spell_resistance", "ibx_lib:spell_penetration", "ibx_lib:spell_cast_speed", "ibx_lib:spell_cooldown_ratio",
-            "ibx_lib:can_spell_crit", "ibx_lib:critical_chance", "ibx_lib:critical_damage", "ibx_lib:armor_penetration",
-            "ibx_lib:ranged_damage", "ibx_lib:draw_speed",
-            "ibx_lib:draw_time", "ibx_lib:heal_efficiency", "ibx_lib:thorns", "ibx_lib:max_summons");
-
     /** 面板里要列的：去掉设置里关掉的；勾了「隐藏默认值」再去掉还是默认值的。 */
     public static List<Entry> forPanel(Player player) {
+        AttributePanelLayout.applyDefaults();
         Set<String> hidden = new HashSet<>(ClientConfig.get(ClientConfig.ATTRIBUTE_PANEL_HIDDEN));
         boolean hideDefault = ClientConfig.get(ClientConfig.ATTRIBUTE_PANEL_HIDE_DEFAULT);
         AttributeSupplier defaults = DefaultAttributes.getSupplier(EntityType.PLAYER);
@@ -88,6 +74,7 @@ public final class AttributeList {
 
     /** 设置界面里列的：全部属性（关掉的也列，好再勾回来），顺序、分组同面板。 */
     public static List<Entry> forSettings(Player player) {
+        AttributePanelLayout.applyDefaults();
         return withHeaders(sorted(player));
     }
 
@@ -104,11 +91,10 @@ public final class AttributeList {
         Comparator<Holder<Attribute>> byDefault = Comparator
                 .comparingInt((Holder<Attribute> a) -> namespaceRank(namespace(a)))
                 .thenComparingInt(a -> {
-                    int i = DEFAULT_ORDER.indexOf(id(a));
-                    return i >= 0 ? i : DEFAULT_ORDER.size() + registryIndex.get(a);
+                    int i = AttributePanelLayout.orderIndex(id(a));
+                    return i >= 0 ? i : AttributePanelLayout.orderSize() + registryIndex.get(a);
                 });
-        Comparator<Holder<Attribute>> order = switch (ClientConfig.SPEC.isLoaded()
-                ? ClientConfig.ATTRIBUTE_PANEL_SORT.get() : AttributeSort.DEFAULT) {
+        Comparator<Holder<Attribute>> order = switch (ClientConfig.get(ClientConfig.ATTRIBUTE_PANEL_SORT)) {
             case DEFAULT -> byDefault;
             case NAME -> Comparator.<Holder<Attribute>, String>comparing(a -> name(a).getString(), collator()).thenComparing(byDefault);
             case CUSTOM -> {

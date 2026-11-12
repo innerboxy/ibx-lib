@@ -8,7 +8,7 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import org.jspecify.annotations.Nullable;
 
 /**
- * 换颜色的火：让实体身上烧的火（第三人称身上的火苗、第一人称屏幕上的火）换成别的贴图，比如 2me 翠焰的绿火。
+ * 换颜色的火：让实体身上烧的火（第三人称身上的火苗、第一人称屏幕上的火）换成别的贴图，比如绿色的魔法火。
  *
  * <p>着火本身还是原版的（着火时间、伤害、水能浇灭、防火的不着）；这里只在实体上记“烧的是哪种火”（{@code fire_look}，
  * 存盘、同步给看得见它的玩家），火灭了就自动清掉。贴图是方块图集里的两张 {@code <命名空间>:block/<路径>_0}、{@code _1}，
@@ -17,8 +17,8 @@ import org.jspecify.annotations.Nullable;
  * 客户端的换图在 {@code client.CustomFireRendering} 和 {@code mixin.FlameFeatureRendererMixin}。</p>
  *
  * <pre>{@code
- * // 点燃 3 秒，烧的是 taverntales_2me:block/emerald_fire_0 / _1
- * CustomFire.ignite(target, TavernTalesTome.id("emerald_fire"), 3.0F);
+ * // 点燃 3 秒，烧的是 examplemod:block/emerald_fire_0 / _1
+ * CustomFire.ignite(target, Identifier.fromNamespaceAndPath("examplemod", "emerald_fire"), 3.0F);
  * }</pre>
  *
  * <p>着着绿火又走进原版火里，还是显示绿火，直到整个火灭掉。</p>

@@ -19,7 +19,7 @@ public abstract class FlameFeatureRendererMixin {
     @ModifyExpressionValue(method = "renderFlame", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/resources/model/sprite/AtlasManager;get(Lnet/minecraft/client/resources/model/sprite/SpriteId;)Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;",
             ordinal = 0))
-    private TextureAtlasSprite taverntales$customFire0(TextureAtlasSprite original, @Local(argsOnly = true) EntityRenderState state) {
+    private TextureAtlasSprite ibx_lib$customFire0(TextureAtlasSprite original, @Local(argsOnly = true) EntityRenderState state) {
         Identifier look = state.getRenderData(CustomFireRendering.LOOK);
         return look == null ? original : CustomFireRendering.sprite(look, 0);
     }
@@ -27,7 +27,7 @@ public abstract class FlameFeatureRendererMixin {
     @ModifyExpressionValue(method = "renderFlame", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/resources/model/sprite/AtlasManager;get(Lnet/minecraft/client/resources/model/sprite/SpriteId;)Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;",
             ordinal = 1))
-    private TextureAtlasSprite taverntales$customFire1(TextureAtlasSprite original, @Local(argsOnly = true) EntityRenderState state) {
+    private TextureAtlasSprite ibx_lib$customFire1(TextureAtlasSprite original, @Local(argsOnly = true) EntityRenderState state) {
         Identifier look = state.getRenderData(CustomFireRendering.LOOK);
         return look == null ? original : CustomFireRendering.sprite(look, 1);
     }

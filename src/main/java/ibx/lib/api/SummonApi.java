@@ -7,6 +7,7 @@ import ibx.lib.registry.AttributeRegistry;
 import ibx.lib.spell.Spell;
 import ibx.lib.summon.OwnerSummons;
 import ibx.lib.summon.SummonData;
+import ibx.lib.summon.SummonSpell;
 import ibx.lib.summon.Summoned;
 import ibx.lib.summon.UnsummonReason;
 import net.minecraft.core.BlockPos;
@@ -46,8 +47,8 @@ import java.util.function.Predicate;
  *
  * <ul>
  *   <li><b>名额</b>：主人的属性「召唤物上限」{@code ibx_lib:max_summons}（默认 1）是总名额，每只召唤物占几个由召唤时给定
- *       （法术的 {@code summonCost}，默认 1）。名额不够时最早召唤的先消散；单只就超过上限时召不出（{@link #summon} 返回 false）。</li>
- *   <li><b>寿命</b>：召唤物一律常驻，主人死亡、下线、找不到时全部消散，主人换维度时跟着搬过去。限时的接口（{@code durationTicks}、法术的 {@code summonDuration}、到点消散）留着，目前不用。</li>
+ *       （召唤法术的 {@code summonCost}）。名额不够时最早召唤的先消散；单只就超过上限时召不出（{@link #summon} 返回 false）。</li>
+ *   <li><b>寿命</b>：召唤物一律常驻，主人死亡、下线、找不到时全部消散，主人换维度时跟着搬过去。限时的接口（{@code durationTicks}、到点消散）留着，目前不用。</li>
  *   <li><b>强度</b>：召唤时由法术按施法者属性算好，用 {@link #setStat} 写成召唤物自己的属性，之后主人换装备不影响。</li>
  *   <li><b>友伤</b>：召唤物打不到主人和同一主人的其他召唤物，主人也打不到自己的召唤物；玩家主人的召唤物算作主人本人，按玩家打玩家判断（关了 PvP、队友且关了友伤时打不到），两个方向都管；法术友伤按
  *       {@code OwnableEntity#getRootOwner}（召唤物实现 {@link Summoned}）自动覆盖。</li>
@@ -149,10 +150,9 @@ public final class SummonApi {
 
     // ---------------------------------------------------------------- 召唤
 
-    /** 按法术注册行的名额和时长召唤（{@code summonCost}、{@code summonDuration}，时长没写 = 常驻）。 */
-    public static boolean summon(LivingEntity owner, Mob summon, Spell spell) {
-        float seconds = spell.summonDuration();
-        return summon(owner, summon, spell, seconds > 0.0F ? Math.max(1, Mth.ceil(seconds * 20.0F)) : 0, spell.summonCost());
+    /** 按召唤法术的名额（{@link SummonSpell#summonCost}）召唤，常驻。 */
+    public static boolean summon(LivingEntity owner, Mob summon, SummonSpell spell) {
+        return summon(owner, summon, spell, 0, spell.summonCost());
     }
 
     /**

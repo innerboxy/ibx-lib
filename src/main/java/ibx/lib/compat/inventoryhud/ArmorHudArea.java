@@ -10,6 +10,7 @@ import dlovin.inventoryhud.gui.renderers.EachArmorRenderer;
 import dlovin.inventoryhud.gui.renderers.HotBarArmorRenderer;
 import dlovin.inventoryhud.utils.EachItem;
 import dlovin.inventoryhud.utils.WidgetAligns;
+import ibx.lib.client.hud.HudAvoidance;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.Rect2i;
@@ -31,7 +32,7 @@ import java.util.function.Predicate;
  * {@code HotBarArmorRenderer}（贴着快捷栏两边，默认）、{@code BlockArmorRenderer}（整块摆在别处）、
  * {@code EachArmorRenderer}（每格各自摆，「整体移动」关掉时）。它的坐标约定：居中对齐时 x 为正是往<b>左</b>数。</p>
  *
- * <p>只在装了 InventoryHUD+ 时由 {@code compat.InventoryHudCompat} 注册。它换了版本、字段对不上时抛的错由
+ * <p>引用了 InventoryHUD+ 的类，只在客户端、装了它时注册（先过 {@code InventoryHudCompat.isLoaded()}）。它换了版本、字段对不上时抛的错由
  * {@link ibx.lib.client.hud.HudAvoidance} 接住、停用这个来源。</p>
  */
 public final class ArmorHudArea {
@@ -62,6 +63,11 @@ public final class ArmorHudArea {
         this.font = font;
         this.out = out;
         this.scale = hud.armScale;
+    }
+
+    /** 把盔甲栏 HUD 报给 HUD 的避让，在客户端模组入口里调一次。 */
+    public static void register() {
+        HudAvoidance.register(ArmorHudArea::collect);
     }
 
     /** {@link ibx.lib.client.hud.HudAvoidance.Source}：盔甲栏 HUD 这一帧画出来的格子。 */

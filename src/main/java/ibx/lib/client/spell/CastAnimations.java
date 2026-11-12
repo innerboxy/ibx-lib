@@ -159,7 +159,7 @@ public final class CastAnimations {
         return type != Animation.LoopType.PLAY_ONCE && type != Animation.LoopType.DEFAULT;
     }
 
-    /** 主手拿着施法物品就是主手，否则副手（都没有时按主手）。 */
+    /** 这个玩家身上放施法动作的控制器；没有为 null。 */
     private static @Nullable PlayerAnimationController controller(Avatar avatar) {
         return PlayerAnimLayers.controller(avatar, LAYER);
     }

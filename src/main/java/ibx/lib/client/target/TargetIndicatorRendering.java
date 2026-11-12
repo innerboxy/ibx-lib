@@ -34,7 +34,7 @@ import java.util.Map;
  * 看不看得见按「自己 / 玩家（友方、敌方）/ 生物（友方、敌方）」五个开关。
  *
  * <p>服务端发什么画什么（{@link TargetIndicatorPayload}），跟着实体走的形状每帧按插值后的位置算。
- * 不挂在实体渲染器上，整个世界一起画：抽取世界渲染状态时把网格算好，提交自定义几何时画出来（同护盾术的光盾）。</p>
+ * 不挂在实体渲染器上，整个世界一起画：抽取世界渲染状态时把网格算好，提交自定义几何时画出来。</p>
  */
 public final class TargetIndicatorRendering {
     private TargetIndicatorRendering() {}

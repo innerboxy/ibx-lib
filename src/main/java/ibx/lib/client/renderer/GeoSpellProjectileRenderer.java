@@ -8,7 +8,7 @@ import com.geckolib.renderer.base.GeoRenderState;
 import com.geckolib.renderer.base.RenderPassInfo;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import ibx.lib.entity.SpellProjectile;
+import ibx.lib.entity.GeoSpellProjectile;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -21,11 +21,11 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * 法术弹射物的 3D 模型渲染器（GeckoLib）：模型顺着飞行方向，中心在碰撞箱正中，飞行中循环播
- * {@code SpellProjectile#flyAnimation}。各模组注册实体渲染器时直接用：
+ * {@link GeoSpellProjectile#flyAnimation}。各模组注册实体渲染器时直接用：
  *
  * <pre>{@code
  * event.registerEntityRenderer(MAGIC_MISSILE.get(), ctx -> new GeoSpellProjectileRenderer<>(ctx,
- *         Identifier.fromNamespaceAndPath("taverntales_2me", "spell/magic_missile")));
+ *         Identifier.fromNamespaceAndPath("examplemod", "spell/magic_missile")));
  * }</pre>
  *
  * <ul>
@@ -36,12 +36,12 @@ import org.jspecify.annotations.Nullable;
  *       partialTick 插值，拐弯是平滑的；</li>
  *   <li>{@code emissive} 为 true 时自发光：不吃光照，夜里、洞里也是贴图本来的颜色，但各面仍按朝向分明暗，看得出立体。</li>
  * </ul>
- * 要装 GeckoLib 才能加载（对 lib 是可选依赖），同 {@code SpellProjectile}。
+ * 要装 GeckoLib 才能加载（对 lib 是可选依赖），同 {@link GeoSpellProjectile}。
  */
-public class GeoSpellProjectileRenderer<T extends SpellProjectile, R extends EntityRenderState & GeoRenderState>
+public class GeoSpellProjectileRenderer<T extends GeoSpellProjectile, R extends EntityRenderState & GeoRenderState>
         extends GeoEntityRenderer<T, R> {
     /** 这一帧的飞行方向（没归一化）。 */
-    private static final DataTicket<Vec3> DIRECTION = DataTicket.create("taverntales_spell_projectile_direction", Vec3.class);
+    private static final DataTicket<Vec3> DIRECTION = DataTicket.create("ibx_lib_spell_projectile_direction", Vec3.class);
 
     private final boolean emissive;
 

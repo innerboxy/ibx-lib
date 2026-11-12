@@ -1,7 +1,7 @@
 package ibx.lib.mixin.curios;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import ibx.lib.compat.curios.ElytraCurioRendering;
+import ibx.lib.compat.curios.client.ElytraCurioRendering;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.layers.CapeLayer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;

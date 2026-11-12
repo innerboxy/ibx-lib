@@ -15,7 +15,7 @@ TODO: mod description.
 '''
 
 # 原版生物 AI 认可模组弓弩并按属性射击，以及接管原版弓弩（开关见 config/${mod_id}-startup.toml）。
-# Tt 弓弩的物品类本身不依赖 mixin。
+# Ibx 弓弩的物品类本身不依赖 mixin。
 [[mixins]]
     config="${mod_id}.mixins.json"
 
@@ -43,8 +43,8 @@ TODO: mod description.
     ordering="NONE"
     side="BOTH"
 
-# GeckoLib 非强制依赖:只有法术弹射物基类 SpellProjectile 和它的 3D 渲染器用到,给注册弹射物的模组继承(那些模组自己强制要 GeckoLib)。
-# lib 自己不会加载这两个类,没装 GeckoLib 照常加载。
+# GeckoLib 非强制依赖:只有 3D 法术弹射物(GeoSpellProjectile 和它的渲染器)、Geo 盔甲(IbxGeoArmorItem 和它的渲染器)用到,
+# 给注册这些东西的模组继承(那些模组自己强制要 GeckoLib)。lib 自己不会加载这几个类,没装 GeckoLib 照常加载。
 [[dependencies."${mod_id}"]]
     modId="geckolib"
     type="optional"
@@ -79,6 +79,14 @@ TODO: mod description.
 # Jade 非强制依赖:装了就首次进世界关掉它的「显示Boss」,提示框里在护甲后面显示魔抗。
 [[dependencies."${mod_id}"]]
     modId="jade"
+    type="optional"
+    versionRange="*"
+    ordering="NONE"
+    side="CLIENT"
+
+# JEI 非强制依赖:装了就把背包旁的属性面板、创造栏子栏、饰品栏占的地方报给它,让书签栏让开。
+[[dependencies."${mod_id}"]]
+    modId="jei"
     type="optional"
     versionRange="*"
     ordering="NONE"

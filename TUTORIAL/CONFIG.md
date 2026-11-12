@@ -28,7 +28,7 @@ hideEquipmentWhenInvisible = true
 | `enableVanillaCritical` | boolean | `false` | 是否保留原版的跳劈必暴。开启后跳劈仍必定暴击,平地攻击另按暴击率判定(两者取或)。无论开关如何,暴击倍率都取 `critical_damage`(见 [属性 3](ATTRIBUTE.md#3-伤害与治疗的结算顺序))。 |
 | `hideEquipmentWhenInvisible` | boolean | `true` | 隐身的生物是否连盔甲、鞘翅、头上戴的南瓜 / 头颅和手里的物品也一起藏起来;`false` 为原版,只藏身体。看得见隐身的人(旁观者、开了「看见隐身队友」的队友)照原版显示;盔甲架不受影响;第一人称自己手里的物品照常显示。按服务器的值算,玩家在客户端改不了。 |
 
-> SERVER 配置在存档加载后才可用。开发者在代码里读 `Config` 时只能在游戏运行中读,不要在注册期或类初始化时读,否则会抛异常。
+> SERVER 配置在存档加载后才可用。开发者在代码里读要走 `Config.get(选项)`:配置还没加载时(注册期、主菜单)它取默认值;直接调选项的 `get()` 会抛异常。
 
 ---
 
@@ -58,7 +58,7 @@ raiseVanillaStackSizes = true
 
 ## 3. 客户端配置
 
-每个玩家自己的显示和操作设置,文件位于 `config/ibx_lib-client.toml`,不同步。也可以在模组列表里点本模组的「配置」改;施法相关的五项还在 **选项 → 控制** 里,插在原版「使用:切换 / 按住」后面。都是现读的,游戏里改了立即生效。
+每个玩家自己的显示和操作设置,文件位于 `config/ibx_lib-client.toml`,不同步。也可以在模组列表里点本模组的「配置」改;施法相关的五项还在 **选项 → 控制** 里,插在原版「使用:切换 / 按住」后面。都是现读的,游戏里改了立即生效。代码里读走 `ClientConfig.get(选项)`(颜色走 `ClientConfig.color(选项)`),没加载时取默认值。
 
 ### HUD 与画面
 
@@ -111,7 +111,8 @@ raiseVanillaStackSizes = true
 | `attributePanelHideDefault` | boolean | `false` | 是否不列出还是默认值的属性(只列被装备、效果等改过的)。 |
 | `attributePanelSort` | `DEFAULT` / `NAME` / `CUSTOM` | `DEFAULT` | 默认顺序 / 按名称 / 自定义(设置界面里用 ▲▼ 调的顺序)。 |
 | `attributePanelOrder` | 属性 id 列表 | 空 | 自定义顺序,排序选 `CUSTOM` 时用;没列出的按默认顺序接在后面。 |
-| `attributePanelHidden` | 属性 id 列表 | 见说明 | 面板里不显示的属性。默认不显示镜头距离、路径点传输 / 接收距离、名称标签渲染距离、创造模式飞行。 |
+| `attributePanelHidden` | 属性 id 列表 | 见说明 | 面板里不显示的属性。默认不显示镜头距离、路径点传输 / 接收距离、名称标签渲染距离、创造模式飞行;别的模组登记了「默认不显示」的属性,打开面板时也会加进来一次(见下一项)。 |
+| `attributePanelDefaultsApplied` | 属性 id 列表 | 空 | 内部记录,一般不用改:别的模组登记了「默认不显示」(见 [属性 7](ATTRIBUTE.md#7-属性面板))、已经替你隐藏过一次的属性。隐藏过之后你在设置界面里勾回来就一直显示;从这里删掉一项,下次打开属性面板会再替你隐藏它一次。 |
 
 ### 其他
 

@@ -1,4 +1,4 @@
-// 前置库：法力、远程武器、属性等（原 taverntales-l1b）
+// 前置库：法力、法术、远程武器、属性等
 plugins {
     id 'java-library'
     id 'idea'
@@ -8,7 +8,7 @@ plugins {
 apply from: rootProject.file('gradle/mod-common.gradle')
 
 dependencies {
-    // GeckoLib（可选）：只有法术弹射物基类 SpellProjectile 和它的 3D 渲染器用到；用它们的模组（tavern）自己强制要。开发环境照常带上
+    // GeckoLib（可选）：只有 3D 法术弹射物（GeoSpellProjectile 和它的渲染器）、Geo 盔甲（IbxGeoArmorItem 和它的渲染器）用到；用它们的模组自己强制要。开发环境照常带上
     implementation "com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
     // Player Animation Library（可选）：施法、盾击时的玩家动作；没装就不放动作。开发环境照常带上
     implementation "maven.modrinth:player-animation-library:${player_animation_library_version}"

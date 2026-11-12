@@ -25,7 +25,7 @@ Where things are:
 | `ibx.lib.api.SummonApi` | Entry point: summoning, dismissing, queries, owner transfer, marked target, stat snapshots, spawn positions (see [4](#4-summonapi)) |
 | `ibx.lib.summon.Summoned` | Interface implemented by summon entities (see [5](#5-summon-entities)) |
 | `ibx.lib.summon.goal` | AI goals for summons (see [6](#6-ai-goals)) |
-| `Spell.props().summonCount(...)` etc. | Declares a spell as a summoning spell (see [7](#7-summoning-spells)) |
+| `ibx.lib.summon.SummonSpell` | Base class for summoning spells: how many per cast, slots each, slot check before casting (see [7](#7-summoning-spells)) |
 | `ibx.lib.api.event.SummonEvent` | Events for summoning, owner transfer and leaving (see [8](#8-events)) |
 | `ibx.lib.summon.SummonData` / `OwnerSummons` | Data stored on the summon and on the owner (see [9](#9-attachments)) |
 
@@ -92,12 +92,12 @@ public static final DeferredHolder<EntityType<?>, EntityType<SpiritHoundEntity>>
 event.put(SPIRIT_HOUND.get(), SpiritHoundEntity.createAttributes().build());
 ```
 
-**The spell**: in `onCast`, `create` the entity, position it, write its stats with `setStat`, then hand it to `SummonApi.summon`. Slot cost and duration come from the registration line.
+**The spell**: extend `SummonSpell`; in `onCast`, `create` the entity, position it, write its stats with `setStat`, then hand it to `SummonApi.summon`. The slot cost comes from the values given to the constructor.
 
 ```java
-public final class SummonSpiritHoundSpell extends Spell {
-    public SummonSpiritHoundSpell(Properties properties) {
-        super(properties);
+public final class SummonSpiritHoundSpell extends SummonSpell {
+    public SummonSpiritHoundSpell(Properties properties, int summonCount, int summonCost) {
+        super(properties, summonCount, summonCost);
     }
 
     @Override
@@ -121,12 +121,12 @@ public final class SummonSpiritHoundSpell extends Spell {
 }
 ```
 
-**The registration line**: setting `summonCount` makes it a summoning spell.
+**The registration line**: the numbers go in `Spell.props()` as usual, followed by how many per cast and the slots each takes.
 
 ```java
 public static final DeferredRegister<Spell> SPELLS = DeferredRegister.create(SpellRegistries.SPELL_KEY, "examplemod");
 public static final DeferredHolder<Spell, SummonSpiritHoundSpell> SUMMON_SPIRIT_HOUND = SPELLS.register("summon_spirit_hound",
-        () -> new SummonSpiritHoundSpell(Spell.props().manaCost(30).cooldown(10.0F).castTime(1.5F).summonCount(1).summonCost(1)));
+        () -> new SummonSpiritHoundSpell(Spell.props().manaCost(30).cooldown(10.0F).castTime(1.5F), 1, 1));
 ```
 
 **Summoning without a spell** (a boss ability, for example): call the five-argument `summon` with `null` for the spell. A mob owner also has a default budget of 1; to summon more, raise `ibx_lib:max_summons` in its attributes.
@@ -146,7 +146,7 @@ SummonApi.summon(boss, minion, null, 0, 1);
 ### Slots
 
 - The total budget is the owner's attribute `ibx_lib:max_summons` (`AttributeRegistry.MAX_SUMMONS`, displayed as "Max Summons"), rounded down. Default 1, range 0 to 1024; every living entity has this attribute.
-- Each summon's cost is given when it is summoned: the registration line's `summonCost` (default 1) for spells, the `cost` argument for direct `summon` calls. It can be 0, which takes no slots.
+- Each summon's cost is given when it is summoned: the summoning spell's `summonCost()` for spells, the `cost` argument for direct `summon` calls. It can be 0, which takes no slots.
 - Used slots are the sum of the costs of every summon on the owner's list, including ones that aren't loaded at the moment.
 - When there isn't enough room, summons are pushed out starting from the **oldest** (leave reason `REPLACED`) until the new one fits.
 - If a single summon costs more than the total budget, it can't be summoned: `summon` returns `false` and nothing is pushed out.
@@ -155,7 +155,7 @@ SummonApi.summon(boss, minion, null, 0, 1);
 ### Lifetime and leaving
 
 - **Permanent**: no time limit by default. Summoning marks the entity as persistent so it never despawns naturally.
-- **Timed**: if `summon`'s `durationTicks` is greater than 0, or the spell's registration line sets `summonDuration`, the summon is timed and leaves with `EXPIRED` when its time is up. The expiry is a world game time, so time spent unloaded counts too.
+- **Timed**: if `summon`'s `durationTicks` is greater than 0, the summon is timed and leaves with `EXPIRED` when its time is up. The expiry is a world game time, so time spent unloaded counts too.
 - **Owner dies**: all summons leave (`OWNER_DIED`).
 - **Player owner logs out**: all summons leave (`OWNER_LEFT`).
 - **Owner can't be found**: a summon checks for its owner once per second. After 3 failed checks in a row (owner removed, or in an unloaded chunk), or if the owner's list no longer contains it, it leaves (`OWNER_GONE`).
@@ -244,7 +244,7 @@ A summon's strength is fixed at the moment it is summoned: the spell computes va
 
 | Method | Returns | Description |
 | --- | --- | --- |
-| `summon(owner, summon, spell)` | `boolean` | Summons using the spell's registered `summonCost` and `summonDuration` (no duration = permanent). Use this in a summoning spell's `onCast`. |
+| `summon(owner, summon, spell)` | `boolean` | `spell` is a `SummonSpell`: summons using its `summonCost()`, permanent. Use this in a summoning spell's `onCast`. |
 | `summon(owner, summon, spell, durationTicks, cost)` | `boolean` | Puts `summon` into the owner's level as `owner`'s summon. Pass null for `spell` when it isn't from a spell; `durationTicks` of 0 or less = permanent; `cost` is at least 0. |
 
 Before calling `summon`, the mob must already be created (**in the owner's level**), positioned and given its stats, but not yet added to the world; `summon` adds it. In order, it: checks that the single cost doesn't exceed the total budget → fires `SummonEvent.Pre` → pushes out the oldest if there isn't room → writes the summon data, marks it persistent and adds it to the world → records it on the owner's list → fires `SummonEvent.Post`.
@@ -375,26 +375,30 @@ The three targeting goals filter with the vanilla default combat conditions: no 
 
 ## 7. Summoning spells
 
-A spell declares itself a summoning spell through three values on its registration line (`Spell.props()`). The rest of the spell system is in [SPELL_en.md](SPELL_en.md).
+A summoning spell extends `ibx.lib.summon.SummonSpell` (a subclass of `Spell`); how many are summoned per cast and how many slots each takes are constructor arguments. The rest of the spell system is in [SPELL_en.md](SPELL_en.md).
 
-| Registration | Default | Description |
-| --- | --- | --- |
-| `summonCount(int)` | `0` | How many are summoned per cast. **Setting it (greater than 0) makes the spell a summoning spell.** |
-| `summonCost(int)` | `1` | Slots each one takes, at least 0. |
-| `summonDuration(float)` | `0` | The summon's lifetime in seconds; 0 = permanent. |
+| Constructor argument / getter | Description |
+| --- | --- |
+| `summonCount` / `summonCount()` | How many are summoned per cast, at least 1. |
+| `summonCost` / `summonCost()` | Slots each one takes, at least 0. |
 
-The matching getters on the spell: `isSummon()`, `summonCount()`, `summonCost()`, `summonDuration()`.
+There is also a constructor with a targeting declaration, `(properties, targeting, summonCount, summonCost)`, for summoning spells that pick a target, such as summoning at the crosshair (see [TARGETING_en.md](TARGETING_en.md)).
 
-What the framework does once `summonCount` is set:
+| Method | Description |
+| --- | --- |
+| `fits(caster)` | Whether one summon fits in the caster's total budget (only the total, not what is used). Works on both sides. |
+| `overCapacityMessage(caster)` | The message shown when there aren't enough slots, "Not enough summon slots" (`message.ibx_lib.cast.summon_over_capacity`). |
 
-- **Slot check before casting**: when the cast starts, if `summonCost` exceeds the caster's total budget, the cast fails with no mana spent and no cooldown, and the player sees "Not enough summon slots" on the action bar (`message.ibx_lib.cast.summon_over_capacity`).
-- **Extra tooltip lines**: the spell wheel's tooltip gains a line "Summons N, M slot(s) each"; with `summonDuration` set, another line "Lasts Xs"; and when `summonCost` exceeds the total budget, a "Not enough summon slots" line.
+What `SummonSpell` does for you:
 
-**The summoning itself is yours to write** in `onCast`: loop `summonCount()` times, and for each one `create`, position, `setStat`, then call `SummonApi.summon(caster, mob, this)` (see [2](#2-quick-start)). `summon` records the cost and duration from this spell's `summonCost` and `summonDuration`. `CastContext` has no summon-specific methods.
+- **Slot check**: its `canCast` checks whether `summonCost` exceeds the caster's total budget; if so the spell can't be cast, with no mana spent and no cooldown, and the player sees "Not enough summon slots" on the action bar. `canCast` runs when the cast starts and again before it takes effect, so if the limit drops too low mid-cast, the cast is cancelled. When you override `canCast` to add conditions, call `super.canCast(ctx)` first, or slots are no longer checked.
+- **Extra tooltip lines**: the spell wheel's tooltip gains a line "Summons N, M slot(s) each"; when `summonCost` exceeds the total budget, a "Not enough summon slots" line.
+
+**The summoning itself is yours to write** in `onCast`: loop `summonCount()` times, and for each one `create`, position, `setStat`, then call `SummonApi.summon(caster, mob, this)` (see [2](#2-quick-start)). `summon` records the cost from this spell's `summonCost()`, and the summon is permanent; for a timed one call the five-argument `summon` and pass `durationTicks` yourself. `CastContext` has no summon-specific methods.
 
 Notes:
 
-- The pre-cast check looks at a **single** summon's cost, not `summonCount × summonCost`. If one cast summons several and there isn't enough room, the later ones push out the earlier ones.
+- The check looks at a **single** summon's cost, not `summonCount × summonCost`. If one cast summons several and there isn't enough room, the later ones push out the earlier ones.
 - `summon` can return `false` (cancelled by `SummonEvent.Pre`, for example); check the return value before playing particles or sounds for that summon.
 - To show the summon's strength in the tooltip ("Health 40" and so on), override the spell's `getTooltip(caster)`.
 

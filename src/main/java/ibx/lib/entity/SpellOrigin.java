@@ -13,7 +13,7 @@ public interface SpellOrigin {
 
     /**
      * 射线（{@link SpellBeam}）对准的点（世界坐标）；null 照默认（生物对准攻击目标、玩家对准准星）。
-     * 想让射线跟着身体慢慢转、不直接锁死目标时用（比如玛门的翡翠射线）。只在服务端调。
+     * 想让射线跟着身体慢慢转、不直接锁死目标时用（比如 Boss 边转身边扫的射线）。只在服务端调。
      */
     default @Nullable Vec3 getSpellAimPoint() {
         return null;

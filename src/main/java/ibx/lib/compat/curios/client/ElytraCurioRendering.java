@@ -1,9 +1,10 @@
-package ibx.lib.compat.curios;
+package ibx.lib.compat.curios.client;
 
 import com.google.common.reflect.TypeToken;
 import com.mojang.blaze3d.vertex.PoseStack;
 import ibx.lib.IbxLib;
 import ibx.lib.client.InvisibilityRendering;
+import ibx.lib.compat.curios.ElytraCurioSlot;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.model.object.equipment.ElytraModel;
 import net.minecraft.client.model.player.PlayerModel;

@@ -31,8 +31,10 @@ import net.neoforged.neoforge.event.entity.player.CriticalHitEvent;
 import org.jspecify.annotations.Nullable;
 
 /**
- * 本模组统一的伤害处理入口。所有伤害相关的结算都写在这里，按 {@link #onIncomingDamage} 里的
+ * 本模组统一的伤害数值结算入口。改伤害量的步骤都写在这里，按 {@link #onIncomingDamage} 里的
  * 调用顺序依次执行，不要再另开事件监听，否则各步骤之间的先后关系会散落在多处、难以推断。
+ * 不改伤害量、只决定这次伤害算不算或带来什么后果的，在各自的模块里：吟唱被打断在 {@code SpellCasting}，
+ * 召唤物的友伤在 {@code SummonHandler}，饰品的触发在 {@code CurioTriggerHandler}。
  *
  * <p><b>顺序约定</b>：先定"基础伤害"，再叠倍率，最后做减免。新增步骤时按这个次序插进去
  * ——{@link #applyAmmoRangedDamage} 属于第一类，它是直接<b>覆盖</b>伤害值的，必须排在所有
@@ -112,7 +114,7 @@ public final class DamageHandler {
      * 再乘一次就成了双重结算，所以放过它们。</p>
      */
     private static void applyCriticalDamage(LivingIncomingDamageEvent event) {
-        if (!isTtCriticalArrow(event.getSource().getDirectEntity())) {
+        if (!isIbxCriticalArrow(event.getSource().getDirectEntity())) {
             return;
         }
         if (event.getSource().getEntity() instanceof LivingEntity shooter) {
@@ -235,7 +237,7 @@ public final class DamageHandler {
         if (!DummmmmmyCompat.isLoaded() || !(event.getRayTraceResult() instanceof EntityHitResult hit)) {
             return;
         }
-        if (!isTtCriticalArrow(event.getProjectile())) {
+        if (!isIbxCriticalArrow(event.getProjectile())) {
             return;
         }
         if (event.getProjectile().getOwner() instanceof LivingEntity shooter) {
@@ -249,7 +251,7 @@ public final class DamageHandler {
      * <p>两个条件缺一不可：带本模组的远程伤害（排除未被接管的弓弩，它们的暴击已由原版自己结算），
      * 且带着发射时掷骰打上的原版暴击标记。</p>
      */
-    private static boolean isTtCriticalArrow(@Nullable Entity projectile) {
+    private static boolean isIbxCriticalArrow(@Nullable Entity projectile) {
         return projectile instanceof AbstractArrow arrow
                 && arrow.isCritArrow()
                 && RangedWeaponApi.getAmmoRangedDamage(arrow).isPresent();
@@ -268,7 +270,7 @@ public final class DamageHandler {
      */
     private static void onCriticalHit(CriticalHitEvent event) {
         Player player = event.getEntity();
-        boolean critical = event.isVanillaCritical() && Config.ENABLE_VANILLA_CRITICAL.getAsBoolean();
+        boolean critical = event.isVanillaCritical() && Config.get(Config.ENABLE_VANILLA_CRITICAL);
         if (!critical && !player.level().isClientSide()) {
             critical = CriticalStrikeApi.roll(player);
         }

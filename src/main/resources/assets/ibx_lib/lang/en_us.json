@@ -86,7 +86,6 @@
   "gui.ibx_lib.spell_tooltip.charge": "Charge time %ss",
   "gui.ibx_lib.spell_tooltip.channel": "Channeled, takes effect every %ss",
   "gui.ibx_lib.spell_tooltip.summon": "Summons %s, %s slot(s) each",
-  "gui.ibx_lib.spell_tooltip.summon_duration": "Lasts %ss",
   "gui.ibx_lib.spell_picker.title": "Choose Spells",
   "gui.ibx_lib.spell_picker.selected": "Selected (%s)",
   "gui.ibx_lib.spell_picker.registered": "All Spells (%s)",
@@ -152,6 +151,7 @@
   "ibx_lib.configuration.attributePanelSort": "Attribute Panel: Sort",
   "ibx_lib.configuration.attributePanelOrder": "Attribute Panel: Custom Order",
   "ibx_lib.configuration.attributePanelHidden": "Attribute Panel: Hidden Attributes",
+  "ibx_lib.configuration.attributePanelDefaultsApplied": "Attribute Panel: Default Hides Already Applied",
   "curios.identifier.elytra": "Elytra",
   "curios.modifiers.elytra": "When worn as elytra:"
 }

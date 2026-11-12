@@ -203,7 +203,7 @@ public final class SummonHandler {
     /**
      * 召唤物算作它的主人，按玩家打玩家判断（两个方向都管）：攻击方是召唤物就换成它的主人，被打方是召唤物也换成它的主人，
      * 两边都是玩家而前者打不到后者时（服务器关了 PvP、同队且队伍关了友伤）就不让打。
-     * 所以别人打不到你时也打不到你的召唤物，你打不到的人你的召唤物也打不到。两边都不是召唤物时交给原版；生物主人（比如玛门）不受影响。
+     * 所以别人打不到你时也打不到你的召唤物，你打不到的人你的召唤物也打不到。两边都不是召唤物时交给原版；生物主人（比如会召唤的 Boss）不受影响。
      */
     private static boolean blockedAsPlayers(LivingEntity victim, Entity attacker, @Nullable UUID attackerOwner, @Nullable UUID victimOwner) {
         if (attackerOwner == null && victimOwner == null) {

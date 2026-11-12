@@ -23,8 +23,8 @@ import java.util.List;
 /**
  * 召唤物指令（需要 2 级权限），不写目标即执行者：
  * <pre>
- * /taverntales summon list [主人]         列出主人在场的召唤物、已用 / 总名额、剩余时间
- * /taverntales summon dismiss [主人们]    解散全部召唤物
+ * /ibx summon list [主人]         列出主人在场的召唤物、已用 / 总名额、剩余时间
+ * /ibx summon dismiss [主人们]    解散全部召唤物
  * </pre>
  */
 public final class SummonCommand {
@@ -40,7 +40,7 @@ public final class SummonCommand {
     }
 
     private static void onRegisterCommands(RegisterCommandsEvent event) {
-        event.getDispatcher().register(Commands.literal("taverntales")
+        event.getDispatcher().register(Commands.literal("ibx")
                 .then(Commands.literal("summon")
                         .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.literal("list")

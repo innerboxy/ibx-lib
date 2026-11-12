@@ -8,9 +8,9 @@
 
 ## 1. 简介
 
-本模组的指令都挂在 `/taverntales` 下,分 `mana`、`spell`、`summon` 三组,每组都要 **2 级权限**(命令方块、OP)。
+本模组的指令都挂在 `/ibx` 下,分 `mana`、`spell`、`summon` 三组,每组都要 **2 级权限**(命令方块、OP)。
 
-- 根节点 `/taverntales` 可能和别的模组共用,权限挂在三组各自那一层。
+- 根节点 `/ibx` 可能和别的模组共用,权限挂在三组各自那一层。
 - 目标里不是生物的实体会被忽略;一个生物都没有时报错。
 - `spell` 和 `summon` 不写目标时作用于指令的执行者,用 `/execute as` 让别的生物来执行。
 
@@ -19,10 +19,10 @@
 ## 2. 法力
 
 ```
-/taverntales mana get <目标>
-/taverntales mana set <目标们> <数值>
-/taverntales mana add <目标们> <数值>
-/taverntales mana fill <目标们>
+/ibx mana get <目标>
+/ibx mana set <目标们> <数值>
+/ibx mana add <目标们> <数值>
+/ibx mana fill <目标们>
 ```
 
 | 子指令 | 说明 |
@@ -37,10 +37,10 @@
 ## 3. 法术
 
 ```
-/taverntales spell cast <法术> [来源]
-/taverntales spell stop
-/taverntales spell cooldown clear [目标们]
-/taverntales spell list
+/ibx spell cast <法术> [来源]
+/ibx spell stop
+/ibx spell cooldown clear [目标们]
+/ibx spell list
 ```
 
 | 子指令 | 说明 |
@@ -63,7 +63,7 @@
 
 ```
 # 让最近的僵尸放一次法术(来源按执行者推断为 mob)
-/execute as @e[type=minecraft:zombie,limit=1,sort=nearest] at @s run taverntales spell cast examplemod:frost_bolt
+/execute as @e[type=minecraft:zombie,limit=1,sort=nearest] at @s run ibx spell cast examplemod:frost_bolt
 ```
 
 ---
@@ -71,8 +71,8 @@
 ## 4. 召唤物
 
 ```
-/taverntales summon list [主人]
-/taverntales summon dismiss [主人们]
+/ibx summon list [主人]
+/ibx summon dismiss [主人们]
 ```
 
 | 子指令 | 说明 |

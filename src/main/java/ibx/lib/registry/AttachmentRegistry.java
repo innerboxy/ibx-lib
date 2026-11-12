@@ -94,7 +94,7 @@ public final class AttachmentRegistry {
                             .build());
 
     /**
-     * 玩家当前选中的法术 id。读写请走 {@link ibx.lib.spell.SpellCasting}（改选只有轮盘的选中包一条路）。
+     * 玩家当前选中的法术 id。读写请走 {@link ibx.lib.spell.PlayerSpells}（改选只有轮盘的选中包一条路）。
      * 存盘；只同步给自己；死亡后保留（选择是玩家的偏好，不是状态）。
      */
     public static final Supplier<AttachmentType<SelectedSpell>> SELECTED_SPELL =

@@ -33,7 +33,7 @@ public abstract class TagLoaderMixin {
     private String directory;
 
     @Inject(method = "load", at = @At("RETURN"))
-    private void taverntales$addAutoItemTags(ResourceManager resourceManager,
+    private void ibx_lib$addAutoItemTags(ResourceManager resourceManager,
                                              CallbackInfoReturnable<Map<Identifier, List<TagLoader.EntryWithSource>>> cir) {
         if (!this.directory.equals(Registries.tagsDirPath(Registries.ITEM))) {
             return;

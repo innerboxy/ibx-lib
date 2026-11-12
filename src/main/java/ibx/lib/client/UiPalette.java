@@ -8,8 +8,7 @@ import net.minecraft.resources.Identifier;
  * 不直接写色值，换色只改这一处。值都是 ARGB。
  *
  * <p>说明框的木色底和琥珀边框是贴图（{@link #TOOLTIP_STYLE}，材质包可以换），这里的 {@code TOOLTIP_*} 只给自己画框的地方对色用。
- * HUD 的条框和快捷栏也是贴图，用同一套木色、琥珀选中框，由素材脚本生成，不读这里；快捷栏在模组自带材质包「酒馆轶事：界面材质」里
- * （在主模组 tavern 的 {@code resourcepacks/hud}），玩家可以关掉。
+ * HUD 的条框也是贴图，用同一套木色、琥珀选中框，不读这里。
  * 锻造台不依赖 lib，用自己的一套配色。</p>
  */
 public final class UiPalette {
@@ -58,10 +57,10 @@ public final class UiPalette {
     public static final int TOOLTIP_BORDER_TOP = 0xFFFFB347;
     public static final int TOOLTIP_BORDER_BOTTOM = 0xFF8A5A20;
     /**
-     * 说明框样式：贴图 {@code ibx_lib:tooltip/tavern_background}、{@code tooltip/tavern_frame}（九宫格，同原版）。
+     * 说明框样式：贴图 {@code ibx_lib:tooltip/wood_background}、{@code tooltip/wood_frame}（九宫格，同原版）。
      * 自己画说明框时传给 {@code tooltip(...)} 的最后一个参数；物品可以用原版 {@code tooltip_style} 组件指向它。
      */
-    public static final Identifier TOOLTIP_STYLE = Identifier.fromNamespaceAndPath(IbxLib.MODID, "tavern");
+    public static final Identifier TOOLTIP_STYLE = Identifier.fromNamespaceAndPath(IbxLib.MODID, "wood");
 
     // ---------------------------------------------------------------- 法术轮盘（按 GUI 像素画的框，见 WheelShape）
 

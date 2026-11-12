@@ -1,14 +1,14 @@
 package ibx.lib.compat;
 
-import net.mehvahdjukaar.dummmmmmy.common.TargetDummyEntity;
+import ibx.lib.compat.dummmmmmy.DummmmmmyAccess;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.fml.ModList;
 
 /**
  * MmmMmmMmmMmm 试验假人（modId {@code dummmmmmy}）联动。本模组对它是<b>非强制依赖</b>。
  *
- * <p><b>凡是会碰到 {@code net.mehvahdjukaar.dummmmmmy} 的方法，调用前必须先过
- * {@link #isLoaded()}</b>，否则玩家没装这个模组时会 NoClassDefFoundError。</p>
+ * <p><b>{@link #notifyCrit} 调用前必须先过 {@link #isLoaded()}</b>：它转给 {@code compat.dummmmmmy} 里碰假人类的实现，
+ * 玩家没装这个模组时会 NoClassDefFoundError。</p>
  *
  * <p>假人显示"12 (1.5x)"这种暴击数字，靠的是 {@code TargetDummyEntity.moist(攻击者, 倍率)}
  * 先登记一次暴击：它把记录加进当 tick 的列表，等自己的 {@code hurtServer()} 里再与伤害来源配对。
@@ -49,8 +49,6 @@ public final class DummmmmmyCompat {
      * 的暴击，让它把伤害数字显示成暴击样式。必须在假人受到这次伤害<b>之前</b>调用。
      */
     public static void notifyCrit(Entity target, Entity attacker, float multiplier) {
-        if (target instanceof TargetDummyEntity dummy) {
-            dummy.moist(attacker, multiplier);
-        }
+        DummmmmmyAccess.notifyCrit(target, attacker, multiplier);
     }
 }

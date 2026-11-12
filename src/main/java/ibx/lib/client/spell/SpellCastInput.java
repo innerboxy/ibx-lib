@@ -3,6 +3,7 @@ package ibx.lib.client.spell;
 import ibx.lib.config.ClientConfig;
 import ibx.lib.network.CastRejectedPayload;
 import ibx.lib.registry.TagRegistry;
+import ibx.lib.spell.PlayerSpells;
 import ibx.lib.spell.SpellCasting;
 import ibx.lib.spell.SpellEntry;
 import net.minecraft.client.Minecraft;
@@ -53,7 +54,7 @@ public final class SpellCastInput {
                 || !event.getItem().is(TagRegistry.CAN_CAST_SPELL) || mc.options.toggleUse().get()) {
             return;
         }
-        SpellEntry entry = SpellCasting.getSelectedSpell(mc.player);
+        SpellEntry entry = PlayerSpells.getSelectedSpell(mc.player);
         toggled = entry != null && switch (entry.value().castType()) {
             case CAST -> ClientConfig.get(ClientConfig.TOGGLE_CAST_SPELL);
             case CHANNEL -> ClientConfig.get(ClientConfig.TOGGLE_CHANNEL_SPELL);

@@ -6,7 +6,7 @@ import ibx.lib.client.spell.SpellIcons;
 import ibx.lib.config.ClientConfig;
 import ibx.lib.registry.TagRegistry;
 import ibx.lib.spell.CastType;
-import ibx.lib.spell.SpellCasting;
+import ibx.lib.spell.PlayerSpells;
 import ibx.lib.spell.SpellEntry;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -49,8 +49,8 @@ import java.util.Locale;
  * 吟唱条、蓝条不看原版 HUD 那一项（{@link #barsVisible()}），用原版 HUD 时照样叠在心形 / 鸡腿（护甲、氧气泡）几行上方；
  * 当前法术框是功能不是装饰，不受 {@link #isActive()} 管：除旁观外都画，用原版 HUD 也画。</p>
  */
-public final class TavernHud {
-    private TavernHud() {}
+public final class IbxHud {
+    private IbxHud() {}
 
     static final int BAR_W = 89;     // 条：描边 1 + 钢框 2 + 黑缝 1 + 槽 + 黑缝 1 + 钢框 2 + 描边 1
     static final int BAR_H = 15;
@@ -109,7 +109,7 @@ public final class TavernHud {
 
     /** 生命条、饥饿条这一套当前是否生效：没选原版 HUD，且 {@link #barsVisible()}。 */
     public static boolean isActive() {
-        return !ClientConfig.vanillaHud() && barsVisible();
+        return !ClientConfig.get(ClientConfig.VANILLA_HUD) && barsVisible();
     }
 
     /** 吟唱条、蓝条画不画：GUI 没隐藏、能受伤的模式（生存 / 冒险）、镜头在玩家身上。不看原版 HUD 那一项。 */
@@ -409,7 +409,7 @@ public final class TavernHud {
         if (!player.getMainHandItem().is(TagRegistry.CAN_CAST_SPELL) && !player.getOffhandItem().is(TagRegistry.CAN_CAST_SPELL)) {
             return;
         }
-        SpellEntry entry = SpellCasting.getSelectedSpell(player);
+        SpellEntry entry = PlayerSpells.getSelectedSpell(player);
         if (entry == null) {
             return;
         }
@@ -469,7 +469,7 @@ public final class TavernHud {
         }
         float mana = ManaApi.getMana(player);
         float alpha;
-        if (ClientConfig.alwaysShowManaBar() || mana < max) {
+        if (ClientConfig.get(ClientConfig.ALWAYS_SHOW_MANA_BAR) || mana < max) {
             alpha = 1.0F;
             manaLastNotFull = ticks;
         } else {

@@ -8,9 +8,9 @@
 
 ## 1. Overview
 
-All of the mod's commands live under `/taverntales` in three groups, `mana`, `spell` and `summon`, each requiring **permission level 2** (command blocks, ops).
+All of the mod's commands live under `/ibx` in three groups, `mana`, `spell` and `summon`, each requiring **permission level 2** (command blocks, ops).
 
-- The root `/taverntales` may be shared with other mods, so the permission check sits on each group.
+- The root `/ibx` may be shared with other mods, so the permission check sits on each group.
 - Non-living entities among the targets are ignored; it's an error if no living entity is left.
 - `spell` and `summon` act on the command's executor when no target is given; use `/execute as` to have another entity run them.
 
@@ -19,10 +19,10 @@ All of the mod's commands live under `/taverntales` in three groups, `mana`, `sp
 ## 2. Mana
 
 ```
-/taverntales mana get <target>
-/taverntales mana set <targets> <amount>
-/taverntales mana add <targets> <amount>
-/taverntales mana fill <targets>
+/ibx mana get <target>
+/ibx mana set <targets> <amount>
+/ibx mana add <targets> <amount>
+/ibx mana fill <targets>
 ```
 
 | Subcommand | Description |
@@ -37,10 +37,10 @@ All of the mod's commands live under `/taverntales` in three groups, `mana`, `sp
 ## 3. Spells
 
 ```
-/taverntales spell cast <spell> [source]
-/taverntales spell stop
-/taverntales spell cooldown clear [targets]
-/taverntales spell list
+/ibx spell cast <spell> [source]
+/ibx spell stop
+/ibx spell cooldown clear [targets]
+/ibx spell list
 ```
 
 | Subcommand | Description |
@@ -63,7 +63,7 @@ Players in creative mode additionally skip mana and cooldowns. See [Spell system
 
 ```
 # Make the nearest zombie cast a spell (source inferred from the executor: mob)
-/execute as @e[type=minecraft:zombie,limit=1,sort=nearest] at @s run taverntales spell cast examplemod:frost_bolt
+/execute as @e[type=minecraft:zombie,limit=1,sort=nearest] at @s run ibx spell cast examplemod:frost_bolt
 ```
 
 ---
@@ -71,8 +71,8 @@ Players in creative mode additionally skip mana and cooldowns. See [Spell system
 ## 4. Summons
 
 ```
-/taverntales summon list [owner]
-/taverntales summon dismiss [owners]
+/ibx summon list [owner]
+/ibx summon dismiss [owners]
 ```
 
 | Subcommand | Description |

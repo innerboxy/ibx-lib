@@ -1,17 +1,12 @@
 package ibx.lib.entity;
 
-import com.geckolib.animatable.GeoEntity;
-import com.geckolib.animatable.instance.AnimatableInstanceCache;
-import com.geckolib.animatable.manager.AnimatableManager;
-import com.geckolib.animation.AnimationController;
-import com.geckolib.animation.RawAnimation;
-import com.geckolib.util.GeckoLibUtil;
 import ibx.lib.api.SpellDamageApi;
 import ibx.lib.api.SpellDamageSnapshot;
 import ibx.lib.target.Faction;
 import ibx.lib.target.TargetApi;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import net.minecraft.core.Direction;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -63,20 +58,18 @@ import org.jspecify.annotations.Nullable;
  *   <li>不打施法者自己；友伤保护开着时（快照默认）直接穿过友方（宠物、同队、关了 PvP 的玩家），不在他们身上炸；</li>
  *   <li>不追踪；{@link #getHomingStrength()} 大于 0 时追前方 60° 内最近的可伤害生物；</li>
  *   <li>进水照飞；{@link #isExtinguishedByWater()} 为 true 时一进水就熄灭（调 {@link #onExpire()}）；</li>
- *   <li>撞到方块、打中最后一个目标都算"命中结束"：调 {@link #onImpact}，客户端播 {@link #impactParticles()}，然后消失。</li>
+ *   <li>撞到方块、打中最后一个目标都算"命中结束"：调 {@link #onImpact}，客户端播 {@link #impactParticles()}，然后消失；
+ *       子类想在半路主动结束（空中引爆）调 {@link #impact()}。</li>
  * </ul>
  *
  * <p>盾牌照原版：伤害来源带着弹射物的位置，正面举盾能挡（法术伤害不在 {@code #bypasses_shield} 里）。
  * 施法者下线或被卸载后，飞着的弹射物照样结算伤害，只是没有施法者：不做友伤判定。</p>
  *
- * <p>渲染：客户端用 {@code client.renderer.SpellProjectileRenderer}（一张朝向镜头的图）、
- * {@code client.renderer.GeoSpellProjectileRenderer}（GeckoLib 3D 模型，飞行中循环播 {@link #flyAnimation()}），或者自己写渲染器。
+ * <p>渲染：客户端用 {@code client.renderer.SpellProjectileRenderer}（一张朝向镜头的图），或者自己写渲染器。
+ * 要用 GeckoLib 3D 模型的弹射物改继承 {@link GeoSpellProjectile}。
  * 实体类型由各模组自己注册（{@code DeferredRegister.Entities}），大小建议 0.25 ~ 0.5 格。</p>
- *
- * <p>这个类实现了 GeckoLib 的 {@code GeoEntity}，要装 GeckoLib 才能加载。GeckoLib 对 lib 是可选依赖（用它的模组自己强制要求），
- * 所以 lib 自己常驻的代码里不能引用这个类（{@code instanceof}、参数类型都不行），只给注册了弹射物的模组继承。</p>
  */
-public abstract class SpellProjectile extends Projectile implements GeoEntity {
+public abstract class SpellProjectile extends Projectile {
     /** 命中结束时发给客户端的实体事件，客户端据此播 {@link #impactParticles()}。 */
     private static final byte IMPACT_EVENT = 3;
     /** 追踪只看前方这个角度以内（cos 60°）。 */
@@ -89,7 +82,6 @@ public abstract class SpellProjectile extends Projectile implements GeoEntity {
     /** 已经打过的实体（穿透时不重复打）。不存盘：读档后可能再打一次同一个目标，可以接受。 */
     private final IntSet hitEntities = new IntOpenHashSet();
     private @Nullable LivingEntity homingTarget;
-    private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
 
     /** 实体类型的工厂用（读档、客户端生成），不要在法术里用。 */
     protected SpellProjectile(EntityType<? extends SpellProjectile> type, Level level) {
@@ -359,7 +351,19 @@ public abstract class SpellProjectile extends Projectile implements GeoEntity {
         }
     }
 
-    private void impact(HitResult hit) {
+    /**
+     * 在原地主动"命中结束"（空中引爆、到点自爆……）：同撞到东西一样调 {@link #onImpact}、客户端播 {@link #impactParticles()}，然后消失。
+     * 传给 {@link #onImpact} 的是一个落在当前位置、什么也没打中的结果（{@link HitResult.Type#MISS}）。只在服务端调。
+     */
+    protected final void impact() {
+        this.impact(BlockHitResult.miss(this.position(), Direction.UP, this.blockPosition()));
+    }
+
+    /** 命中结束：调 {@link #onImpact}、通知客户端播命中粒子，然后消失。撞到方块、打中最后一个目标时框架自己调；只在服务端调。 */
+    protected final void impact(HitResult hit) {
+        if (this.isRemoved()) {
+            return;
+        }
         this.onImpact(hit);
         this.level().broadcastEntityEvent(this, IMPACT_EVENT);
         this.discard();
@@ -406,25 +410,5 @@ public abstract class SpellProjectile extends Projectile implements GeoEntity {
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
-    }
-
-    // ---------------------------------------------------------------- 3D 模型（GeckoLib）
-
-    /** 用 3D 模型渲染（{@code client.renderer.GeoSpellProjectileRenderer}）时，飞行中一直循环播的动画；null 为不播。 */
-    protected @Nullable RawAnimation flyAnimation() {
-        return null;
-    }
-
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        RawAnimation fly = this.flyAnimation();
-        if (fly != null) {
-            controllers.add(new AnimationController<SpellProjectile>("fly", test -> test.setAndContinue(fly)));
-        }
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return this.geoCache;
     }
 }

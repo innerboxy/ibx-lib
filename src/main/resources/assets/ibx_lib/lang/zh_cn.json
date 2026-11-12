@@ -86,7 +86,6 @@
   "gui.ibx_lib.spell_tooltip.charge": "蓄力 %s 秒",
   "gui.ibx_lib.spell_tooltip.channel": "引导，每 %s 秒生效一次",
   "gui.ibx_lib.spell_tooltip.summon": "召唤 %s 只，每只占 %s 个名额",
-  "gui.ibx_lib.spell_tooltip.summon_duration": "持续 %s 秒",
   "gui.ibx_lib.spell_picker.title": "挑选法术",
   "gui.ibx_lib.spell_picker.selected": "已选法术（%s）",
   "gui.ibx_lib.spell_picker.registered": "全部法术（%s）",
@@ -152,6 +151,7 @@
   "ibx_lib.configuration.attributePanelSort": "属性面板：排序",
   "ibx_lib.configuration.attributePanelOrder": "属性面板：自定义顺序",
   "ibx_lib.configuration.attributePanelHidden": "属性面板：不显示的属性",
+  "ibx_lib.configuration.attributePanelDefaultsApplied": "属性面板：已替你隐藏过的属性",
   "curios.identifier.elytra": "鞘翅",
   "curios.modifiers.elytra": "佩戴鞘翅时："
 }

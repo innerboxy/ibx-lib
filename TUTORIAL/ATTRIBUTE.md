@@ -175,9 +175,24 @@ public static final DeferredItem<Item> EMBER_TALISMAN = ITEMS.registerItem("embe
 
 背包人物框左下角的卷轴按钮打开,贴在背包左边,列出玩家身上的全部属性(原版、本模组、其他模组的都列),每行图标 + 名字 + 数值。面板左下角的齿轮打开设置界面:显示哪些、怎么排序、是否按模组分组,都存在客户端配置里(见 [配置](CONFIG.md))。创造模式背包的「物品栏」页同样有;和原版配方书占同一块地方,配方书开着时不画。
 
-别的模组的属性会自动出现在面板里,还可以补两样东西:
+别的模组的属性会自动出现在面板里,还可以补几样东西:
 
-- **图标**:9×9 的贴图,放在 `assets/ibx_lib/textures/gui/sprites/hud/icon/<属性 id 的路径>.png`。只看路径不看命名空间:属性 `examplemod:frost_power` 对应 `frost_power.png`,放在自己模组的资源里即可。没有图标的画通用的占位图标(`unknown.png`)。
+- **图标**:9×9 的贴图,放在属性自己命名空间下的 `assets/<命名空间>/textures/gui/sprites/hud/icon/<属性 id 的路径>.png`:属性 `examplemod:frost_power` 对应 `assets/examplemod/textures/gui/sprites/hud/icon/frost_power.png`,不用登记。找不到时再找 `assets/ibx_lib/` 下同路径的(原版属性的图标都在那里),都没有画通用的占位图标(`unknown.png`)。
+- **默认顺序、默认隐藏**:用 `AttributePanelLayout` 登记(见下面)。
 - **分组名**:按模组分组时,组名先找语言键 `gui.ibx_lib.attribute_panel.mod.<命名空间>`,没有就用模组的显示名。
 
 面板显示的是客户端读到的值:没标同步的属性(`Attribute#isClientSyncable` 为 `false`)只能显示基础值。自己注册的属性想在面板里跟着装备变,注册时调 `setSyncable(true)`。
+
+### 登记默认排法 `AttributePanelLayout`
+
+`ibx.lib.client.attribute.AttributePanelLayout`,只在客户端。在客户端初始化时调(比如客户端模组入口 `@Mod(value = ..., dist = Dist.CLIENT)` 的构造函数里):
+
+```java
+AttributePanelLayout.order(ExampleAttributes.FROST_POWER, ExampleAttributes.FROST_RESISTANCE);
+AttributePanelLayout.hideByDefault(ExampleAttributes.FROST_STACKS);
+```
+
+| 方法 | 说明 |
+| --- | --- |
+| `order(attributes...)` | 这几个属性的默认先后,按写的顺序排;已经登记过的不动,可以分几次调。没登记的属性按注册顺序接在登记过的后面。只管同一个命名空间里的先后,命名空间之间固定是原版最前,然后本模组、其他模组,NeoForge 的最后。排序方式选「默认」时用它。 |
+| `hideByDefault(attributes...)` | 这几个属性默认不在面板里列出来。玩家的设置说了算:每个属性只替玩家隐藏一次(记在客户端配置 `attributePanelDefaultsApplied`),玩家在设置界面里勾回来就一直显示;点「恢复默认」会再隐藏。 |

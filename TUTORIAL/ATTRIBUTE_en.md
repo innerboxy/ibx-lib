@@ -175,9 +175,24 @@ Which operation to use for each attribute:
 
 Opened with the scroll button at the bottom-left of the inventory's player box, the panel sits left of the inventory and lists every attribute the player has (vanilla, this mod's and other mods'), one row each with icon + name + value. The gear at the panel's bottom-left opens a settings screen: what to show, how to sort, whether to group by mod — all stored in the client config (see [Configuration](CONFIG_en.md)). The creative inventory's "Survival Inventory" tab has it too; it shares its spot with the vanilla recipe book and isn't drawn while the recipe book is open.
 
-Other mods' attributes show up in the panel automatically, and you can add two things for them:
+Other mods' attributes show up in the panel automatically, and you can add a few things for them:
 
-- **Icon**: a 9×9 texture at `assets/ibx_lib/textures/gui/sprites/hud/icon/<path of the attribute id>.png`. Only the path matters, not the namespace: attribute `examplemod:frost_power` maps to `frost_power.png`, which you put in your own mod's resources. Attributes without an icon get the generic placeholder (`unknown.png`).
+- **Icon**: a 9×9 texture under the attribute's own namespace, `assets/<namespace>/textures/gui/sprites/hud/icon/<path of the attribute id>.png`: attribute `examplemod:frost_power` maps to `assets/examplemod/textures/gui/sprites/hud/icon/frost_power.png`; nothing to register. If it isn't there, the same path under `assets/ibx_lib/` is tried (vanilla attributes' icons live there); with neither, the generic placeholder (`unknown.png`) is drawn.
+- **Default order, hidden by default**: register them with `AttributePanelLayout` (see below).
 - **Group name**: when grouping by mod, the group name is looked up at translation key `gui.ibx_lib.attribute_panel.mod.<namespace>` first, falling back to the mod's display name.
 
 The panel shows the values the client can read: an attribute that isn't synced (`Attribute#isClientSyncable` is `false`) can only show its base value. If you want your own attribute to follow gear changes in the panel, call `setSyncable(true)` when registering it.
+
+### Registering the default layout: `AttributePanelLayout`
+
+`ibx.lib.client.attribute.AttributePanelLayout`, client only. Call it during client setup (for example in the constructor of your client mod entry, `@Mod(value = ..., dist = Dist.CLIENT)`):
+
+```java
+AttributePanelLayout.order(ExampleAttributes.FROST_POWER, ExampleAttributes.FROST_RESISTANCE);
+AttributePanelLayout.hideByDefault(ExampleAttributes.FROST_STACKS);
+```
+
+| Method | Description |
+| --- | --- |
+| `order(attributes...)` | The default order of these attributes, as written; ones already registered stay put, and you can call it several times. Unregistered attributes follow the registered ones in registry order. It only orders within a namespace; namespaces always go vanilla first, then this mod, other mods, and NeoForge last. Used when the sort mode is "Default". |
+| `hideByDefault(attributes...)` | These attributes are not listed in the panel by default. The player's settings win: each attribute is hidden for the player only once (recorded in the client config `attributePanelDefaultsApplied`); once they tick it back on in the settings screen it stays shown, and the "Reset" button hides it again. |

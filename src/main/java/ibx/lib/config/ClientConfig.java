@@ -8,7 +8,8 @@ import java.util.List;
 /**
  * 本模组的客户端配置（{@code config/ibx_lib-client.toml}），只影响本机的显示和操作，不同步。
  *
- * <p>都是每帧现读，游戏里改了立即生效。配置还没加载时（极早期）按默认值算。</p>
+ * <p>都是每帧现读，游戏里改了立即生效。读都走 {@link #get}（颜色走 {@link #color}），配置还没加载时（极早期）按默认值算，
+ * 不要直接调配置项的 {@code get()}（没加载时会抛异常）。</p>
  */
 public final class ClientConfig {
     private ClientConfig() {}
@@ -135,6 +136,11 @@ public final class ClientConfig {
                     "minecraft:camera_distance", "minecraft:waypoint_transmit_range", "minecraft:waypoint_receive_range",
                     "neoforge:nametag_distance", "neoforge:creative_flight"), () -> "", ClientConfig::isId);
 
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> ATTRIBUTE_PANEL_DEFAULTS_APPLIED = BUILDER
+            .comment("内部记录，一般不用改：别的模组登记了「默认不显示」、并且已经替你隐藏过一次的属性（属性 id）。",
+                    "隐藏过之后你在设置界面里勾回来就一直显示；从这里删掉一项，下次打开属性面板会再替你隐藏它一次。")
+            .defineListAllowEmpty("attributePanelDefaultsApplied", List.of(), () -> "", ClientConfig::isId);
+
     public static final ModConfigSpec.BooleanValue JADE_BOSSES_HIDDEN_ONCE = BUILDER
             .comment("内部记录，一般不用改：是否已经替你关掉过 Jade 的「显示Boss」（装了 Jade 才有用）。",
                     "Jade 准星对着 Boss 时会再显示一遍血量，和 Boss 血条重复，所以第一次进世界时自动关一次；",
@@ -143,26 +149,14 @@ public final class ClientConfig {
 
     public static final ModConfigSpec SPEC = BUILDER.build();
 
-    public static boolean vanillaHud() {
-        return SPEC.isLoaded() ? VANILLA_HUD.get() : VANILLA_HUD.getDefault();
-    }
-
-    public static double spellWheelScale() {
-        return SPEC.isLoaded() ? SPELL_WHEEL_SCALE.get() : SPELL_WHEEL_SCALE.getDefault();
-    }
-
-    public static boolean alwaysShowManaBar() {
-        return SPEC.isLoaded() && ALWAYS_SHOW_MANA_BAR.get();
-    }
-
-    /** 开关类配置的当前值，没加载时取默认值。 */
-    public static boolean get(ModConfigSpec.BooleanValue value) {
+    /** 配置项的当前值（开关、数值、枚举、列表都行），没加载时取默认值。 */
+    public static <T> T get(ModConfigSpec.ConfigValue<T> value) {
         return SPEC.isLoaded() ? value.get() : value.getDefault();
     }
 
     /** 颜色配置的 RGB 值（不带透明度）；没加载、写错时取默认值。 */
     public static int color(ModConfigSpec.ConfigValue<String> value) {
-        String text = SPEC.isLoaded() ? value.get() : value.getDefault();
+        String text = get(value);
         if (!isColor(text)) {
             text = value.getDefault();
         }
@@ -175,11 +169,6 @@ public final class ClientConfig {
 
     private static boolean isId(Object value) {
         return value instanceof String text && Identifier.tryParse(text) != null;
-    }
-
-    /** 列表类配置的当前值，没加载时取默认值。 */
-    public static List<? extends String> get(ModConfigSpec.ConfigValue<List<? extends String>> value) {
-        return SPEC.isLoaded() ? value.get() : value.getDefault();
     }
 
     /** 属性面板的排序方式。 */

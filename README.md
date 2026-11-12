@@ -34,7 +34,7 @@
 
 ### 属性
 
-18 个属性:远程伤害、拉弦、暴击、护甲穿透、回复效率、反甲、法力、法术强度、法术抗性与穿透、召唤物上限……全部生物都有、全部同步到客户端。背包左边可以打开属性面板,列出玩家身上的全部属性。
+18 个属性:远程伤害、拉弦、暴击、护甲穿透、回复效率、反甲、法力、法术强度、法术抗性与穿透、召唤物上限……全部生物都有、全部同步到客户端。背包左边可以打开属性面板,列出玩家身上的全部属性;别的模组可以登记自己属性的默认顺序和默认隐藏,按路径放图标就有图标。
 
 详见 [属性](TUTORIAL/ATTRIBUTE.md)。
 
@@ -64,7 +64,7 @@
 | [特效](TUTORIAL/EFFECT.md) | `GroundWarnings`、`BlockWave`、`CustomFire` |
 | [创造栏子栏](TUTORIAL/CREATIVE_TAB.md) | `CreativeSubTabs`、分组规则 |
 | [配置](TUTORIAL/CONFIG.md) | 服务端配置、启动配置、客户端配置 |
-| [指令](TUTORIAL/COMMAND.md) | `/taverntales mana`、`spell`、`summon` |
+| [指令](TUTORIAL/COMMAND.md) | `/ibx mana`、`spell`、`summon` |
 
 ---
 
@@ -74,12 +74,13 @@
 | --- | --- | --- |
 | NeoForge `26.1.2.112+` | **必需** | — |
 | Minecraft `26.1.2` | **必需** | — |
-| [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | 可选 | 只有法术弹射物基类 `SpellProjectile`、3D 盔甲 `IbxGeoArmorItem` 和它们的渲染器用到;注册法术弹射物或 3D 盔甲的模组自己要把它设成必需 |
+| [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | 可选 | 只有 3D 模型的法术弹射物 `GeoSpellProjectile`、3D 盔甲 `IbxGeoArmorItem` 和它们的渲染器用到;用到这些的模组自己要把它设成必需 |
 | [Player Animation Library](https://modrinth.com/mod/player-animation-library) `1.2.6+` | 可选(客户端) | 装了才有施法、格挡和盾击时的玩家动作,没装只是手臂不动;它播第一人称动作时,3D 盔甲照它对原版盔甲的规矩藏起来 |
 | [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | 可选 | 饰品基类、饰品的触发钩子、鞘翅槽、饰品栏里的施法物品、饰品栏界面上的属性面板按钮 |
 | [Jade](https://modrinth.com/mod/jade) | 可选(客户端) | 提示框里在护甲后面显示法术抗性;第一次进世界时关掉一次 Jade 的「显示Boss」,免得和 Boss 血条重复 |
 | [MmmMmmMmmMmm](https://modrinth.com/mod/mmmmmmmmmmmm)(试验假人) | 可选 | 远程、法术暴击显示成暴击数字,法术伤害的数字用专属的蓝色 |
 | [JEI](https://modrinth.com/mod/jei) | 可选(客户端) | 属性面板、饰品槽、创造栏子栏显示时让 JEI 的书签栏让开 |
+| [InventoryHUD+](https://modrinth.com/mod/inventoryhudplus) | 可选(客户端) | 当前法术框避开它贴着快捷栏画的盔甲栏 HUD |
 
 ---
 

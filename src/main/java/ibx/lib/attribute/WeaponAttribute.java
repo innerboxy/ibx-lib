@@ -10,7 +10,7 @@ import net.neoforged.neoforge.common.extensions.IAttributeExtension;
 import org.jspecify.annotations.Nullable;
 
 /**
- * 远程武器用的属性：自带"基础修饰符 id"，让武器上挂的数值在 tooltip 里渲染成原版剑那样的
+ * 由武器提供基础值的属性（远程伤害、拉弓时间、法术强度）：自带"基础修饰符 id"，让武器上挂的数值在 tooltip 里渲染成原版剑那样的
  * 深绿合并行（"8 远程伤害"），而不是蓝色的"+8 远程伤害"。
  * 识别逻辑在 NeoForge 的 {@link IAttributeExtension#getBaseId()} 与 {@code AttributeUtil.applyTextFor}：
  * 物品上 id 等于 {@link #getBaseId()} 的 ADD_VALUE 修饰符被视为"武器基础值"，加上实体基础值后显示，

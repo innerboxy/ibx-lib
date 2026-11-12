@@ -41,7 +41,7 @@ import java.util.function.Consumer;
  *
  * <p>注册：同 {@link ibx.lib.item.IbxBowItem}，用 {@code DeferredRegister.Items#registerItem}，在工厂里使用传进来的 Properties，例如
  * {@code ITEMS.registerItem("my_tome", p -> new IbxTomeItem(p, 1000, 6.0F))}、
- * {@code ITEMS.registerItem("fire_tome", p -> new IbxTomeItem(p, 1500, 8.0F, List.of(Identifier.parse("taverntales_2me:fireball"))))}。</p>
+ * {@code ITEMS.registerItem("fire_tome", p -> new IbxTomeItem(p, 1500, 8.0F, List.of(Identifier.parse("examplemod:fireball"))))}。</p>
  */
 public class IbxMagicWeaponItem extends Item implements SpellContainer {
     /** 施法时移速倍率的基准值（原版使用物品默认 0.2，太慢）。 */

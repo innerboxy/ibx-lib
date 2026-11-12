@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.Optional;
 
 /**
- * 玩家当前选中的法术（附加数据 {@code ibx_lib:selected_spell}）。读写请走 {@link SpellCasting}。
+ * 玩家当前选中的法术（附加数据 {@code ibx_lib:selected_spell}）。读写请走 {@link PlayerSpells}。
  *
  * <p>存<b>法术 id</b> 不存下标：换一件装备列表顺序就变。不可变，改选用 {@code setData} 换一份（会自动同步）。
  * 存盘（重登还选着）、只同步给自己、死亡后保留。</p>

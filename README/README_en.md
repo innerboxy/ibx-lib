@@ -34,7 +34,7 @@ See [Equipment base classes](../TUTORIAL/EQUIPMENT_en.md).
 
 ### Attributes
 
-18 attributes: ranged damage, draw, critical strikes, armor penetration, heal efficiency, thorns, mana, spell power, spell resistance and penetration, max summons… Every living entity has them and all are synced to the client. An attribute panel left of the inventory lists every attribute the player has.
+18 attributes: ranged damage, draw, critical strikes, armor penetration, heal efficiency, thorns, mana, spell power, spell resistance and penetration, max summons… Every living entity has them and all are synced to the client. An attribute panel left of the inventory lists every attribute the player has; other mods can register their attributes' default order and default hiding, and get icons just by putting images at the right path.
 
 See [Attributes](../TUTORIAL/ATTRIBUTE_en.md).
 
@@ -64,7 +64,7 @@ See [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md).
 | [Visual effects](../TUTORIAL/EFFECT_en.md) | `GroundWarnings`, `BlockWave`, `CustomFire` |
 | [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md) | `CreativeSubTabs`, grouping rules |
 | [Configuration](../TUTORIAL/CONFIG_en.md) | Server config, startup config, client config |
-| [Commands](../TUTORIAL/COMMAND_en.md) | `/taverntales mana`, `spell`, `summon` |
+| [Commands](../TUTORIAL/COMMAND_en.md) | `/ibx mana`, `spell`, `summon` |
 
 ---
 
@@ -74,12 +74,13 @@ See [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md).
 | --- | --- | --- |
 | NeoForge `26.1.2.112+` | **Required** | — |
 | Minecraft `26.1.2` | **Required** | — |
-| [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | Optional | Used only by the spell projectile base class `SpellProjectile`, the 3D armor class `IbxGeoArmorItem` and their renderers; mods that register spell projectiles or 3D armor must require it themselves |
+| [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | Optional | Used only by 3D-model spell projectiles `GeoSpellProjectile`, the 3D armor class `IbxGeoArmorItem` and their renderers; mods that use these must require it themselves |
 | [Player Animation Library](https://modrinth.com/mod/player-animation-library) `1.2.6+` | Optional (client) | Adds player animations for casting, guarding and shield bashing; without it the arms just don't move. While it plays a first-person animation, 3D armor is hidden the way it hides vanilla armor |
 | [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | Optional | Curio base class, curio trigger hooks, the elytra slot, casting items in curio slots, the attribute panel button on the curios screen |
 | [Jade](https://modrinth.com/mod/jade) | Optional (client) | Shows spell resistance after armor in the tooltip; turns Jade's "Show Bosses" off once the first time you join a world so it doesn't duplicate boss bars |
 | [MmmMmmMmmMmm](https://modrinth.com/mod/mmmmmmmmmmmm) (Target Dummy) | Optional | Ranged and spell crits show as crit numbers, and spell damage numbers get their own blue color |
 | [JEI](https://modrinth.com/mod/jei) | Optional (client) | Keeps JEI's bookmark panel clear of the attribute panel, curio slots and creative sub-tabs |
+| [InventoryHUD+](https://modrinth.com/mod/inventoryhudplus) | Optional (client) | The current-spell frame moves out of the way of its armor HUD drawn beside the hotbar |
 
 ---
 

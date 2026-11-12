@@ -17,7 +17,7 @@ public enum SpellPickerSource {
     REGISTERED,
     /**
      * 正在改的这件物品自带的法术（{@link SpellContainer#innateSpells}，移出了也能加回来），再加上玩家身上其他装备现在能放的法术
-     * （{@link SpellCasting#getSpellsExcept}，按轮盘里的顺序）。
+     * （{@link PlayerSpells#getSpellsExcept}，按轮盘里的顺序）。
      */
     CARRIED;
 
@@ -32,7 +32,7 @@ public enum SpellPickerSource {
             case REGISTERED -> SpellRegistries.SPELL.listElements().map(h -> h);
             case CARRIED -> Stream.concat(
                     picker.getItem() instanceof SpellContainer container ? container.innateSpells(picker).stream() : Stream.empty(),
-                    SpellCasting.getSpellsExcept(player, picker).stream().map(SpellEntry::spell));
+                    PlayerSpells.getSpellsExcept(player, picker).stream().map(SpellEntry::spell));
         };
         return all.filter(SpellPickerSource::pickable).distinct().toList();
     }

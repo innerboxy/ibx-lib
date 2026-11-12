@@ -13,7 +13,7 @@ public final class LibNetwork {
         modEventBus.addListener(LibNetwork::onRegisterPayloadHandlers);
     }
 
-    /** 发给客户端的包只在这里登记格式，处理器在客户端入口另外注册（{@code RegisterClientPayloadHandlersEvent}）。 */
+    /** 发给客户端的包只在这里登记格式，处理器由用到它的客户端类各自注册（{@code RegisterClientPayloadHandlersEvent}）。 */
     private static void onRegisterPayloadHandlers(RegisterPayloadHandlersEvent event) {
         event.registrar(VERSION)
                 .playToServer(SelectSpellPayload.TYPE, SelectSpellPayload.STREAM_CODEC, SelectSpellPayload::handle)

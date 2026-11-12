@@ -10,7 +10,7 @@ import net.neoforged.bus.api.Event;
 import java.util.List;
 
 /**
- * 玩家的法术列表聚合完之后（{@code SpellCasting.getSpells}），发在 {@code NeoForge.EVENT_BUS} 上：可以增删条目——
+ * 玩家的法术列表聚合完之后（{@code PlayerSpells.getSpells}），发在 {@code NeoForge.EVENT_BUS} 上：可以增删条目——
  * 药水效果临时给法术、别的模组的装备接进来都靠它。
  *
  * <p><b>两端都会触发</b>：客户端画轮盘、HUD 时，服务端校验选中和施法时。两边算出的结果必须一致，

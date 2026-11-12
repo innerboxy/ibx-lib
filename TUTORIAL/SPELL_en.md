@@ -12,7 +12,7 @@ ibx_lib splits "casting a spell" into a few parts, each with its own job:
 
 - **Spells** (`ibx.lib.spell.Spell`): the registration line holds numbers only (mana cost, cooldown, cast time); the effect is written in the spell class's hooks (see [3](#3-spells)).
 - **Casting** (`SpellCasting`): the single entry point. Checks, target selection, cast progress, mana, cooldown and syncing are all done there, and players and mobs share the same path (see [4](#4-casting)).
-- **Spell containers**: players never "learn" spells. What they can cast is whatever the items on them provide (see [5](#5-spell-containers)).
+- **Spell containers**: players never "learn" spells. What they can cast is whatever the items on them provide; the list and the selection live in `PlayerSpells` (see [5](#5-spell-containers)).
 - **Spell damage** (`SpellDamageApi`): damage is computed into a snapshot at cast time and settled on hit. Friendly fire, crits, spell resistance and fire / freeze / lifesteal are handled by the framework (see [8](#8-spell-damage)).
 - **Spell entity base classes**: projectile, area effect and beam; you only write what differs (see [9](#9-spell-entity-base-classes)).
 - **Mana** (`ManaApi`): current value, consumption, regeneration (see [10](#10-mana)).
@@ -121,13 +121,12 @@ The lib itself registers only one spell, `ibx_lib:dismiss_summons` (see [SUMMON_
 | `minCharge(float)` | `0.1` | Releasing below this charge ratio (0–1) counts as cancelling. |
 | `interruptible(boolean)` | `true` | Whether taking damage during the cast interrupts it. |
 | `castAnimation(Identifier)` | None | A cast animation of its own, overriding the casting item's default (see [12](#12-cast-animations)). |
-| `summonCount(int)` | `0` | How many are summoned per cast; setting it makes this a summon spell (see [SUMMON_en.md](SUMMON_en.md)). |
-| `summonCost(int)` | `1` | Summon spells: how many summon slots each one takes. |
-| `summonDuration(float seconds)` | `0` | Summon spells: lifetime of a timed summon; 0 is permanent. |
+
+Summon spells extend `SummonSpell`; how many are summoned per cast and how many slots each takes are its constructor arguments, not set here (see [SUMMON_en.md](SUMMON_en.md)).
 
 > Watch out for invulnerability frames on multi-hit channeled spells: spell damage respects vanilla i-frames by default, and with an interval of 10 ticks or less hits get dropped at random. Turn on `withLeaveNoIFrames(true)` on the snapshot (see [8](#8-spell-damage)) and let `tickInterval` control the hit rate.
 
-`Spell` has getters with the same names (`manaCost()`, `cooldown()`, `castTime()`, `castType()`, `tickInterval()`, `minCharge()`, `interruptible()`, `castAnimation()`, `isSummon()`, `summonCount()`, `summonCost()`, `summonDuration()`) that return the raw values from the registration line. For the actual per-caster values use `SpellCasting.getCastTicks` / `getCooldownTicks` and `ManaApi.getActualCost`.
+`Spell` has getters with the same names (`manaCost()`, `cooldown()`, `castTime()`, `castType()`, `tickInterval()`, `minCharge()`, `interruptible()`, `castAnimation()`) that return the raw values from the registration line. For the actual per-caster values use `SpellCasting.getCastTicks` / `getCooldownTicks` and `ManaApi.getActualCost`.
 
 Other getters:
 
@@ -215,7 +214,6 @@ Targeting is declared in the constructor (`super(props, Targeting.xxx())`); see 
 | `cast(caster, spell, target)` | Mob AI casts at a given target (see [7](#7-how-mobs-cast)). |
 | `cast(caster, spell, source)` | Cast with an explicit source. |
 | `cast(caster, spell, source, triggerItem, sourceItem)` | Same, with the casting item and the item providing the spell; pass `ItemStack.EMPTY` when there is none. There is also a variant with a trailing `target` parameter. |
-| `castSelected(player, hand)` | Casts the player's selected spell, source `ITEM`. The lib calls this itself when a casting item is right-clicked. |
 | `isCasting(caster)` | Whether the entity is casting. Works on both sides. |
 | `getCurrentCast(caster)` | The `CastContext` of the cast in progress; null when not casting. Works on both sides. |
 | `getLastEndReason(caster)` | How the previous cast ended; null while casting or before the first cast. |
@@ -224,7 +222,7 @@ Targeting is declared in the constructor (`super(props, Targeting.xxx())`); see 
 | `getCastTicks(caster, spell)` | Actual cast / full charge ticks = `castTime(caster)` × 20 ÷ `spell_cast_speed`, at least 1; 0 for instant and channel. |
 | `getCooldownTicks(caster, spell)` | Actual cooldown ticks = `cooldown(caster)` × 20 × `spell_cooldown_ratio`. |
 
-For the player spell list and selection methods see [5](#5-spell-containers).
+The player's spell list, the selection and casting the selected spell (`castSelected`) live in `PlayerSpells`; see [5](#5-spell-containers).
 
 ### Flow and results
 
@@ -236,11 +234,10 @@ On the server `cast` runs these checks in order; the first one that fails decide
 | 2 | Cooldown (only for sources that trigger cooldowns) | `ON_COOLDOWN` |
 | 3 | Mana (only for sources that consume mana) | `NOT_ENOUGH_MANA` |
 | 4 | Target selection by the spell's targeting found nothing | `CONDITION_FAILED` |
-| 5 | The spell's own `canCast` | `CONDITION_FAILED` |
-| 6 | Summon spells: not enough summon slots | `CONDITION_FAILED` |
-| 7 | `SpellCastEvent.Pre` was cancelled | `CONDITION_FAILED` |
+| 5 | The spell's own `canCast` (summon spells check summon slots here, see [SUMMON_en.md](SUMMON_en.md)) | `CONDITION_FAILED` |
+| 6 | `SpellCastEvent.Pre` was cancelled | `CONDITION_FAILED` |
 
-If everything passes the result is `SUCCESS`: an instant spell has taken effect, any other type has started casting. `NO_SPELL` is only returned by `castSelected` (no spells at all). An instant spell that can no longer pay after the pre-cast event raised its cost also returns `NOT_ENOUGH_MANA`.
+If everything passes the result is `SUCCESS`: an instant spell has taken effect, any other type has started casting. `NO_SPELL` is only returned by `PlayerSpells.castSelected` (no spells at all). An instant spell that can no longer pay after the pre-cast event raised its cost also returns `NOT_ENOUGH_MANA`.
 
 - On failure the player sees the reason in the action bar (language key `message.ibx_lib.cast.<result name in lower case>`, or the reason given to `ctx.fail`) and hears a failure sound; callers don't need to report it again. A cast cancelled by the event shows nothing.
 - `CastResult.isSuccess()` tells whether it worked.
@@ -350,13 +347,13 @@ A container's tooltip lists the spells it provides below the name, unless the it
 
 ### The player's spell list
 
-`SpellCasting.getSpells(player)` scans the containers on the player in a fixed order:
+`ibx.lib.spell.PlayerSpells.getSpells(player)` scans the containers on the player in a fixed order:
 
 **Main hand → off hand → curio slots (only with Curios installed) → head → chest → legs → feet**
 
 A spell is listed only the first time it appears. Finally `SpellListEvent` is posted, and listeners may add or remove entries (see [11](#11-events)). Take the equipment off and its spells are gone.
 
-| Method | Description |
+| `PlayerSpells` method (all static) | Description |
 | --- | --- |
 | `getSpells(player)` | The spells the player can cast right now, each a `SpellEntry`. Works on both sides. |
 | `getSpellsExcept(player, excluded)` | Same, but ignoring the one stack `excluded`. |
@@ -364,6 +361,7 @@ A spell is listed only the first time it appears. Finally `SpellListEvent` is po
 | `getSelectedSpell(player)` | The entry that will actually be cast: the selected one if it is still in the list, otherwise the first; null with no spells. |
 | `resolveSelected(player, spells)` | Same, using a list you already computed. |
 | `select(player, id)` | Change the selection: written only if the spell is in that player's list; returns whether it worked. Server only. |
+| `castSelected(player, hand)` | Casts the selected spell, source `ITEM`, with the item in `hand` as the casting item. The lib calls this itself when a casting item is right-clicked. On the client it only checks. |
 
 - `SpellEntry` is a record: `spell()` (`Holder<Spell>`), `sourceItem()` (the item providing it; `ItemStack.EMPTY` for entries added by the event that don't come from an item), `value()` (the `Spell` directly).
 - The selection is a **spell id** (`SelectedSpell`), not an index: swapping equipment changes the list order. It is saved and kept on death.
@@ -592,7 +590,7 @@ What the three have in common:
 
 ### Projectile: `SpellProjectile`
 
-> **`SpellProjectile` needs GeckoLib**: it implements GeckoLib's `GeoEntity`. GeckoLib is an optional dependency of ibx_lib, and only this class and its renderers use it. If your mod registers spell projectiles, declare GeckoLib as a required dependency in your own `neoforge.mods.toml`.
+> A projectile drawn as a single sprite extends `SpellProjectile` and doesn't need GeckoLib. One with a GeckoLib 3D model extends its subclass `GeoSpellProjectile` (see below): GeckoLib is an optional dependency of ibx_lib, so if your mod uses it, declare GeckoLib as a required dependency in your own `neoforge.mods.toml`.
 
 ```java
 public class FireBolt extends SpellProjectile {
@@ -637,7 +635,6 @@ public static final DeferredHolder<EntityType<?>, EntityType<FireBolt>> FIRE_BOL
 | `getPierce()` | `0` | How many targets it can pass through; 0 ends on the first hit. A target is only hit once. |
 | `getHomingStrength()` | `0` | Homing strength: how far the velocity turns towards the target each tick (0–1); 0 is no homing. It homes on the nearest affectable entity within 60° ahead. |
 | `getHomingRange()` | `16.0` | Homing search range in blocks. |
-| `flyAnimation()` | `null` | The GeckoLib animation looped in flight when rendered as a 3D model. |
 
 | Hook | When |
 | --- | --- |
@@ -647,6 +644,14 @@ public static final DeferredHolder<EntityType<?>, EntityType<FireBolt>> FIRE_BOL
 | `trailParticles()` | Client, every tick: trail particles. |
 | `impactParticles()` | Client: particles for the final hit. |
 
+To end it on your own mid-flight (an air burst, a timed detonation), call `impact()`: like hitting something it calls `onImpact` (with a result at the current position that hit nothing), plays the impact particles and removes the projectile. Server only.
+
+**Projectiles with a 3D model** extend `GeoSpellProjectile`. Parameters, hooks and constructors are the same as `SpellProjectile`, plus one parameter:
+
+| Parameter (override) | Default | Description |
+| --- | --- | --- |
+| `flyAnimation()` | `null` | The GeckoLib animation looped in flight. |
+
 Renderers (`ibx.lib.client.renderer`) are registered in `EntityRenderersEvent.RegisterRenderers`:
 
 ```java
@@ -654,7 +659,7 @@ Renderers (`ibx.lib.client.renderer`) are registered in `EntityRenderersEvent.Re
 event.registerEntityRenderer(ExampleEntities.FIRE_BOLT.get(), ctx -> new SpellProjectileRenderer<>(ctx,
         Identifier.fromNamespaceAndPath("examplemod", "textures/entity/spell/fire_bolt.png"), 0.5F, true));
 
-// A GeckoLib 3D model pointing along the flight direction; files use GeckoLib's default paths
+// A GeckoLib 3D model pointing along the flight direction; the entity must extend GeoSpellProjectile, files use GeckoLib's default paths
 event.registerEntityRenderer(ExampleEntities.ICE_SHARD.get(), ctx -> new GeoSpellProjectileRenderer<>(ctx,
         Identifier.fromNamespaceAndPath("examplemod", "spell/ice_shard")));
 ```
@@ -705,6 +710,7 @@ public final class FireFieldSpell extends Spell {
 | `getRadiusPerTick()` | `0` | Radius change per tick (positive grows, negative shrinks); it ends early once below 0.5 blocks. |
 | `leavesNoIFrames()` | `true` | Leave no i-frames after a hit: the pace is set by `getHitInterval()`, and the damage over time doesn't block other attacks. |
 | `getParticle()` | The witch's purple particle | The particle spawned at random on the disc on the client. |
+| `particleDensity()` | `0.3` | Particles per square block per tick while active (fractions are rolled); 0 spawns none. |
 
 | Hook | Description |
 | --- | --- |
@@ -712,18 +718,24 @@ public final class FireFieldSpell extends Spell {
 | `canAffect(target)` | Whether this target should be affected: by default not the caster, otherwise per `affects()`. |
 | `affect(target)` | One effect: deals the snapshot's damage by default and returns whether it hit. Healing circles change it to `SpellDamageApi.heal`. |
 | `onAffect(target, hit)` | After one effect (side effects). `hit` false means it was blocked. |
-| `onExpire()` | The duration is over, or the radius shrank away. The entity is removed afterwards. |
-| `ambientParticles()` | The client's per-tick particles; override it to draw everything yourself. |
+| `onActivate()` | The moment it takes effect (the first tick after the warning), called once before the first target is affected. Put the strike sound and particles here. |
+| `onActiveTick()` | Every tick while active, before targets are affected (also called when `affects()` is `Faction.NONE`). Put anything you release over time here. |
+| `onExpire()` | The duration is over, the radius shrank away, or `finish()` was called. The entity is removed afterwards. |
+| `ambientParticles()` | The client's per-tick particles: picks random points on the disc by `particleDensity()` and calls `spawnParticle` for each; override it to draw everything yourself. |
+| `spawnParticle(x, z)` | Client: spawns one particle at this point on the disc; override it to change the height or speed. |
 
 | Method | Description |
 | --- | --- |
 | `getRadius()` / `setRadius(radius)` | The radius, synced to clients, at most 32. |
 | `setWaitTime(ticks)` | How long to "warn" before taking effect; set it before adding the entity to the level. Nothing is affected during the warning and particles are sparse. |
 | `isWaiting()` | Whether it is still warning. |
+| `activeTicks()` | How many ticks it has been active: 0 while warning, 1 on the tick it takes effect. Only meaningful on the server. |
+| `finish()` | Ends it early: calls `onExpire()` and removes the entity. A plain `discard()` skips the clean-up hook. Server only. |
 | `getOwner()` / `snapshot()` | Caster / damage snapshot; either may be null. |
 
 - There is also a constructor without a snapshot, `(type, caster, pos, radius, durationTicks)`, to use with `affects()` returning `Faction.NONE`.
 - `durationTicks` is how long it is active, not counting the warning.
+- The order each tick once active: (the first time) `onActivate()` → change the radius by `getRadiusPerTick()` → `onActiveTick()` → affect the entities in the cylinder. Effects that release things over time (a rain of arrows, say) go in `onActiveTick()`, with `affects()` returning `Faction.NONE`.
 - It has no model; register vanilla `NoopRenderer::new` as its renderer. The `sized` values at registration don't matter, as the bounding box follows the radius.
 - The damage source position is the circle's center: a shield raised towards the center blocks it.
 - It is saved. It keeps working after the caster logs out or is unloaded, just without the friendly-fire check.
@@ -794,7 +806,8 @@ Set the spell's `tickInterval` and the beam's `getHitInterval()` to the same val
 | Hook | Description |
 | --- | --- |
 | `origin(owner, partialTick)` | Start point. The chest by default (0.65 of the body height above the feet); a caster implementing `SpellOrigin` supplies its own. |
-| `direction(owner, start, partialTick)` | Direction. By default from the start point towards the point under the crosshair; mobs aim at the body center of the AI-given target or attack target. |
+| `direction(owner, start, partialTick)` | Direction. By default from the start point towards the body center of `aimTarget`, or the point under the crosshair when there is none. |
+| `aimTarget(owner)` | Server: the entity the beam aims at; null follows the crosshair. By default the AI-given target, otherwise a mob's attack target, and null for players. Override it to aim at something else (a healing beam aiming at an ally, say). |
 | `aimPoint(owner, partialTick)` | The point under the crosshair. |
 | `affects()` / `canAffect(target)` / `affect(target)` / `onAffect(target, hit)` | Same as `SpellAoe`. |
 | `onBlockHit(hit)` | Every tick the beam ends on a block. |
@@ -886,7 +899,7 @@ All are in the package `ibx.lib.api.event` and posted on `NeoForge.EVENT_BUS`.
 | `SpellCastStateEvent.Start` | No | Client | An entity starts casting (when the cast state sync arrives); fired for yourself and nearby entities. Instant spells fire it too, followed immediately by the end. | Notification only. |
 | `SpellCastStateEvent.End` | No | Client | An entity stops casting; `getReason()` is the end reason. | Notification only. |
 | `SpellDamageEvent` | Yes | Server | Before spell damage lands (`SpellDamageApi.hurt`, living targets): the friendly-fire check has passed and the crit is rolled (the amount already includes the crit multiplier), but the vanilla damage flow hasn't started. | `setAmount`; `getSource()` returns the `SpellDamageSource` (snapshot, crit or not). |
-| `SpellListEvent` | No | Both | After a player's spell list has been gathered (`SpellCasting.getSpells`). | `add(spell, sourceItem)`, `remove(spell)`, `contains(spell)`, or edit `getSpells()` directly. |
+| `SpellListEvent` | No | Both | After a player's spell list has been gathered (`PlayerSpells.getSpells`). | `add(spell, sourceItem)`, `remove(spell)`, `contains(spell)`, or edit `getSpells()` directly. |
 | `ManaEvent.Consume` | Yes | Server | Before mana is consumed (`ManaApi.tryConsume`). Cancelling fails the payment and takes nothing. Not fired in creative mode. | `setCost` (the value received already includes the mana cost multiplier). |
 | `ManaEvent.Gain` | No | Server | Before mana is gained (`ManaApi.add`). Not fired by natural regeneration. | `setAmount`; negative subtracts. |
 | `ManaEvent.Changed` | No | Server | After mana changed, natural regeneration included — it may fire every tick while regenerating. `getOldValue()` / `getNewValue()`. | Notification only. |

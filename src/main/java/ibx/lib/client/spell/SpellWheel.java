@@ -4,7 +4,6 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import ibx.lib.IbxLib;
 import ibx.lib.api.ManaApi;
-import ibx.lib.api.SummonApi;
 import ibx.lib.client.UiPalette;
 import ibx.lib.config.ClientConfig;
 import ibx.lib.network.SelectSpellPayload;
@@ -12,11 +11,13 @@ import ibx.lib.registry.AttachmentRegistry;
 import ibx.lib.registry.SoundRegistry;
 import ibx.lib.spell.CastResult;
 import ibx.lib.spell.CastType;
+import ibx.lib.spell.PlayerSpells;
 import ibx.lib.spell.SelectedSpell;
 import ibx.lib.spell.Spell;
 import ibx.lib.spell.SpellCasting;
 import ibx.lib.spell.SpellCooldowns;
 import ibx.lib.spell.SpellEntry;
+import ibx.lib.summon.SummonSpell;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.KeyMapping;
@@ -47,7 +48,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 法术轮盘：<b>按住</b>轮盘键（默认 R，可改）弹出，格子就是 {@link SpellCasting#getSpells} 的结果；
+ * 法术轮盘：<b>按住</b>轮盘键（默认 R，可改）弹出，格子就是 {@link PlayerSpells#getSpells} 的结果；
  * <b>鼠标左键点</b>一格选中（发 {@link SelectSpellPayload}），松开轮盘键关上。只选不放，放法术是右键施法物品。
  * 选项 → 控制 里设成「可以不点击」（默认）时，松开轮盘键也会选中鼠标指着的那格，左键点选照常有效。
  * 圆心附近一小块不算指着任何格子（框停在当前选中上），指着那里松开、点击都不改。
@@ -116,7 +117,7 @@ public final class SpellWheel {
             close(mc, true);
             return;
         }
-        spells = SpellCasting.getSpells(player);
+        spells = PlayerSpells.getSpells(player);
         if (spells.isEmpty()) {
             close(mc, true);
             return;
@@ -128,7 +129,7 @@ public final class SpellWheel {
     }
 
     private static void tryOpen(Minecraft mc, Player player) {
-        spells = SpellCasting.getSpells(player);
+        spells = PlayerSpells.getSpells(player);
         if (spells.isEmpty()) {
             player.sendOverlayMessage(Component.translatable(CastResult.NO_SPELL.messageKey()));
             return;
@@ -190,7 +191,7 @@ public final class SpellWheel {
         if (id == null) {
             return;
         }
-        boolean changed = !id.equals(SpellCasting.getSelectedId(player));
+        boolean changed = !id.equals(PlayerSpells.getSelectedId(player));
         if (changed) {
             // 本地先改，HUD 立刻换图标；服务端校验不过会把它的值重发回来
             player.setData(AttachmentRegistry.SELECTED_SPELL, new SelectedSpell(id));
@@ -215,7 +216,7 @@ public final class SpellWheel {
         // 按配置放大；屏幕放不下（上方还要留名字）时缩回去，但不小于刚好放得下图标的大小
         int fit = WheelShape.fitRadius(spells.size());
         int room = Math.min(cy - NAME_GAP - 4, cx - 4);
-        int radius = Mth.clamp((int) Math.round(fit * ClientConfig.spellWheelScale()), fit, Math.max(fit, room));
+        int radius = Mth.clamp((int) Math.round(fit * ClientConfig.get(ClientConfig.SPELL_WHEEL_SCALE)), fit, Math.max(fit, room));
         WheelShape shape = WheelShape.of(spells.size(), radius);
         int ox = cx - shape.half;
         int oy = cy - shape.half;
@@ -226,7 +227,7 @@ public final class SpellWheel {
         int deadZone = Math.max(DEAD_ZONE_MIN, radius / 4);
         int slot = dx * dx + dy * dy < deadZone * deadZone ? -1 : shape.slotAt(dx, dy);
         hovered = slot < spells.size() ? slot : -1;
-        SpellEntry selected = SpellCasting.resolveSelected(player, spells);
+        SpellEntry selected = PlayerSpells.resolveSelected(player, spells);
         int framed = hovered >= 0 ? hovered : spells.indexOf(selected);
 
         graphics.submitGuiElementRenderState(new WheelRenderState(new Matrix3x2f(graphics.pose()), ox, oy, shape.size,
@@ -267,11 +268,9 @@ public final class SpellWheel {
         List<Component> lines = new ArrayList<>();
         lines.add(spell.getName().copy().withColor(UiPalette.TITLE).withStyle(ChatFormatting.BOLD));
         lines.addAll(spell.getTooltip(player));
-        if (spell.isSummon()) {
-            lines.add(Component.translatable(TOOLTIP + "summon", spell.summonCount(), spell.summonCost()).withColor(UiPalette.BODY));
-            if (spell.summonDuration() > 0.0F) {
-                lines.add(Component.translatable(TOOLTIP + "summon_duration", SECONDS.format(spell.summonDuration())).withColor(UiPalette.BODY));
-            }
+        SummonSpell summon = spell instanceof SummonSpell s ? s : null;
+        if (summon != null) {
+            lines.add(Component.translatable(TOOLTIP + "summon", summon.summonCount(), summon.summonCost()).withColor(UiPalette.BODY));
         }
         float cost = ManaApi.getActualCost(player, spell.manaCost());
         if (cost > 0.0F) {
@@ -289,9 +288,8 @@ public final class SpellWheel {
             case CHANNEL -> Component.translatable(TOOLTIP + "channel", SECONDS.format(spell.tickInterval() / 20.0));
         }).withColor(UiPalette.BODY));
         int remaining = SpellCooldowns.getRemaining(player, spell);
-        if (spell.isSummon() && !SummonApi.fits(player, spell.summonCost())) {
-            lines.add(Component.translatable("message." + IbxLib.MODID + ".cast.summon_over_capacity",
-                    spell.summonCost(), SummonApi.capacity(player)).withColor(UiPalette.NEGATIVE));
+        if (summon != null && !summon.fits(player)) {
+            lines.add(summon.overCapacityMessage(player).copy().withColor(UiPalette.NEGATIVE));
         } else if (remaining > 0) {
             lines.add(Component.translatable(CastResult.ON_COOLDOWN.messageKey(), SECONDS.format(remaining / 20.0)).withColor(UiPalette.NEGATIVE));
         } else if (!ManaApi.canAfford(player, spell.manaCost())) {

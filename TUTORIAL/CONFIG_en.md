@@ -28,7 +28,7 @@ hideEquipmentWhenInvisible = true
 | `enableVanillaCritical` | boolean | `false` | Whether to keep vanilla's guaranteed jump crit. When on, jump attacks always crit and other attacks still roll critical chance (either one counts). Either way the crit multiplier is `critical_damage` (see [Attributes 3](ATTRIBUTE_en.md#3-damage-and-healing-order)). |
 | `hideEquipmentWhenInvisible` | boolean | `true` | Whether invisible mobs and players also hide their armor, elytra, worn pumpkins / heads and held items; `false` is vanilla, which only hides the body. Viewers who can see invisible entities (spectators, teammates with "see friendly invisibles") still see them as in vanilla; armor stands are not affected; your own held item in first person still shows. The server's value is used, so players cannot change it on their side. |
 
-> SERVER configs are only available after a world is loaded. Developers must read `Config` only while the game is running, never during registration or class initialization, or it throws.
+> SERVER configs are only available after a world is loaded. In code, read them through `Config.get(option)`: before the config is loaded (during registration, on the title screen) it returns the default; calling the option's own `get()` throws.
 
 ---
 
@@ -58,7 +58,7 @@ raiseVanillaStackSizes = true
 
 ## 3. Client config
 
-Each player's own display and control settings, at `config/ibx_lib-client.toml`, not synced. You can also edit it via this mod's "Config" button in the mod list; the five casting options are also under **Options → Controls**, right after vanilla's "Use: Toggle / Hold". All are read live, so changes in game apply immediately.
+Each player's own display and control settings, at `config/ibx_lib-client.toml`, not synced. You can also edit it via this mod's "Config" button in the mod list; the five casting options are also under **Options → Controls**, right after vanilla's "Use: Toggle / Hold". All are read live, so changes in game apply immediately. In code, read them through `ClientConfig.get(option)` (colors through `ClientConfig.color(option)`), which returns the default before the config is loaded.
 
 ### HUD and screen
 
@@ -111,7 +111,8 @@ The attribute panel left of the inventory (see [Attributes 7](ATTRIBUTE_en.md#7-
 | `attributePanelHideDefault` | boolean | `false` | Whether to hide attributes still at their default value (listing only those changed by gear, effects, etc.). |
 | `attributePanelSort` | `DEFAULT` / `NAME` / `CUSTOM` | `DEFAULT` | Default order / by name / custom (the order set with ▲▼ in the settings screen). |
 | `attributePanelOrder` | list of attribute ids | empty | The custom order, used when sorting is `CUSTOM`; unlisted attributes follow in default order. |
-| `attributePanelHidden` | list of attribute ids | see description | Attributes not shown in the panel. Hidden by default: camera distance, waypoint transmit / receive range, name tag distance, creative flight. |
+| `attributePanelHidden` | list of attribute ids | see description | Attributes not shown in the panel. Hidden by default: camera distance, waypoint transmit / receive range, name tag distance, creative flight; attributes another mod registered as hidden by default are added once when the panel opens (see the next option). |
+| `attributePanelDefaultsApplied` | list of attribute ids | empty | Internal record, normally left alone: attributes another mod registered as hidden by default (see [Attributes 7](ATTRIBUTE_en.md#7-attribute-panel)) that have already been hidden for you once. After that, ticking one back on in the settings screen keeps it shown; remove an entry here and the panel hides it for you once more the next time it opens. |
 
 ### Other
 

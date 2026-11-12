@@ -1,11 +1,11 @@
-package ibx.lib.compat.curios;
+package ibx.lib.compat.curios.client;
 
+import ibx.lib.compat.CuriosCompat;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.client.renderer.Rect2i;
-import net.neoforged.fml.ModList;
 import org.jspecify.annotations.Nullable;
 import top.theillusivec4.curios.client.screen.CuriosScreen;
 import top.theillusivec4.curios.client.screen.button.CuriosButton;
@@ -26,7 +26,7 @@ import java.util.List;
 public final class CuriosScreens {
     private CuriosScreens() {}
 
-    private static final boolean LOADED = ModList.get().isLoaded("curios");
+    private static final boolean LOADED = CuriosCompat.isLoaded();
 
     public static boolean isCuriosScreen(@Nullable Screen screen) {
         return LOADED && screen != null && Impl.isCuriosScreen(screen);

@@ -26,7 +26,7 @@ import java.util.List;
  * <pre>{@code
  * // 一层
  * event.registerEntityRenderer(FROST_BEAM.get(), ctx -> new SpellBeamRenderer<>(ctx,
- *         Identifier.fromNamespaceAndPath("taverntales_2me", "textures/entity/spell/frost_beam.png"), true, 1.0F, 0.1F));
+ *         Identifier.fromNamespaceAndPath("examplemod", "textures/entity/spell/frost_beam.png"), true, 1.0F, 0.1F));
  * // 两层：外面一层半透明的辉光，里面一根细芯（后写的画在上面）
  * event.registerEntityRenderer(EMERALD_BEAM.get(), ctx -> new SpellBeamRenderer<>(ctx, true,
  *         new SpellBeamRenderer.Layer(GLOW_TEXTURE, 1.0F, 1.2F, 0.2F),

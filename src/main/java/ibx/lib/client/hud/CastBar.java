@@ -14,7 +14,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.function.IntSupplier;
 
 /**
- * 吟唱条的客户端状态，{@link TavernHud} 每帧照着画（左边，叠在心形那几行上方）。
+ * 吟唱条的客户端状态，{@link IbxHud} 每帧照着画（左边，叠在心形那几行上方）。
  *
  * <p>数据来自本地玩家的施法状态（{@code ActiveCast}，服务端同步过来：法术、来源、开始时刻、读条长度、结束原因）。
  * 每个客户端 tick 由 {@link #tick} 看一眼：换了一次施法就开条，没了就按结束原因收尾。瞬发没有条。
@@ -117,16 +117,16 @@ public final class CastBar {
         }
         // 完成按满宽画；引导蓝尽时剩余时间正好见底，也按满宽画，不然蓝色反馈只剩一条缝
         resultProgress = result == CastEndReason.COMPLETED || (kind == CastType.CHANNEL && result == CastEndReason.OUT_OF_MANA)
-                ? 1.0F : progress(TavernHud.ticks(), 0.0F);
+                ? 1.0F : progress(IbxHud.ticks(), 0.0F);
         CastBar.result = result;
-        resultTick = TavernHud.ticks();
+        resultTick = IbxHud.ticks();
         kind = null;
         channelRemaining = null;
     }
 
     private static void begin(CastType newKind, int alreadyElapsed) {
         kind = newKind;
-        startTick = TavernHud.ticks() - Math.max(0, alreadyElapsed);
+        startTick = IbxHud.ticks() - Math.max(0, alreadyElapsed);
         result = null;
         channelRemaining = null;
     }

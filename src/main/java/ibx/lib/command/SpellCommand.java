@@ -35,10 +35,10 @@ import java.util.Locale;
 /**
  * 法术指令（需要 2 级权限），施法者是指令的执行者（用 {@code /execute as} 让别的生物施法）：
  * <pre>
- * /taverntales spell cast &lt;法术&gt; [来源]     来源：item / scroll / mob / boss / command，不写按执行者推断（玩家 item、Boss boss、其他生物 mob）
- * /taverntales spell stop                     松手：吟唱取消、引导结束、蓄力按当前比例结算
- * /taverntales spell cooldown clear [目标们]   不写目标即执行者
- * /taverntales spell list                     列出所有已注册的法术
+ * /ibx spell cast &lt;法术&gt; [来源]     来源：item / scroll / mob / command，不写按执行者推断（玩家 item、其他生物 mob）
+ * /ibx spell stop                     松手：吟唱取消、引导结束、蓄力按当前比例结算
+ * /ibx spell cooldown clear [目标们]   不写目标即执行者
+ * /ibx spell list                     列出所有已注册的法术
  * </pre>
  */
 public final class SpellCommand {
@@ -64,8 +64,8 @@ public final class SpellCommand {
     }
 
     private static void onRegisterCommands(RegisterCommandsEvent event) {
-        // 权限挂在 spell 这一层：taverntales 根节点和 mana 指令共用。
-        event.getDispatcher().register(Commands.literal("taverntales")
+        // 权限挂在 spell 这一层：ibx 根节点和 mana 指令共用。
+        event.getDispatcher().register(Commands.literal("ibx")
                 .then(Commands.literal("spell")
                         .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.literal("cast")

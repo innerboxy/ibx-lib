@@ -985,7 +985,7 @@ public class VampireFangItem extends Item implements CurioTriggers {
 - **滑翔同原版**:在地上、骑着东西、飘浮、创造模式飞行时不能起飞;再掉一点耐久就坏的鞘翅不算(同原版,鞘翅不会真的碎掉)。
 - **掉耐久**:胸甲栏和鞘翅槽都有能用的鞘翅时,每次掉的耐久在它们里面随机挑一件扣,同原版身上有几件滑翔装备时的做法。经验修补照样修得到(Curios 自己处理)。
 - **外观**:鞘翅槽里的鞘翅画在玩家背上,画法同原版(附魔光效、皮肤自带的鞘翅图、披风图案都照原版),背上画了鞘翅就不画披风。这一格的化妆栏有东西就画化妆栏的,没有就看这一格的显示开关;胸甲栏已经有鞘翅时只画胸甲栏那件;隐身时按「隐身连装备一起藏」的配置一起藏。空格子的图标是 `ibx_lib:slot/empty_elytra_slot`(`assets/ibx_lib/textures/slot/empty_elytra_slot.png`)。
-- 只给玩家开这个槽位。槽位文件在 `data/ibx_lib/curios/slots/elytra.json`;代码在 `ibx.lib.compat.curios.ElytraCurioSlot`(槽位 id `SLOT`、`isGlider`、`usableElytras`、`canGlide`),接进原版滑翔判定的是 `ibx.lib.mixin.curios.LivingEntityElytraSlotMixin`,画在背上的是 `ibx.lib.compat.curios.ElytraCurioRendering`(披风让开靠 `CapeLayerMixin`),都只在装了 Curios 时加载。
+- 只给玩家开这个槽位。槽位文件在 `data/ibx_lib/curios/slots/elytra.json`;代码在 `ibx.lib.compat.curios.ElytraCurioSlot`(槽位 id `SLOT`、`isGlider`、`usableElytras`、`canGlide`),接进原版滑翔判定的是 `ibx.lib.mixin.curios.LivingEntityElytraSlotMixin`,画在背上的是 `ibx.lib.compat.curios.client.ElytraCurioRendering`(披风让开靠 `CapeLayerMixin`),都只在装了 Curios 时加载。
 
 ---
 

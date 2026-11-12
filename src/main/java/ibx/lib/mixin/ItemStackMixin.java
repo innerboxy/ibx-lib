@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ItemStack.class)
 public abstract class ItemStackMixin {
     @Inject(method = "getUseDuration", at = @At("HEAD"), cancellable = true)
-    private void taverntales$spellUseDuration(LivingEntity user, CallbackInfoReturnable<Integer> cir) {
+    private void ibx_lib$spellUseDuration(LivingEntity user, CallbackInfoReturnable<Integer> cir) {
         if (((ItemStack) (Object) this).is(TagRegistry.CAN_CAST_SPELL)) {
             cir.setReturnValue(72000);
         }

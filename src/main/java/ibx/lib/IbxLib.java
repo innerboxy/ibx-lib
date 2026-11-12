@@ -23,7 +23,9 @@ import ibx.lib.registry.AttributeRegistry;
 import ibx.lib.registry.DataComponentRegistry;
 import ibx.lib.registry.SoundRegistry;
 import ibx.lib.registry.SpellRegistry;
+import ibx.lib.spell.PlayerSpells;
 import ibx.lib.spell.SpellCasting;
+import ibx.lib.spell.SpellItemUse;
 import ibx.lib.spell.SpellRegistries;
 import ibx.lib.summon.SummonHandler;
 import ibx.lib.target.TargetHandler;
@@ -61,6 +63,8 @@ public class IbxLib {
         HealHandler.register();
         ManaHandler.register();
         SpellCasting.register();
+        PlayerSpells.register();
+        SpellItemUse.register();
         TargetHandler.register();
         CustomFire.register();
         ShieldApi.register();

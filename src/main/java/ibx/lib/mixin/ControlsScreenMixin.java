@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ControlsScreen.class)
 public abstract class ControlsScreenMixin {
     @Inject(method = "options", at = @At("RETURN"), cancellable = true)
-    private static void taverntales$addSpellCastOptions(Options options, CallbackInfoReturnable<OptionInstance<?>[]> cir) {
+    private static void ibx_lib$addSpellCastOptions(Options options, CallbackInfoReturnable<OptionInstance<?>[]> cir) {
         cir.setReturnValue(SpellControlOptions.addTo(options, cir.getReturnValue()));
     }
 }

@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class MinecraftMixin {
     @WrapOperation(method = "handleKeybinds", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;releaseUsingItem(Lnet/minecraft/world/entity/player/Player;)V"))
-    private void taverntales$keepToggledCast(MultiPlayerGameMode gameMode, Player player, Operation<Void> original) {
+    private void ibx_lib$keepToggledCast(MultiPlayerGameMode gameMode, Player player, Operation<Void> original) {
         if (!SpellCastInput.keepUsing()) {
             original.call(gameMode, player);
         }

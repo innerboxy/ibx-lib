@@ -17,7 +17,7 @@ public final class DamageTypeRegistry {
     /** 通用法术伤害：法术不指定伤害类型时用它。已在 {@link TagRegistry#IS_SPELL} 里。 */
     public static final ResourceKey<DamageType> SPELL_GENERAL = key("spell_general");
 
-    /** 消化：别西卜胃里的伤害，无视护甲、盾牌和无敌帧，没有击退。 */
+    /** 消化：被吞进肚子里受的伤害，无视护甲、盾牌和无敌帧，没有击退。 */
     public static final ResourceKey<DamageType> DIGEST = key("digest");
 
     /** 流血：真实伤害，无视护甲、盔甲韧性、抗性提升和保护类附魔，没有击退；吸收（金心）照常先扣。 */
