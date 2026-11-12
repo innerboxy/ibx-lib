@@ -1,4 +1,4 @@
-package ibx.lib.item.curio;
+package ibx.lib.item.general;
 
 import ibx.lib.api.event.SpellCastEvent;
 import net.minecraft.world.damagesource.DamageSource;

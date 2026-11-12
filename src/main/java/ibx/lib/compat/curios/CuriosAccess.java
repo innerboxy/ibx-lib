@@ -4,6 +4,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.NeoForge;
 import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.event.CurioChangeEvent;
 import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
 import top.theillusivec4.curios.api.type.inventory.IDynamicStackHandler;
@@ -33,6 +34,25 @@ public final class CuriosAccess {
                 }
             }
         });
+    }
+
+    /**
+     * 「同一种只能戴一个」的判断：饰品栏别的格子里没有同一物品才行，放回自己原来那格（重新校验）不算第二个。
+     * 给 {@code IbxCurioItem#unique()} 用。
+     */
+    public static boolean notWornElsewhere(SlotContext slotContext, ItemStack stack) {
+        if (slotContext.entity() == null) {
+            return true;
+        }
+        // 用不带缓存的 findCurios(Predicate)：findCurios(Item) 一刻内只算一次，同一刻连放两个会漏判
+        return CuriosApi.getCuriosInventory(slotContext.entity())
+                .map(inventory -> inventory.findCurios(worn -> worn.is(stack.getItem())).stream()
+                        .allMatch(worn -> isSameSlot(worn.slotContext(), slotContext)))
+                .orElse(true);
+    }
+
+    private static boolean isSameSlot(SlotContext a, SlotContext b) {
+        return a.identifier().equals(b.identifier()) && a.index() == b.index() && a.cosmetic() == b.cosmetic();
     }
 
     /** 饰品换了（只在服务端触发）：{@code listener} 拿到穿戴者。 */

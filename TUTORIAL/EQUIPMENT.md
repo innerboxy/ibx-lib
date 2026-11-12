@@ -23,8 +23,8 @@
 | 3D 盔甲(穿上的样子由 GeckoLib 画) | `ibx.lib.item.IbxGeoArmorItem` | [7](#7-3d-盔甲) |
 | 带法术抗性的盔甲材质 | `ibx.lib.item.general.IbxArmorMaterial` | [7](#盔甲材质) |
 | 给盔甲加材质以外的属性 | `ibx.lib.item.general.IbxArmorProperties` | [7](#盔甲的物品属性) |
-| 同一种只能戴一个的饰品 | 普通物品 + `ibx.lib.item.curio.UniqueCurioItem` | [8](#8-饰品) |
-| 攻击、挨打、击杀、施法时触发的饰品 | 物品类实现 `ibx.lib.item.curio.CurioTriggers` | [8](#触发钩子) |
+| 饰品(只能戴一个、常驻效果、不惹末影人、死了不掉……) | `ibx.lib.item.IbxCurioItem` | [8](#8-饰品) |
+| 攻击、挨打、击杀、施法时触发的饰品 | 继承 `IbxCurioItem`,重写 `ibx.lib.item.general.CurioTriggers` 的方法 | [8](#触发钩子) |
 | 鞘翅放在饰品栏里也能滑翔 | 给 Curios 槽位 `elytra` 加格数(默认 0 格) | [8](#鞘翅槽) |
 
 - **注册方式都一样**:`Item.Properties` 必须先带上物品 id 才能构造物品,所以用 `DeferredRegister.Items#registerItem` 注册,在工厂里使用传进来的 `Properties`;稀有度、防火等也设在它上面。
@@ -901,12 +901,44 @@ Player Animation Library 播第一人称动作(比如 Better Combat 的攻击)�
 
 本模组对 Curios(模组 id `curios`)是可选依赖。饰品本身是普通物品,槽位、属性加成按 Curios 自己的办法配;本模组提供下面几样东西。
 
-**`ibx.lib.item.curio.UniqueCurioItem`**:同一种饰品只能戴一个。饰品栏别的格子里已经有同一物品就不让放;放回自己原来那格不算。其余行为(属性加成等)走 Curios 默认。不挂它就是能戴多个,每个都算加成。
+**`ibx.lib.item.IbxCurioItem`**:饰品的基类。普通饰品直接 `new`,链式设置常用的几样;有自己机制的继承它,重写 Curios 的 `ICurioItem` 或[触发钩子](#触发钩子)的方法。Curios 会自动认出它,不用另外挂。
 
 ```java
-modEventBus.addListener(FMLCommonSetupEvent.class, event ->
-        CuriosApi.registerCurio(SIGNET_RING.get(), UniqueCurioItem.INSTANCE));
+// 普通饰品
+public static final DeferredItem<IbxCurioItem> SIGNET_RING = ITEMS.registerItem("signet_ring",
+        p -> new IbxCurioItem(p).unique(), p -> p.stacksTo(1));
+
+public static final DeferredItem<IbxCurioItem> GOGGLES = ITEMS.registerItem("goggles",
+        p -> new IbxCurioItem(p).unique().effect(MobEffects.NIGHT_VISION).enderMask().keepOnDeath(),
+        p -> p.stacksTo(1));
+
+// 有自己机制的:在构造函数里设置,重写时记得调 super
+public class WhoopieCushionItem extends IbxCurioItem {
+    public WhoopieCushionItem(Properties properties) {
+        super(properties);
+        keepOnDeath();
+    }
+
+    @Override
+    public void curioTick(SlotContext slotContext, ItemStack stack) {
+        super.curioTick(slotContext, stack);
+        // 每刻的逻辑
+    }
+}
 ```
+
+| 方法 | 说明 |
+| --- | --- |
+| `unique()` | 同一种只能戴一个。饰品栏别的格子里已经有同一物品就不让放;放回自己原来那格不算。不设就是能戴多个,每个都算加成。 |
+| `effect(effect)` / `effect(effect, amplifier)` | 戴着一直有这个状态效果:无限时长,不闪、不冒粒子、HUD 不显示图标;摘下来就去掉。可以调多次给多个效果。`amplifier` 同 `MobEffectInstance`,0 是一级。 |
+| `enderMask()` | 看末影人不会惹它,同戴南瓜头。 |
+| `keepOnDeath()` | 死了不掉,留在饰品栏。 |
+| `piglinNeutral()` | 猪灵不主动攻击穿戴者,同穿金盔甲。 |
+
+- **设置要在构造物品时做完**:`registerItem` 的工厂里,或者子类的构造函数里。槽位、属性加成照旧按 Curios 的办法配(物品标签、`curios:attribute_modifiers` 组件)。
+- **常驻效果和药水**:同一效果的药水,等级更高的生效期间不动它,到期后再补上;等级不比它高的会被盖住。摘下时只去掉饰品给的那个(无限时长、不显示粒子、等级相同),别处来的留着。
+- **重写时记得调 `super`**:重写 `canEquip`、`curioTick`、`onUnequip` 不调 `super` 的话,`unique()`、常驻效果就失效了。`isEnderMask`、`makesPiglinsNeutral`、`getDropRule` 重写了就以子类为准。
+- **用它的模组必须装 Curios**:`IbxCurioItem` 实现了 Curios 的接口,没装 Curios 时一加载就 `NoClassDefFoundError`。
 
 **`ibx.lib.compat.CuriosCompat`**:
 
@@ -917,16 +949,16 @@ modEventBus.addListener(FMLCommonSetupEvent.class, event ->
 | `anyCurio(entity, condition)` | 饰品栏里有没有满足条件的物品。两端都能用。 |
 | `onCurioChange(listener)` | 饰品换了时通知,`listener` 拿到穿戴者。只在服务端触发。 |
 
-> `UniqueCurioItem` 和 `CuriosCompat` 里除 `isLoaded()` 以外的方法都会碰到 Curios 的类。你的模组如果也把 Curios 当可选依赖,调用前先过 `CuriosCompat.isLoaded()`,否则没装 Curios 时会 `NoClassDefFoundError`。
+> `CuriosCompat` 里除 `isLoaded()` 以外的方法都会碰到 Curios 的类。你的模组如果也把 Curios 当可选依赖,调用前先过 `CuriosCompat.isLoaded()`,否则没装 Curios 时会 `NoClassDefFoundError`。
 
 饰品也能提供法术:饰品栏里带 `ibx_lib:spells` 组件的物品会算进玩家能放的法术(见 [法术系统](SPELL.md))。
 
 ### 触发钩子
 
-**`ibx.lib.item.curio.CurioTriggers`**:饰品在战斗里的触发时机。饰品物品类实现这个接口,重写自己需要的方法,其余默认什么都不做。
+**`ibx.lib.item.general.CurioTriggers`**:饰品在战斗里的触发时机。`IbxCurioItem` 已经实现了它,继承后重写自己需要的方法就行,其余默认什么都不做;不继承 `IbxCurioItem` 的饰品物品类也可以自己实现这个接口。
 
 ```java
-public class VampireFangItem extends Item implements CurioTriggers {
+public class VampireFangItem extends IbxCurioItem {
     public VampireFangItem(Properties properties) {
         super(properties);
     }
@@ -953,7 +985,7 @@ public class VampireFangItem extends Item implements CurioTriggers {
 | `onShieldBash(slot, stack, shield, hits)` | 打出一次盾击之后;`hits` 是打中的生物,可能为空 | 只通知 |
 
 - **只在服务端调用**,只认戴在饰品栏里的(化妆栏不算)。`slot` 是这件饰品所在的格子,`slot.entity()` 是穿戴者;`stack` 是这件饰品本身。
-- **按槽位顺序逐件调用**:同一种戴了几个就调几次,改伤害的会一件接一件叠上去。不想叠的照上面挂 `UniqueCurioItem`。
+- **按槽位顺序逐件调用**:同一种戴了几个就调几次,改伤害的会一件接一件叠上去。不想叠的照上面设 `unique()`。
 - **冷却、触发几率由饰品自己处理**(比如 `Player#getCooldowns`、`slot.entity().getRandom()`),框架不管。
 - **伤害**:近战、弹射物(穿戴者是射手)、法术都走 `onDealDamage` / `onDamageDealt`,用 `source` 区分。改的伤害会再被护甲、法术抗性减免,和原版附魔的伤害加成一样。致命的那一下,`onKill` 在 `onDamageDealt` 之前调。
 - **被别的模组取消的不触发**:取消了的伤害、死亡、格挡都不会调到。

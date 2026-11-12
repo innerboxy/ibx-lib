@@ -76,7 +76,7 @@
 | Minecraft `26.1.2` | **必需** | — |
 | [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | 可选 | 只有 3D 模型的法术弹射物 `GeoSpellProjectile`、3D 盔甲 `IbxGeoArmorItem` 和它们的渲染器用到;用到这些的模组自己要把它设成必需 |
 | [Player Animation Library](https://modrinth.com/mod/player-animation-library) `1.2.6+` | 可选(客户端) | 装了才有施法、格挡和盾击时的玩家动作,没装只是手臂不动;它播第一人称动作时,3D 盔甲照它对原版盔甲的规矩藏起来 |
-| [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | 可选 | 饰品基类、饰品的触发钩子、鞘翅槽、饰品栏里的施法物品、饰品栏界面上的属性面板按钮 |
+| [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | 可选 | 饰品基类(只戴一个、常驻效果等)、饰品的触发钩子、鞘翅槽、饰品栏里的施法物品、饰品栏界面上的属性面板按钮 |
 | [Jade](https://modrinth.com/mod/jade) | 可选(客户端) | 提示框里在护甲后面显示法术抗性;第一次进世界时关掉一次 Jade 的「显示Boss」,免得和 Boss 血条重复 |
 | [MmmMmmMmmMmm](https://modrinth.com/mod/mmmmmmmmmmmm)(试验假人) | 可选 | 远程、法术暴击显示成暴击数字,法术伤害的数字用专属的蓝色 |
 | [JEI](https://modrinth.com/mod/jei) | 可选(客户端) | 属性面板、饰品槽、创造栏子栏显示时让 JEI 的书签栏让开 |

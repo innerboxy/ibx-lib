@@ -3,7 +3,7 @@ package ibx.lib.compat.curios;
 import ibx.lib.api.SummonApi;
 import ibx.lib.api.event.SpellCastEvent;
 import ibx.lib.api.event.SummonEvent;
-import ibx.lib.item.curio.CurioTriggers;
+import ibx.lib.item.general.CurioTriggers;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;

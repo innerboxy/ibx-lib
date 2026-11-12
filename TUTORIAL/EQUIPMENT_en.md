@@ -23,8 +23,8 @@ This mod provides a set of item base classes. Other mods use them directly or ex
 | 3D armor (worn look drawn by GeckoLib) | `ibx.lib.item.IbxGeoArmorItem` | [7](#7-3d-armor) |
 | Armor material with spell resistance | `ibx.lib.item.general.IbxArmorMaterial` | [7](#armor-material) |
 | Attributes beyond the material on an armor piece | `ibx.lib.item.general.IbxArmorProperties` | [7](#armor-item-properties) |
-| A curio you can only wear one of | a plain item + `ibx.lib.item.curio.UniqueCurioItem` | [8](#8-curios) |
-| A curio that triggers on attacks, hits, kills or casts | an item class implementing `ibx.lib.item.curio.CurioTriggers` | [8](#trigger-hooks) |
+| A curio (wear only one, permanent effects, enderman mask, kept on death...) | `ibx.lib.item.IbxCurioItem` | [8](#8-curios) |
+| A curio that triggers on attacks, hits, kills or casts | extend `IbxCurioItem` and override `ibx.lib.item.general.CurioTriggers` methods | [8](#trigger-hooks) |
 | Elytra that also glide from a curio slot | add slots to the Curios slot `elytra` (0 by default) | [8](#elytra-slot) |
 
 - **Registration is the same for all**: `Item.Properties` must carry the item id before an item can be constructed, so register with `DeferredRegister.Items#registerItem` and use the `Properties` passed into the factory; rarity, fire resistance and so on are set on it too.
@@ -901,12 +901,44 @@ Without Player Animation Library both methods return `false` and never touch its
 
 Curios (mod id `curios`) is an optional dependency of this mod. A curio is a plain item; slots and attribute bonuses are set up the Curios way. This mod provides the following.
 
-**`ibx.lib.item.curio.UniqueCurioItem`**: only one of the same curio can be worn. If another curio slot already holds the same item, it can't be equipped; putting it back into its own slot doesn't count. Everything else (attribute bonuses etc.) is the Curios default. Without it, several can be worn and each one counts.
+**`ibx.lib.item.IbxCurioItem`**: base class for curios. A plain curio is just `new`ed, with the common settings chained on; a curio with its own mechanics extends it and overrides methods from Curios' `ICurioItem` or the [trigger hooks](#trigger-hooks). Curios picks it up automatically; nothing else to attach.
 
 ```java
-modEventBus.addListener(FMLCommonSetupEvent.class, event ->
-        CuriosApi.registerCurio(SIGNET_RING.get(), UniqueCurioItem.INSTANCE));
+// Plain curios
+public static final DeferredItem<IbxCurioItem> SIGNET_RING = ITEMS.registerItem("signet_ring",
+        p -> new IbxCurioItem(p).unique(), p -> p.stacksTo(1));
+
+public static final DeferredItem<IbxCurioItem> GOGGLES = ITEMS.registerItem("goggles",
+        p -> new IbxCurioItem(p).unique().effect(MobEffects.NIGHT_VISION).enderMask().keepOnDeath(),
+        p -> p.stacksTo(1));
+
+// With its own mechanics: set things up in the constructor, and call super when overriding
+public class WhoopieCushionItem extends IbxCurioItem {
+    public WhoopieCushionItem(Properties properties) {
+        super(properties);
+        keepOnDeath();
+    }
+
+    @Override
+    public void curioTick(SlotContext slotContext, ItemStack stack) {
+        super.curioTick(slotContext, stack);
+        // per-tick logic
+    }
+}
 ```
+
+| Method | Description |
+| --- | --- |
+| `unique()` | Only one of the same curio can be worn. If another curio slot already holds the same item, it can't be equipped; putting it back into its own slot doesn't count. Without it, several can be worn and each one counts. |
+| `effect(effect)` / `effect(effect, amplifier)` | The wearer always has this status effect: infinite, no flicker, no particles, no HUD icon; removed when taken off. Call it several times for several effects. `amplifier` is as in `MobEffectInstance`; 0 is level I. |
+| `enderMask()` | Looking at endermen doesn't anger them, like wearing a carved pumpkin. |
+| `keepOnDeath()` | Not dropped on death; stays in the curio slot. |
+| `piglinNeutral()` | Piglins don't attack the wearer, like wearing gold armor. |
+
+- **Finish the settings while constructing the item**: in the `registerItem` factory, or in the subclass constructor. Slots and attribute bonuses are still set up the Curios way (item tags, the `curios:attribute_modifiers` component).
+- **Permanent effects and potions**: while a stronger potion of the same effect is active it is left alone, and the curio's effect comes back when the potion runs out; a potion that is not stronger is covered up. Taking the curio off only removes the effect it gave (infinite, no particles, same level); the same effect from elsewhere stays.
+- **Call `super` when overriding**: override `canEquip`, `curioTick` or `onUnequip` without calling `super` and `unique()` / the permanent effects stop working. Overriding `isEnderMask`, `makesPiglinsNeutral` or `getDropRule` replaces the setting.
+- **Mods using it must require Curios**: `IbxCurioItem` implements a Curios interface, so loading it without Curios installed throws `NoClassDefFoundError`.
 
 **`ibx.lib.compat.CuriosCompat`**:
 
@@ -917,16 +949,16 @@ modEventBus.addListener(FMLCommonSetupEvent.class, event ->
 | `anyCurio(entity, condition)` | Whether any item in the curio slots matches. Usable on both sides. |
 | `onCurioChange(listener)` | Notifies when a curio changes; `listener` receives the wearer. Server side only. |
 
-> `UniqueCurioItem` and every `CuriosCompat` method except `isLoaded()` touch Curios classes. If Curios is optional for your mod too, check `CuriosCompat.isLoaded()` before calling them, or you get a `NoClassDefFoundError` when Curios isn't installed.
+> Every `CuriosCompat` method except `isLoaded()` touches Curios classes. If Curios is optional for your mod too, check `CuriosCompat.isLoaded()` before calling them, or you get a `NoClassDefFoundError` when Curios isn't installed.
 
 Curios can provide spells too: items in curio slots that carry the `ibx_lib:spells` component count towards the spells a player can cast (see [Spell system](SPELL_en.md)).
 
 ### Trigger hooks
 
-**`ibx.lib.item.curio.CurioTriggers`**: combat trigger points for curios. A curio item class implements this interface and overrides the methods it needs; the rest do nothing by default.
+**`ibx.lib.item.general.CurioTriggers`**: combat trigger points for curios. `IbxCurioItem` already implements it, so extend that and override the methods you need; the rest do nothing by default. A curio item class that doesn't extend `IbxCurioItem` can implement the interface itself.
 
 ```java
-public class VampireFangItem extends Item implements CurioTriggers {
+public class VampireFangItem extends IbxCurioItem {
     public VampireFangItem(Properties properties) {
         super(properties);
     }
@@ -953,7 +985,7 @@ public class VampireFangItem extends Item implements CurioTriggers {
 | `onShieldBash(slot, stack, shield, hits)` | After a shield bash; `hits` are the mobs hit, possibly empty | Notification only |
 
 - **Server side only**, and only for curios worn in curio slots (cosmetic slots don't count). `slot` is the slot the curio is in, `slot.entity()` is the wearer; `stack` is the curio itself.
-- **Called piece by piece in slot order**: wear several of the same and it is called that many times, and damage changes stack one after another. Use `UniqueCurioItem` above for curios that should not stack.
+- **Called piece by piece in slot order**: wear several of the same and it is called that many times, and damage changes stack one after another. Set `unique()` above for curios that should not stack.
 - **Cooldowns and trigger chances are up to the curio** (for example `Player#getCooldowns`, `slot.entity().getRandom()`); the framework does not handle them.
 - **Damage**: melee, projectiles (the wearer being the shooter) and spells all go through `onDealDamage` / `onDamageDealt`; tell them apart by `source`. Changed damage is still reduced by armor and spell resistance, like vanilla enchantment damage bonuses. On a killing blow, `onKill` is called before `onDamageDealt`.
 - **Anything canceled by another mod does not trigger**: canceled damage, deaths and blocks are never passed on.

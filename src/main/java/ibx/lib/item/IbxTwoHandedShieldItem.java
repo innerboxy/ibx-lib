@@ -161,7 +161,7 @@ public class IbxTwoHandedShieldItem extends IbxShieldItem {
      * 盾击的效果（冷却、动作已处理；这时盾还举着，结算完才放下）。默认：掷一次暴击，{@link #bashTargets} 里的每个目标挨一下
      * {@link #bashHit}，打中的再走 {@link #onBashHit}。
      *
-     * @return 打中的生物，交给饰品的盾击钩子（{@link ibx.lib.item.curio.CurioTriggers#onShieldBash}）
+     * @return 打中的生物，交给饰品的盾击钩子（{@link ibx.lib.item.general.CurioTriggers#onShieldBash}）
      */
     protected List<LivingEntity> onBash(ServerPlayer player, ItemStack stack) {
         boolean critical = CriticalStrikeApi.roll(player);
