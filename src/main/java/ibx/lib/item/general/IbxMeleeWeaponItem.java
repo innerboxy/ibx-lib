@@ -9,6 +9,8 @@ import net.minecraft.world.item.ToolMaterial;
  *
  * <ul>
  *   <li>同原版剑：材料给耐久、修复材料、附魔能力；砍蜘蛛网快、每次攻击掉 1 点耐久；主手挂攻击伤害、攻速（基础 id，tooltip 是深绿合并行）。</li>
+ *   <li>注册时用 {@code Properties#attributes} 给的被动属性会留着，排在攻击伤害、攻速后面（{@code sword()} 本来是整份替换，
+ *       见 {@link IbxAttributeModifiers}）。</li>
  *   <li>左键动作（Better Combat 的 {@code weapon_attributes}）和手持显示（lib 的 {@code general_*_hand} 模型）按武器种类在资源里给，不在这里。</li>
  *   <li>自动进 {@code #c:tools}、{@code #c:tools/melee_weapon}（见 {@link ibx.lib.registry.AutoItemTags}），data 里不用再写。</li>
  * </ul>
@@ -24,6 +26,6 @@ public class IbxMeleeWeaponItem extends Item {
      * @param attackSpeed  攻速基数：+ 玩家的 4 = 显示的攻速
      */
     public IbxMeleeWeaponItem(Item.Properties properties, ToolMaterial material, float attackDamage, float attackSpeed) {
-        super(properties.sword(material, attackDamage, attackSpeed));
+        super(IbxAttributeModifiers.keeping(properties, p -> p.sword(material, attackDamage, attackSpeed)));
     }
 }

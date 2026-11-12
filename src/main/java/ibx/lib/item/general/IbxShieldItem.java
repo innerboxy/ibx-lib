@@ -17,8 +17,8 @@ import java.util.Optional;
  * {@link ibx.lib.item.IbxTwoHandedShieldItem} 双手拿，主手还能普通攻击和盾击。
  *
  * <ul>
- *   <li>格挡全走原版的 {@code blocks_attacks} 组件，由构造参数烤：举盾延迟、挡掉比例、水平角度，不大于 0 用原版盾的值
- *       （0.25 秒、全挡、90°）；耐久函数、无视格挡的伤害（{@code #minecraft:bypasses_shield}）、格挡音、破碎音都同原版盾。
+ *   <li>格挡全走原版的 {@code blocks_attacks} 组件，由构造参数烤：举盾延迟（0 是一举起来就能挡，负数用原版盾的 0.25 秒）、
+ *       挡掉比例、水平角度（这两项不大于 0 用原版盾的全挡、90°）；耐久函数、无视格挡的伤害（{@code #minecraft:bypasses_shield}）、格挡音、破碎音都同原版盾。
  *       副手装备位（{@code equippableUnswappable(OFFHAND)}）也在这里挂，注册时只给耐久和修复材料。</li>
  *   <li>自动进 {@code #c:tools}、{@code #c:tools/shield}，子类再进各自的 {@code #c:tools/one_handed_shield}、
  *       {@code #c:tools/two_handed_shield}（见 {@link ibx.lib.registry.AutoItemTags}）。</li>
@@ -36,7 +36,7 @@ public abstract class IbxShieldItem extends ShieldItem {
 
     /**
      * @param properties  注册时给好耐久、修复材料的属性；{@code blocks_attacks}、副手装备位、破碎音由这里挂
-     * @param blockDelay  举盾几秒后生效；不大于 0 用 {@link #BASELINE_BLOCK_DELAY}
+     * @param blockDelay  举盾几秒后生效，0 是一举起来就能挡；负数用 {@link #BASELINE_BLOCK_DELAY}
      * @param blockFactor 挡掉的比例 0~1；不大于 0 用 {@link #BASELINE_BLOCK_FACTOR}
      * @param blockAngle  水平格挡角度；不大于 0 用 {@link #BASELINE_BLOCK_ANGLE}
      */
@@ -45,7 +45,7 @@ public abstract class IbxShieldItem extends ShieldItem {
     }
 
     private static Item.Properties bake(Item.Properties properties, float blockDelay, float blockFactor, float blockAngle) {
-        float delay = blockDelay > 0.0F ? blockDelay : BASELINE_BLOCK_DELAY;
+        float delay = blockDelay >= 0.0F ? blockDelay : BASELINE_BLOCK_DELAY;
         float factor = blockFactor > 0.0F ? Mth.clamp(blockFactor, 0.0F, 1.0F) : BASELINE_BLOCK_FACTOR;
         float angle = blockAngle > 0.0F ? blockAngle : BASELINE_BLOCK_ANGLE;
         return properties.equippableUnswappable(EquipmentSlot.OFFHAND)

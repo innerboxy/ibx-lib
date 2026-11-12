@@ -1,6 +1,7 @@
 package ibx.lib.item;
 
 import ibx.lib.IbxLib;
+import ibx.lib.item.general.IbxAttributeModifiers;
 import ibx.lib.item.general.IbxMagicWeaponItem;
 import ibx.lib.spell.CastType;
 import net.minecraft.resources.Identifier;
@@ -8,6 +9,7 @@ import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 
 import java.util.List;
 
@@ -48,15 +50,18 @@ public class IbxStaffItem extends IbxMagicWeaponItem {
     }
 
     /**
-     * 其余参数同 {@link IbxMagicWeaponItem}；只想改攻速时 {@code castMoveSpeed} 给 0，用基准值。
+     * 其余参数同 {@link IbxMagicWeaponItem}；只想改攻速时 {@code castMoveSpeed} 给 {@link #BASELINE_CAST_MOVE_SPEED}。
      *
      * @param attackSpeed 主手攻速基数，+ 玩家的 4 = 显示的攻速
      */
     public IbxStaffItem(Item.Properties properties, int durability, float spellPower, float castMoveSpeed, float attackSpeed,
                         List<Identifier> spells) {
-        super(properties, durability, spellPower, castMoveSpeed, spells, modifiers -> modifiers.add(Attributes.ATTACK_SPEED,
-                new AttributeModifier(Item.BASE_ATTACK_SPEED_ID, attackSpeed, AttributeModifier.Operation.ADD_VALUE),
-                EquipmentSlotGroup.MAINHAND));
+        // 先加攻速、父类再加法强：后加的排前面，说明框里是法强、攻速、注册时给的被动属性
+        super(IbxAttributeModifiers.add(properties, ItemAttributeModifiers.builder()
+                .add(Attributes.ATTACK_SPEED,
+                        new AttributeModifier(Item.BASE_ATTACK_SPEED_ID, attackSpeed, AttributeModifier.Operation.ADD_VALUE),
+                        EquipmentSlotGroup.MAINHAND)
+                .build()), durability, spellPower, castMoveSpeed, spells);
     }
 
     /** 瞬发放一遍；吟唱、引导循环，引导和蓄力共用一段。 */

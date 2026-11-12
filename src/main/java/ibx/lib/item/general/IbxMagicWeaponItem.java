@@ -11,6 +11,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Unit;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.Item;
@@ -21,17 +22,19 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Ibx 法器：所有施法物品的基类，数值由构造参数给定。按法器种类分子类（{@link ibx.lib.item.IbxTomeItem} 法典、{@link ibx.lib.item.IbxStaffItem} 法杖……），
  * 随种类变化的东西（比如专属施法动作，重写 {@link #castAnimation}）写在子类里。
  *
  * <ul>
- *   <li>有耐久（必填）：施法时按实际扣掉的蓝量掉耐久，用光就碎，同原版工具（见 {@link ibx.lib.spell.SpellCasting#MANA_PER_DURABILITY}）。</li>
- *   <li>主手拿着加法强：用 {@link AttributeRegistry#BASE_SPELL_POWER_ID} 挂主手，tooltip 显示成深绿合并行（同剑的攻击伤害）。</li>
- *   <li>施法时的移速倍率写进 {@code use_effects} 组件，不填用 {@link #BASELINE_CAST_MOVE_SPEED}。</li>
- *   <li>不可堆叠（有耐久的物品都是）。</li>
+ *   <li>有耐久：施法时按实际扣掉的蓝量掉耐久，用光就碎，同原版工具（见 {@link ibx.lib.spell.SpellCasting#MANA_PER_DURABILITY}）。
+ *       耐久给负数就是无法破坏：没有耐久条、施法不掉耐久，挂原版的 {@code unbreakable} 组件。</li>
+ *   <li>主手拿着加法强：用 {@link AttributeRegistry#BASE_SPELL_POWER_ID} 挂主手，tooltip 显示成深绿合并行（同剑的攻击伤害）。
+ *       写进 {@code attribute_modifiers} 组件；注册时用 {@code Properties#attributes} 给的被动属性会和它合并，排在后面
+ *       （见 {@link IbxAttributeModifiers}），子类要加自己的修饰符也用它。</li>
+ *   <li>施法时的移速倍率写进 {@code use_effects} 组件，0 是施法时站住不动，不填用 {@link #BASELINE_CAST_MOVE_SPEED}。</li>
+ *   <li>不可堆叠（无法破坏的也是）。</li>
  *   <li>自带法术按 id 给，不填为空。物品栈带 {@code spells} 组件时以组件为准（指令、战利品可以覆盖，给空列表就是没有法术）。
  *       id 查不到的跳过，所以可以写别的子模组的法术而不依赖它。</li>
  *   <li>施法动作见 {@link #castAnimation}，法术自己指定了动作时以法术为准。</li>
@@ -53,7 +56,6 @@ public class IbxMagicWeaponItem extends Item implements SpellContainer {
 
     private final float spellPower;
     private final List<Identifier> defaultSpellIds;
-    private final ItemAttributeModifiers modifiers;
     /** 自带法术解析成的 Holder；法术注册表在启动时就定了，第一次用到时解析一次。 */
     private @Nullable List<Holder<Spell>> defaultSpells;
 
@@ -74,33 +76,31 @@ public class IbxMagicWeaponItem extends Item implements SpellContainer {
 
     /**
      * @param properties    物品属性，必须带物品 id（见类说明的注册方式）
-     * @param durability    耐久
+     * @param durability    耐久；负数是无法破坏
      * @param spellPower    法强（主手）
-     * @param castMoveSpeed 施法时的移速倍率，截到 0~1；不大于 0 则用 {@link #BASELINE_CAST_MOVE_SPEED}
+     * @param castMoveSpeed 施法时的移速倍率，截到 0~1，0 是施法时站住不动；负数用 {@link #BASELINE_CAST_MOVE_SPEED}
      * @param spells        自带法术的 id，按轮盘里的顺序
      */
     public IbxMagicWeaponItem(Item.Properties properties, int durability, float spellPower, float castMoveSpeed, List<Identifier> spells) {
-        this(properties, durability, spellPower, castMoveSpeed, spells, modifiers -> {});
-    }
-
-    /**
-     * 同上，子类追加自己的属性修饰符（比如法杖的攻速）。
-     *
-     * @param extraModifiers 往同一份属性修饰符里追加的，排在法强后面
-     */
-    protected IbxMagicWeaponItem(Item.Properties properties, int durability, float spellPower, float castMoveSpeed, List<Identifier> spells,
-                                 Consumer<ItemAttributeModifiers.Builder> extraModifiers) {
-        super(properties.durability(durability).component(DataComponents.USE_EFFECTS,
-                new UseEffects(false, true, castMoveSpeed > 0.0F ? Mth.clamp(castMoveSpeed, 0.0F, 1.0F) : BASELINE_CAST_MOVE_SPEED)));
+        super(durability(IbxAttributeModifiers.add(properties, modifiers(spellPower)), durability).component(DataComponents.USE_EFFECTS,
+                new UseEffects(false, true, castMoveSpeed >= 0.0F ? Mth.clamp(castMoveSpeed, 0.0F, 1.0F) : BASELINE_CAST_MOVE_SPEED)));
         this.spellPower = spellPower;
         this.defaultSpellIds = List.copyOf(spells);
+    }
+
+    /** 负数：无法破坏，不设耐久（没有耐久条），照样不可堆叠。 */
+    private static Item.Properties durability(Item.Properties properties, int durability) {
+        return durability >= 0 ? properties.durability(durability)
+                : properties.stacksTo(1).component(DataComponents.UNBREAKABLE, Unit.INSTANCE);
+    }
+
+    private static ItemAttributeModifiers modifiers(float spellPower) {
         // 这里只存 Holder，不解析属性；物品注册早于属性注册，DeferredHolder 到时候自己会绑定。
-        ItemAttributeModifiers.Builder builder = ItemAttributeModifiers.builder()
+        return ItemAttributeModifiers.builder()
                 .add(AttributeRegistry.SPELL_POWER,
                         new AttributeModifier(AttributeRegistry.BASE_SPELL_POWER_ID, spellPower, AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.MAINHAND);
-        extraModifiers.accept(builder);
-        this.modifiers = builder.build();
+                        EquipmentSlotGroup.MAINHAND)
+                .build();
     }
 
     public float spellPower() {
@@ -125,11 +125,6 @@ public class IbxMagicWeaponItem extends Item implements SpellContainer {
      */
     public Identifier castAnimation(CastType type) {
         return defaultCastAnimation(type);
-    }
-
-    @Override
-    public ItemAttributeModifiers getDefaultAttributeModifiers(ItemStack stack) {
-        return this.modifiers;
     }
 
     @Override

@@ -29,6 +29,7 @@
 
 - **注册方式都一样**:`Item.Properties` 必须先带上物品 id 才能构造物品,所以用 `DeferredRegister.Items#registerItem` 注册,在工厂里使用传进来的 `Properties`;稀有度、防火等也设在它上面。
 - **数值挂在主手**:基类把数值烤成主手的属性修饰符,用「基础 id」,tooltip 显示成原版剑那样的深绿合并行(比如「8 远程伤害」)。
+- **额外的被动属性照常写**:注册时在 `Properties` 上调 `attributes(...)` 给的属性修饰符,会和基类自己的合并,排在基类的后面,不会互相顶掉(盔甲除外,用 `IbxArmorProperties` 的 `add`,见 [7](#盔甲的物品属性))。同一个属性、同一个修饰符 id、同一个槽位写了两次会在加载时报错。自己写物品基类要加修饰符时,在把 `properties` 交给父类之前调 `ibx.lib.item.general.IbxAttributeModifiers.add(properties, modifiers)`;要包住原版 `sword()` 这类整份改写属性的设置,用 `IbxAttributeModifiers.keeping(properties, p -> p.sword(...))`。
 - **标签自动加**:物品按基类自动进通用标签,data 里不用写(见 [9](#9-自动物品标签))。3D 盔甲除外。
 - **能直接用**:普通装备直接 `new` 基类;有自己机制的再继承,重写对应的方法。
 
@@ -440,7 +441,7 @@ public static final DeferredItem<IbxCrossbowItem> ARBALEST = ITEMS.registerItem(
 
 **自带的**:
 
-- **耐久**(必填):施法时按实际扣掉的法力掉耐久,每 4 点法力掉 1 点(`SpellCasting.MANA_PER_DURABILITY`),用光就碎。不可堆叠。
+- **耐久**:施法时按实际扣掉的法力掉耐久,每 4 点法力掉 1 点(`SpellCasting.MANA_PER_DURABILITY`),用光就碎。耐久给负数就是无法破坏:没有耐久条、施法不掉耐久,说明框里显示原版的「无法破坏」。不可堆叠。
 - **法术强度**:主手挂 `ibx_lib:spell_power`,修饰符 id `ibx_lib:base_spell_power`,tooltip 是深绿合并行。
 - **施法时的移速**:写进原版的 `use_effects` 组件。
 - **自带法术**:按法术 id 给,不填为空。
@@ -459,18 +460,18 @@ public static final DeferredItem<IbxCrossbowItem> ARBALEST = ITEMS.registerItem(
 | `(properties, durability, spellPower, spells)` | 施法移速用基准值。 |
 | `(properties, durability, spellPower, castMoveSpeed, spells)` | 全部参数。 |
 
-`IbxStaffItem` 有同样的四个(攻速用默认值),另加一个带攻速的:`(properties, durability, spellPower, castMoveSpeed, attackSpeed, spells)`。只想改攻速时 `castMoveSpeed` 给 0。
+`IbxStaffItem` 有同样的四个(攻速用默认值),另加一个带攻速的:`(properties, durability, spellPower, castMoveSpeed, attackSpeed, spells)`。只想改攻速时 `castMoveSpeed` 给 `BASELINE_CAST_MOVE_SPEED`。
 
 | 参数 | 类型 | 说明 |
 | --- | --- | --- |
 | `properties` | `Item.Properties` | 注册工厂传进来的那个。耐久由下一个参数设,不用自己设。 |
-| `durability` | `int` | 耐久。 |
+| `durability` | `int` | 耐久;负数是无法破坏。 |
 | `spellPower` | `float` | 法术强度(主手)。 |
-| `castMoveSpeed` | `float` | 施法时的移速倍率,截到 0~1;不大于 0 用 `BASELINE_CAST_MOVE_SPEED`(0.5)。 |
+| `castMoveSpeed` | `float` | 施法时的移速倍率,截到 0~1,0 是施法时站住不动;负数用 `BASELINE_CAST_MOVE_SPEED`(0.5)。 |
 | `spells` | `List<Identifier>` | 自带法术的 id,按法术轮盘里的顺序。id 查不到的跳过,所以可以写别的模组的法术而不依赖它。 |
 | `attackSpeed`(只有法杖) | `float` | 主手攻速基数,显示的攻速 = 本值 + 玩家的 4。默认 `DEFAULT_ATTACK_SPEED`(-2.8,显示 1.2)。 |
 
-继承 `IbxMagicWeaponItem` 做新种类的法器时,还有一个 `protected` 构造方法,末尾多一个 `Consumer<ItemAttributeModifiers.Builder> extraModifiers`,往同一份属性修饰符里追加自己的(法杖的攻速就是这样加的)。
+继承 `IbxMagicWeaponItem` 做新种类的法器、要加自己的属性修饰符时,在把 `properties` 交给父类之前调 `IbxAttributeModifiers.add(properties, modifiers)`(法杖的攻速就是这样加的)。说明框里法强排最前,然后是你加的,最后是注册时给的。
 
 ```java
 public static final DeferredItem<IbxTomeItem> EMBER_TOME = ITEMS.registerItem("ember_tome",
@@ -581,7 +582,7 @@ public static final DeferredItem<IbxStaffItem> OAK_STAFF = ITEMS.registerItem("o
 | 参数 | 类型 | 说明 |
 | --- | --- | --- |
 | `properties` | `Item.Properties` | 注册时只给耐久和修复材料;`blocks_attacks`、副手装备位、破碎音由基类挂。 |
-| `blockDelay` | `float` | 举盾几秒后生效;不大于 0 用 `BASELINE_BLOCK_DELAY`(0.25)。 |
+| `blockDelay` | `float` | 举盾几秒后生效,0 是一举起来就能挡;负数用 `BASELINE_BLOCK_DELAY`(0.25)。 |
 | `blockFactor` | `float` | 挡掉的比例 0~1;不大于 0 用 `BASELINE_BLOCK_FACTOR`(1.0,全挡)。 |
 | `blockAngle` | `float` | 水平格挡角度:正前方左右各多少度;不大于 0 用 `BASELINE_BLOCK_ANGLE`(90)。 |
 
@@ -606,18 +607,16 @@ public static final DeferredItem<IbxOneHandedShieldItem> BUCKLER = ITEMS.registe
 
 | 构造方法 | 说明 |
 | --- | --- |
-| `(properties, attackDamage, attackSpeed)` | 格挡数值全用原版盾的,没有额外属性。 |
-| `(properties, attackDamage, attackSpeed, extraModifiers)` | 格挡数值全用原版盾的。 |
-| `(properties, blockDelay, blockFactor, blockAngle, attackDamage, attackSpeed)` | 没有额外属性。 |
-| `(properties, blockDelay, blockFactor, blockAngle, attackDamage, attackSpeed, extraModifiers)` | 全部参数。 |
+| `(properties, attackDamage, attackSpeed)` | 格挡数值全用原版盾的。 |
+| `(properties, blockDelay, blockFactor, blockAngle, attackDamage, attackSpeed)` | 全部参数。 |
 
 | 参数 | 类型 | 说明 |
 | --- | --- | --- |
 | `attackDamage` | `float` | 主手普通攻击的伤害基数(显示时加空手的 1)。盾击的伤害也看它。 |
 | `attackSpeed` | `float` | 主手攻速基数(显示时加玩家的 4)。 |
-| `extraModifiers` | `Consumer<ItemAttributeModifiers.Builder>` | 往同一份属性修饰符里追加的(盾的被动属性,比如法术抗性)。注册时自己调 `Properties#attributes` 会被基类覆盖,所以要走这个参数。 |
 
 - **主手普通攻击**:左键就是原版普通攻击,伤害和攻速来自上面两个参数。
+- **被动属性**(比如法术抗性):注册时在 `Properties` 上调 `attributes(...)` 给,会和攻击伤害、攻速合并,排在它们后面。
 - **双手和攻击动作**交给 Better Combat(见下面的 [资源文件](#双手盾的资源文件)):主手拿着它时副手被当成空手。没装 Better Combat 时不限双手,副手照常拿东西,普通攻击是原版挥臂。
 - **盾击**:主手举盾时按左键。举着它时左键只能是盾击,这期间的普通攻击会被取消。
 - 盾击只认主手。放在副手时没有盾击:装了 Better Combat 被当成空手,没装就是一面原版盾。

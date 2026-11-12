@@ -59,7 +59,7 @@ public final class IbxRangedWeaponStats {
         return this.arrowVelocity;
     }
 
-    /** 烤好的修饰符，供物品的 {@code getDefaultAttributeModifiers} 返回。 */
+    /** 烤好的修饰符，物品基类把它写进 {@code attribute_modifiers} 组件（见 {@link IbxAttributeModifiers}）。 */
     public ItemAttributeModifiers modifiers() {
         return this.modifiers;
     }

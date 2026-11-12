@@ -29,6 +29,7 @@ This mod provides a set of item base classes. Other mods use them directly or ex
 
 - **Registration is the same for all**: `Item.Properties` must carry the item id before an item can be constructed, so register with `DeferredRegister.Items#registerItem` and use the `Properties` passed into the factory; rarity, fire resistance and so on are set on it too.
 - **Numbers go on the main hand**: the base classes bake their numbers into main-hand attribute modifiers with a "base id", so the tooltip shows them as the dark green merged line vanilla swords use (e.g. "8 Ranged Damage").
+- **Extra passive attributes are written the usual way**: attribute modifiers you give with `attributes(...)` on the `Properties` at registration are merged with the base class's own, after them, and neither replaces the other (armor is the exception: use `add` on `IbxArmorProperties`, see [7](#armor-item-properties)). Writing the same attribute, modifier id and slot twice is an error at load time. When writing your own item base class that adds modifiers, call `ibx.lib.item.general.IbxAttributeModifiers.add(properties, modifiers)` before passing `properties` to the parent; to wrap a vanilla setup that replaces all attributes, such as `sword()`, use `IbxAttributeModifiers.keeping(properties, p -> p.sword(...))`.
 - **Tags are added automatically**: items join common tags according to their base class; nothing to write in data (see [9](#9-automatic-item-tags)). 3D armor is the exception.
 - **Usable as they are**: for plain equipment just `new` the base class; extend it and override the relevant methods only when the item has its own mechanics.
 
@@ -440,7 +441,7 @@ The Wither Spawn Egg and the Ender Dragon Spawn Egg are registered in vanilla bu
 
 **What you get**:
 
-- **Durability** (required): casting wears the item by the mana actually spent, 1 durability per 4 mana (`SpellCasting.MANA_PER_DURABILITY`); it breaks when used up. Not stackable.
+- **Durability**: casting wears the item by the mana actually spent, 1 durability per 4 mana (`SpellCasting.MANA_PER_DURABILITY`); it breaks when used up. A negative durability makes it unbreakable: no durability bar, no wear from casting, and the tooltip shows vanilla's "Unbreakable". Not stackable.
 - **Spell power**: `ibx_lib:spell_power` on the main hand, modifier id `ibx_lib:base_spell_power`, shown as the dark green merged line.
 - **Movement speed while casting**: written into the vanilla `use_effects` component.
 - **Built-in spells**: given by spell id; none if omitted.
@@ -459,18 +460,18 @@ The Wither Spawn Egg and the Ender Dragon Spawn Egg are registered in vanilla bu
 | `(properties, durability, spellPower, spells)` | Baseline cast move speed. |
 | `(properties, durability, spellPower, castMoveSpeed, spells)` | All parameters. |
 
-`IbxStaffItem` has the same four (with the default attack speed) plus one with attack speed: `(properties, durability, spellPower, castMoveSpeed, attackSpeed, spells)`. To change only the attack speed, pass 0 for `castMoveSpeed`.
+`IbxStaffItem` has the same four (with the default attack speed) plus one with attack speed: `(properties, durability, spellPower, castMoveSpeed, attackSpeed, spells)`. To change only the attack speed, pass `BASELINE_CAST_MOVE_SPEED` for `castMoveSpeed`.
 
 | Parameter | Type | Description |
 | --- | --- | --- |
 | `properties` | `Item.Properties` | The one passed into the registration factory. Durability is set by the next parameter; don't set it yourself. |
-| `durability` | `int` | Durability. |
+| `durability` | `int` | Durability; negative means unbreakable. |
 | `spellPower` | `float` | Spell power (main hand). |
-| `castMoveSpeed` | `float` | Movement speed multiplier while casting, clamped to 0–1; values not above 0 use `BASELINE_CAST_MOVE_SPEED` (0.5). |
+| `castMoveSpeed` | `float` | Movement speed multiplier while casting, clamped to 0–1; 0 means standing still while casting; negative values use `BASELINE_CAST_MOVE_SPEED` (0.5). |
 | `spells` | `List<Identifier>` | Ids of the built-in spells, in spell-wheel order. Ids that can't be found are skipped, so you can name another mod's spell without depending on it. |
 | `attackSpeed` (staff only) | `float` | Main-hand attack speed base; displayed attack speed = this + 4 (the player's). Default `DEFAULT_ATTACK_SPEED` (-2.8, shown as 1.2). |
 
-When extending `IbxMagicWeaponItem` for a new kind of implement, there is also a `protected` constructor with a trailing `Consumer<ItemAttributeModifiers.Builder> extraModifiers` that appends your own modifiers to the same set (this is how the staff adds attack speed).
+When extending `IbxMagicWeaponItem` for a new kind of implement that adds its own attribute modifiers, call `IbxAttributeModifiers.add(properties, modifiers)` before passing `properties` to the parent (this is how the staff adds attack speed). In the tooltip spell power comes first, then yours, then the ones given at registration.
 
 ```java
 public static final DeferredItem<IbxTomeItem> EMBER_TOME = ITEMS.registerItem("ember_tome",
@@ -581,7 +582,7 @@ Blocking goes entirely through the vanilla `blocks_attacks` component, baked fro
 | Parameter | Type | Description |
 | --- | --- | --- |
 | `properties` | `Item.Properties` | Only set durability and repair items when registering; `blocks_attacks`, the off-hand equipment slot and the break sound are added by the base class. |
-| `blockDelay` | `float` | Seconds after raising before it blocks; values not above 0 use `BASELINE_BLOCK_DELAY` (0.25). |
+| `blockDelay` | `float` | Seconds after raising before it blocks; 0 blocks the moment it is raised; negative values use `BASELINE_BLOCK_DELAY` (0.25). |
 | `blockFactor` | `float` | Fraction blocked, 0–1; values not above 0 use `BASELINE_BLOCK_FACTOR` (1.0, blocks everything). |
 | `blockAngle` | `float` | Horizontal blocking angle: degrees to each side of straight ahead; values not above 0 use `BASELINE_BLOCK_ANGLE` (90). |
 
@@ -606,18 +607,16 @@ public static final DeferredItem<IbxOneHandedShieldItem> BUCKLER = ITEMS.registe
 
 | Constructor | Description |
 | --- | --- |
-| `(properties, attackDamage, attackSpeed)` | Vanilla blocking numbers, no extra attributes. |
-| `(properties, attackDamage, attackSpeed, extraModifiers)` | Vanilla blocking numbers. |
-| `(properties, blockDelay, blockFactor, blockAngle, attackDamage, attackSpeed)` | No extra attributes. |
-| `(properties, blockDelay, blockFactor, blockAngle, attackDamage, attackSpeed, extraModifiers)` | All parameters. |
+| `(properties, attackDamage, attackSpeed)` | Vanilla blocking numbers. |
+| `(properties, blockDelay, blockFactor, blockAngle, attackDamage, attackSpeed)` | All parameters. |
 
 | Parameter | Type | Description |
 | --- | --- | --- |
 | `attackDamage` | `float` | Damage base of the main-hand normal attack (the display adds 1 for the bare hand). Shield bash damage uses it too. |
 | `attackSpeed` | `float` | Main-hand attack speed base (the display adds the player's 4). |
-| `extraModifiers` | `Consumer<ItemAttributeModifiers.Builder>` | Modifiers appended to the same set (the shield's passive attributes, e.g. spell resistance). Calling `Properties#attributes` yourself at registration is overwritten by the base class, so use this parameter. |
 
 - **Main-hand normal attack**: left-click is the vanilla normal attack, with damage and speed from the two parameters above.
+- **Passive attributes** (e.g. spell resistance): give them with `attributes(...)` on the `Properties` at registration; they are merged with attack damage and attack speed, after them.
 - **Two-handedness and attack moves** are left to Better Combat (see [Resource files](#resource-files-for-two-handed-shields) below): with it in the main hand, the off hand is treated as empty. Without Better Combat it is not two-handed, the off hand holds items as usual, and normal attacks are the vanilla swing.
 - **Shield bash**: left-click while the shield is raised in the main hand. While it is raised, left-click can only be a shield bash; normal attacks during that time are cancelled.
 - The shield bash is main hand only. In the off hand there is no bash: with Better Combat it is treated as an empty hand, without it it is a vanilla shield.

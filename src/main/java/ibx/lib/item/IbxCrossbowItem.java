@@ -2,6 +2,7 @@ package ibx.lib.item;
 
 import ibx.lib.api.CriticalStrikeApi;
 import ibx.lib.api.RangedWeaponApi;
+import ibx.lib.item.general.IbxAttributeModifiers;
 import ibx.lib.item.general.IbxRangedWeaponItem;
 import ibx.lib.item.general.IbxRangedWeaponStats;
 import net.minecraft.core.Holder;
@@ -23,7 +24,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.ChargedProjectiles;
-import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -50,6 +50,8 @@ import java.util.function.Predicate;
  *   <li>带 {@code auto_fire} 组件时装填完毕自动松手，见 {@link RangedWeaponApi#tickAutoFire}。</li>
  *   <li>自动进 {@code #c:tools/crossbow}，加上 {@link IbxRangedWeaponItem} 的 {@code #c:tools}、{@code #c:tools/ranged_weapon}
  *       （见 {@link ibx.lib.registry.AutoItemTags}）。</li>
+ *   <li>远程伤害、装填时间写进 {@code attribute_modifiers} 组件（主手、基础 id）。注册时用 {@code Properties#attributes}
+ *       给的被动属性会和它们合并，排在后面（见 {@link IbxAttributeModifiers}）。</li>
  * </ul>
  *
  * <p>注册：26.1 起 {@link Item.Properties} 必须先带上物品 id 才能构造物品，请用
@@ -98,9 +100,13 @@ public class IbxCrossbowItem extends CrossbowItem implements IbxRangedWeaponItem
      */
     public IbxCrossbowItem(Item.Properties properties, float rangedDamage, float drawTime, float arrowVelocity,
                           Predicate<ItemStack> ammo, boolean allowFireworks) {
-        super(properties);
-        this.stats = new IbxRangedWeaponStats(rangedDamage, drawTime, arrowVelocity,
-                BASELINE_DRAW_TIME, BASELINE_ARROW_VELOCITY);
+        this(properties, new IbxRangedWeaponStats(rangedDamage, drawTime, arrowVelocity,
+                BASELINE_DRAW_TIME, BASELINE_ARROW_VELOCITY), ammo, allowFireworks);
+    }
+
+    private IbxCrossbowItem(Item.Properties properties, IbxRangedWeaponStats stats, Predicate<ItemStack> ammo, boolean allowFireworks) {
+        super(IbxAttributeModifiers.add(properties, stats.modifiers()));
+        this.stats = stats;
         this.ammo = ammo;
         this.heldAmmo = allowFireworks ? ammo.or(stack -> stack.is(Items.FIREWORK_ROCKET)) : ammo;
     }
@@ -108,11 +114,6 @@ public class IbxCrossbowItem extends CrossbowItem implements IbxRangedWeaponItem
     @Override
     public IbxRangedWeaponStats stats() {
         return this.stats;
-    }
-
-    @Override
-    public ItemAttributeModifiers getDefaultAttributeModifiers(ItemStack stack) {
-        return this.stats.modifiers();
     }
 
     @Override

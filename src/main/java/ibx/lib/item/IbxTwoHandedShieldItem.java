@@ -5,6 +5,7 @@ import ibx.lib.api.CriticalStrikeApi;
 import ibx.lib.api.ShieldApi;
 import ibx.lib.compat.CuriosCompat;
 import ibx.lib.compat.curios.CurioTriggerHandler;
+import ibx.lib.item.general.IbxAttributeModifiers;
 import ibx.lib.item.general.IbxShieldItem;
 import ibx.lib.target.Faction;
 import ibx.lib.target.TargetApi;
@@ -26,7 +27,6 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Ibx 双手盾：双手拿，主手多出普通攻击和盾击。格挡部分见 {@link IbxShieldItem}。
@@ -36,7 +36,7 @@ import java.util.function.Consumer;
  *       {@code {"parent": "ibx_lib:two_handed_shield"}}（双手 + 横扫 / 下砸两段）。主手拿着它时副手被当成空手，放在副手也当空手；
  *       没装 BC 时不限双手，副手照常拿东西、放在副手就是原版盾，普通攻击是原版挥臂。</li>
  *   <li>主手普通攻击：烤 {@code attack_damage} / {@code attack_speed} 修饰符（基础 id，tooltip 同剑的深绿行），左键就是原版普通攻击。
- *       盾的其他被动属性走构造参数 {@code extraModifiers}（注册时调 {@code Properties#attributes} 会被这里覆盖）。</li>
+ *       盾的其他被动属性注册时用 {@code Properties#attributes} 给，会和这两条合并，排在后面（见 {@link IbxAttributeModifiers}）。</li>
  *   <li>盾击：主手举盾中按左键。原版使用物品期间吞掉攻击点击，所以客户端吃掉攻击键发包（{@code client.ShieldInput}），
  *       服务端 {@link ShieldApi#tryBash} 校验后调 {@link #bash}：进独立冷却（{@link #bashCooldownTicks}，不能用物品冷却——
  *       那会让盾举不起来）、挥臂、放动作（{@link #bashAnimation}，默认 lib 的肩顶 {@code shield.bash}）、趁盾还举着结算
@@ -67,48 +67,33 @@ public class IbxTwoHandedShieldItem extends IbxShieldItem {
     private static final Identifier BASH_ANIMATION = Identifier.fromNamespaceAndPath(IbxLib.MODID, "shield.bash");
     private static final Identifier GUARD_ANIMATION = Identifier.fromNamespaceAndPath(IbxLib.MODID, "shield.guard");
 
-    /** 格挡数值全原版，没有额外属性。 */
-    public IbxTwoHandedShieldItem(Item.Properties properties, float attackDamage, float attackSpeed) {
-        this(properties, 0.0F, 0.0F, 0.0F, attackDamage, attackSpeed, modifiers -> {});
-    }
-
     /** 格挡数值全原版。 */
-    public IbxTwoHandedShieldItem(Item.Properties properties, float attackDamage, float attackSpeed,
-                                  Consumer<ItemAttributeModifiers.Builder> extraModifiers) {
-        this(properties, 0.0F, 0.0F, 0.0F, attackDamage, attackSpeed, extraModifiers);
-    }
-
-    /** 没有额外属性。 */
-    public IbxTwoHandedShieldItem(Item.Properties properties, float blockDelay, float blockFactor, float blockAngle,
-                                  float attackDamage, float attackSpeed) {
-        this(properties, blockDelay, blockFactor, blockAngle, attackDamage, attackSpeed, modifiers -> {});
+    public IbxTwoHandedShieldItem(Item.Properties properties, float attackDamage, float attackSpeed) {
+        this(properties, BASELINE_BLOCK_DELAY, BASELINE_BLOCK_FACTOR, BASELINE_BLOCK_ANGLE, attackDamage, attackSpeed);
     }
 
     /**
-     * @param properties     注册时给好耐久、修复材料的属性
-     * @param blockDelay     举盾几秒后生效；不大于 0 用原版值
-     * @param blockFactor    挡掉的比例 0~1；不大于 0 用原版值
-     * @param blockAngle     水平格挡角度；不大于 0 用原版值
-     * @param attackDamage   主手普通攻击的伤害基数
-     * @param attackSpeed    主手攻速基数
-     * @param extraModifiers 往同一份 {@code attribute_modifiers} 里追加的修饰符（盾的被动属性，比如法术抗性）
+     * @param properties   注册时给好耐久、修复材料的属性；盾的被动属性（比如法术抗性）也在这上面用 {@code attributes} 给
+     * @param blockDelay   举盾几秒后生效，0 是一举起来就能挡；负数用原版值
+     * @param blockFactor  挡掉的比例 0~1；不大于 0 用原版值
+     * @param blockAngle   水平格挡角度；不大于 0 用原版值
+     * @param attackDamage 主手普通攻击的伤害基数
+     * @param attackSpeed  主手攻速基数
      */
     public IbxTwoHandedShieldItem(Item.Properties properties, float blockDelay, float blockFactor, float blockAngle,
-                                  float attackDamage, float attackSpeed, Consumer<ItemAttributeModifiers.Builder> extraModifiers) {
-        super(properties.attributes(modifiers(attackDamage, attackSpeed, extraModifiers)), blockDelay, blockFactor, blockAngle);
+                                  float attackDamage, float attackSpeed) {
+        super(IbxAttributeModifiers.add(properties, modifiers(attackDamage, attackSpeed)), blockDelay, blockFactor, blockAngle);
     }
 
-    private static ItemAttributeModifiers modifiers(float attackDamage, float attackSpeed,
-                                                    Consumer<ItemAttributeModifiers.Builder> extraModifiers) {
-        ItemAttributeModifiers.Builder builder = ItemAttributeModifiers.builder()
+    private static ItemAttributeModifiers modifiers(float attackDamage, float attackSpeed) {
+        return ItemAttributeModifiers.builder()
                 .add(Attributes.ATTACK_DAMAGE,
                         new AttributeModifier(Item.BASE_ATTACK_DAMAGE_ID, attackDamage, AttributeModifier.Operation.ADD_VALUE),
                         EquipmentSlotGroup.MAINHAND)
                 .add(Attributes.ATTACK_SPEED,
                         new AttributeModifier(Item.BASE_ATTACK_SPEED_ID, attackSpeed, AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlotGroup.MAINHAND);
-        extraModifiers.accept(builder);
-        return builder.build();
+                        EquipmentSlotGroup.MAINHAND)
+                .build();
     }
 
     // ---------------------------------------------------------------- 盾击数值（具体某面盾重写来调）

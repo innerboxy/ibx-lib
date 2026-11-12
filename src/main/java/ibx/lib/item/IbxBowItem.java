@@ -2,6 +2,7 @@ package ibx.lib.item;
 
 import ibx.lib.api.CriticalStrikeApi;
 import ibx.lib.api.RangedWeaponApi;
+import ibx.lib.item.general.IbxAttributeModifiers;
 import ibx.lib.item.general.IbxRangedWeaponItem;
 import ibx.lib.item.general.IbxRangedWeaponStats;
 import net.minecraft.network.chat.Component;
@@ -18,7 +19,6 @@ import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
@@ -40,6 +40,8 @@ import java.util.function.Predicate;
  *   <li>带 {@code auto_fire} 组件时拉满自动射出，见 {@link RangedWeaponApi#tickAutoFire}。</li>
  *   <li>自动进 {@code #c:tools/bow}，加上 {@link IbxRangedWeaponItem} 的 {@code #c:tools}、{@code #c:tools/ranged_weapon}
  *       （见 {@link ibx.lib.registry.AutoItemTags}）。</li>
+ *   <li>远程伤害、拉弓时间写进 {@code attribute_modifiers} 组件（主手、基础 id）。注册时用 {@code Properties#attributes}
+ *       给的被动属性会和它们合并，排在后面（见 {@link IbxAttributeModifiers}）。</li>
  * </ul>
  * 需要改箭速、门槛、弹药的变种，继承后重写对应的 protected 方法即可；
  * 要在发射时结算额外代价、改这一发的伤害或给箭挂数据，重写 {@link #prepareShot}。
@@ -84,20 +86,19 @@ public class IbxBowItem extends BowItem implements IbxRangedWeaponItem {
      */
     public IbxBowItem(Item.Properties properties, float rangedDamage, float drawTime, float arrowVelocity,
                      Predicate<ItemStack> ammo) {
-        super(properties);
-        this.stats = new IbxRangedWeaponStats(rangedDamage, drawTime, arrowVelocity,
-                BASELINE_DRAW_TIME, BASELINE_ARROW_VELOCITY);
+        this(properties, new IbxRangedWeaponStats(rangedDamage, drawTime, arrowVelocity,
+                BASELINE_DRAW_TIME, BASELINE_ARROW_VELOCITY), ammo);
+    }
+
+    private IbxBowItem(Item.Properties properties, IbxRangedWeaponStats stats, Predicate<ItemStack> ammo) {
+        super(IbxAttributeModifiers.add(properties, stats.modifiers()));
+        this.stats = stats;
         this.ammo = ammo;
     }
 
     @Override
     public IbxRangedWeaponStats stats() {
         return this.stats;
-    }
-
-    @Override
-    public ItemAttributeModifiers getDefaultAttributeModifiers(ItemStack stack) {
-        return this.stats.modifiers();
     }
 
     @Override
