@@ -24,4 +24,6 @@ dependencies {
     compileOnly "maven.modrinth:jade:${jade_version}"
     // JEI（可选）：背包旁的属性面板开着时告诉 JEI 让开那块地方（书签栏）；只编译 API，开发环境运行用 tavern 里带的 JEI
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+    // InventoryHUD+（可选）：读它盔甲栏 HUD 的渲染器，算出它贴着快捷栏画的那几格，当前法术框让开；只编译
+    compileOnly "maven.modrinth:inventoryhudplus:${inventoryhudplus_version}"
 }

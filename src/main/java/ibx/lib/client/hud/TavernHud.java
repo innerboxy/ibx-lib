@@ -39,7 +39,8 @@ import java.util.Locale;
  *   <li>生命条（左）、饥饿条（右）：橙色底板上放原版图标 + 原版界面配色的条框和凹槽（2 倍精度贴图），代替原版的心形行和鸡腿行；
  *       骑着有血量的坐骑时饥饿条换成同样式的坐骑条；</li>
  *   <li>氧气不再单占一行（原版氧气泡行不画，免得把蓝条顶高），画在生命条的外框上，破泡的声音照原版补上；</li>
- *   <li>当前法术框：选中的法术画在副手栏外侧（不管副手有没有东西，位置都按副手栏在算），只在手持施法物品时画；</li>
+ *   <li>当前法术框：选中的法术画在副手栏外侧（不管副手有没有东西，位置都按副手栏在算），只在手持施法物品时画；
+ *       别的模组的 HUD 压到它时往外让开（{@link HudAvoidance}）；</li>
  *   <li>吟唱条（左）和蓝条（右），按原版的堆叠规则叠在生命条 / 饥饿条上方；</li>
  *   <li>等级数字挪到经验条正中；原版护甲图标行隐藏。</li>
  * </ul>
@@ -73,6 +74,7 @@ public final class TavernHud {
     private static final int AIR_X = 14;            // 氧气圈从底板右缘（14）往右按比例截到 88，右端两列满了才画
     private static final int AIR_W = 74;
     private static final int DROWN_FLASH_TICKS = 4; // 氧气耗尽时外框红 / 原色各停几 tick
+    private static final int SPELL_SLOT = 22;       // 当前法术框（原版副手栏的格子）的边长
 
     private static final Identifier BARS_LAYER = Identifier.fromNamespaceAndPath(IbxLib.MODID, "cast_and_mana_bars");
     private static final Identifier LEVEL_LAYER = Identifier.fromNamespaceAndPath(IbxLib.MODID, "experience_level_on_bar");
@@ -396,6 +398,7 @@ public final class TavernHud {
     /**
      * 选中的法术画在副手栏外侧，框用原版副手栏的贴图，图标带冷却遮罩、法力不足变灰。
      * 位置按"副手栏在"算，副手空着时那一格空着，拿起 / 放下东西时法术框不跳；左手习惯时副手栏在右边，法术框跟着到右边外侧。
+     * 别的模组在这儿画了东西时（{@link HudAvoidance}，如 InventoryHUD+ 的箭数格）再往外让开一点；它那格随手里的东西变时，法术框跟着动。
      * 只在手持施法物品（{@code #can_cast_spell}，任一只手）时画；旁观、隐藏 GUI、身上没有法术时不画。
      */
     private static void renderSelectedSpell(GuiGraphicsExtractor graphics) {
@@ -411,12 +414,14 @@ public final class TavernHud {
             return;
         }
         int cx = graphics.guiWidth() / 2;
+        int bottom = graphics.guiHeight();
         boolean offhandLeft = player.getMainArm() == HumanoidArm.RIGHT;
-        // 原版副手栏贴图 29×24：格子 22 宽，另 7 像素是和快捷栏之间的空隙（左副手栏空隙在右，右副手栏在左）
-        int x = offhandLeft ? cx - 91 - 29 - 29 : cx + 91 + 29;
-        blit(graphics, offhandLeft ? OFFHAND_LEFT : OFFHAND_RIGHT, x, graphics.guiHeight() - 23, 29, 24);
-        SpellIcons.draw(graphics, player, entry.value(), x + (offhandLeft ? 3 : 10), graphics.guiHeight() - 19,
-                ManaApi.canAfford(player, entry.value().manaCost()));
+        // 原版副手栏贴图 29×24：格子 22×22（贴图里 y 1 ~ 23），另 7 像素是和快捷栏之间的空隙（左副手栏空隙在右，右副手栏在左）
+        int slotX = offhandLeft ? cx - 91 - 29 - 29 : cx + 91 + 29 + 7;
+        // 别的模组画在这儿的东西（InventoryHUD+ 的箭数格之类）压到格子时，往外（离开快捷栏的方向）让开
+        slotX = HudAvoidance.pushOut(player, graphics.guiWidth(), bottom, slotX, bottom - 22, SPELL_SLOT, SPELL_SLOT, offhandLeft);
+        blit(graphics, offhandLeft ? OFFHAND_LEFT : OFFHAND_RIGHT, offhandLeft ? slotX : slotX - 7, bottom - 23, 29, 24);
+        SpellIcons.draw(graphics, player, entry.value(), slotX + 3, bottom - 19, ManaApi.canAfford(player, entry.value().manaCost()));
     }
 
     /** ≥ 1000 写成 2.0k，≥ 1 000 000 写成 1.2M；整数写整数，有小数保留一位。 */

@@ -16,6 +16,7 @@ import ibx.lib.client.spell.SpellWheel;
 import ibx.lib.client.target.TargetIndicatorRendering;
 import ibx.lib.client.target.TargetModeSync;
 import ibx.lib.compat.CuriosCompat;
+import ibx.lib.compat.InventoryHudCompat;
 import ibx.lib.compat.JadeCompat;
 import ibx.lib.compat.PlayerAnimCompat;
 import ibx.lib.compat.curios.ElytraCurioRendering;
@@ -96,6 +97,8 @@ public final class IbxLibClient {
         NeoForge.EVENT_BUS.addListener(ShieldInput::onClientTick);
         // Jade（装了才有）：首次进世界关掉它的「显示Boss」；提示框里的魔抗由 Jade 插件 IbxJadePlugin 自己注册
         JadeCompat.register();
+        // InventoryHUD+（装了才有）：当前法术框让开它贴着快捷栏画的盔甲栏 HUD（箭数那一格正好压在法术框上）
+        InventoryHudCompat.register();
         // 背包左边的属性面板（人物框左下角的卷轴按钮开关）和它的设置界面
         AttributePanel.register(modEventBus);
         // 创造栏子栏：选中的创造栏建了子栏（CreativeSubTabs）时，创造模式背包左边一列分组图标

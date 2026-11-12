@@ -83,3 +83,11 @@ TODO: mod description.
     versionRange="*"
     ordering="NONE"
     side="CLIENT"
+
+# InventoryHUD+ 非强制依赖:装了就让当前法术框避开它贴着快捷栏画的盔甲栏 HUD(箭数、背包空格数那几格)。
+[[dependencies."${mod_id}"]]
+    modId="inventoryhud"
+    type="optional"
+    versionRange="*"
+    ordering="NONE"
+    side="CLIENT"
