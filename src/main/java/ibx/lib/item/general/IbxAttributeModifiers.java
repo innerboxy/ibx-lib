@@ -1,9 +1,5 @@
 package ibx.lib.item.general;
 
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponentInitializers;
-import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
@@ -11,7 +7,6 @@ import net.minecraft.world.item.component.ItemAttributeModifiers;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.UnaryOperator;
 
 /**
@@ -51,9 +46,9 @@ public final class IbxAttributeModifiers {
     public static Item.Properties keeping(Item.Properties properties, UnaryOperator<Item.Properties> writer) {
         // 组件要到注册表加载时才真正写，这里只是往初始化步骤里插两步：writer 之前记下已有的，之后合并
         ItemAttributeModifiers[] before = new ItemAttributeModifiers[1];
-        Item.Properties written = writer.apply(step(properties,
-                (components, key) -> before[0] = components.get(DataComponents.ATTRIBUTE_MODIFIERS)));
-        return step(written, (components, key) -> {
+        Item.Properties written = writer.apply(IbxItemComponents.then(properties,
+                (components, context, key) -> before[0] = components.get(DataComponents.ATTRIBUTE_MODIFIERS)));
+        return IbxItemComponents.then(written, (components, context, key) -> {
             ItemAttributeModifiers kept = before[0];
             ItemAttributeModifiers own = components.get(DataComponents.ATTRIBUTE_MODIFIERS);
             if (kept == null || kept.modifiers().isEmpty() || kept == own) {
@@ -81,24 +76,5 @@ public final class IbxAttributeModifiers {
     private static boolean sameModifier(ItemAttributeModifiers.Entry a, ItemAttributeModifiers.Entry b) {
         return a.slot() == b.slot() && a.modifier().id().equals(b.modifier().id())
                 && a.attribute().unwrapKey().equals(b.attribute().unwrapKey());
-    }
-
-    /**
-     * 往 properties 的组件初始化步骤末尾接一步，这一步能读到前面已经写进去的组件。
-     * {@link Item.Properties} 对外只有「写一个组件」的入口，这里借 {@code delayedComponent}：它拿
-     * {@link DataComponentInitializers.SingleComponentInitializer#asInitializer} 的返回值当步骤，重写它就能接上任意一步。
-     */
-    private static Item.Properties step(Item.Properties properties, BiConsumer<DataComponentMap.Builder, ResourceKey<?>> action) {
-        return properties.delayedComponent(DataComponents.ATTRIBUTE_MODIFIERS, new DataComponentInitializers.SingleComponentInitializer<>() {
-            @Override
-            public ItemAttributeModifiers create(HolderLookup.Provider context) {
-                throw new IllegalStateException("IbxAttributeModifiers step was run as a plain component initializer");
-            }
-
-            @Override
-            public <T> DataComponentInitializers.Initializer<T> asInitializer(DataComponentType<ItemAttributeModifiers> type) {
-                return (components, context, key) -> action.accept(components, key);
-            }
-        });
     }
 }

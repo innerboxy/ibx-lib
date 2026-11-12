@@ -3,10 +3,11 @@ package ibx.lib.item;
 import ibx.lib.IbxLib;
 import ibx.lib.api.CriticalStrikeApi;
 import ibx.lib.api.ShieldApi;
+import ibx.lib.compat.BetterCombatCompat;
 import ibx.lib.compat.CuriosCompat;
 import ibx.lib.compat.curios.CurioTriggerHandler;
 import ibx.lib.item.general.IbxAttributeModifiers;
-import ibx.lib.item.general.IbxShieldItem;
+import ibx.lib.item.general.IbxAbstractShieldItem;
 import ibx.lib.target.Faction;
 import ibx.lib.target.TargetApi;
 import net.minecraft.resources.Identifier;
@@ -29,11 +30,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Ibx 双手盾：双手拿，主手多出普通攻击和盾击。格挡部分见 {@link IbxShieldItem}。
+ * Ibx 双手盾：双手拿，主手多出普通攻击和盾击。格挡部分见 {@link IbxAbstractShieldItem}。
  *
  * <ul>
- *   <li>双手和普通攻击的动作都交给 Better Combat：每面双手盾的 {@code weapon_attributes} 写
- *       {@code {"parent": "ibx_lib:two_handed_shield"}}（双手 + 横扫 / 下砸两段）。主手拿着它时副手被当成空手，放在副手也当空手；
+ *   <li>双手和普通攻击的动作都交给 Better Combat：默认用 lib 的预设 {@code ibx_lib:two_handed_shield}（{@link #PRESET}，双手 + 横扫 / 下砸两段），
+ *       写成物品的默认组件，不用每面盾再写 {@code weapon_attributes} 文件；想换，在传进来的 Properties 上先调一次
+ *       {@link BetterCombatCompat#preset}。主手拿着它时副手被当成空手，放在副手也当空手；
  *       没装 BC 时不限双手，副手照常拿东西、放在副手就是原版盾，普通攻击是原版挥臂。</li>
  *   <li>主手普通攻击：烤 {@code attack_damage} / {@code attack_speed} 修饰符（基础 id，tooltip 同剑的深绿行），左键就是原版普通攻击。
  *       盾的其他被动属性注册时用 {@code Properties#attributes} 给，会和这两条合并，排在后面（见 {@link IbxAttributeModifiers}）。</li>
@@ -52,7 +54,7 @@ import java.util.List;
  *       物品栏里的这面盾举着时也走举盾分支，缺了 {@code gui} 显示图标就会变。</li>
  * </ul>
  */
-public class IbxTwoHandedShieldItem extends IbxShieldItem {
+public class IbxTwoHandedShieldItem extends IbxAbstractShieldItem {
     /** 盾击冷却 tick（独立计时），{@link #bashCooldownTicks} 的默认值。 */
     public static final int BASH_COOLDOWN_TICKS = 60;
     /** 盾击后盾失效 tick，{@link #bashDisableTicks} 的默认值。 */
@@ -63,6 +65,9 @@ public class IbxTwoHandedShieldItem extends IbxShieldItem {
     public static final float BASH_HALF_ANGLE = 45.0F;
     /** 盾击击退：受伤本身的击退之外再推这么多，{@link #bashKnockback} 的默认值。 */
     public static final float BASH_KNOCKBACK = 0.6F;
+
+    /** 普通攻击动作的默认预设：lib 的 {@code data/ibx_lib/weapon_attributes/two_handed_shield.json}。 */
+    public static final Identifier PRESET = Identifier.fromNamespaceAndPath(IbxLib.MODID, "two_handed_shield");
 
     private static final Identifier BASH_ANIMATION = Identifier.fromNamespaceAndPath(IbxLib.MODID, "shield.bash");
     private static final Identifier GUARD_ANIMATION = Identifier.fromNamespaceAndPath(IbxLib.MODID, "shield.guard");
@@ -82,7 +87,8 @@ public class IbxTwoHandedShieldItem extends IbxShieldItem {
      */
     public IbxTwoHandedShieldItem(Item.Properties properties, float blockDelay, float blockFactor, float blockAngle,
                                   float attackDamage, float attackSpeed) {
-        super(IbxAttributeModifiers.add(properties, modifiers(attackDamage, attackSpeed)), blockDelay, blockFactor, blockAngle);
+        super(BetterCombatCompat.preset(IbxAttributeModifiers.add(properties, modifiers(attackDamage, attackSpeed)), PRESET),
+                blockDelay, blockFactor, blockAngle);
     }
 
     private static ItemAttributeModifiers modifiers(float attackDamage, float attackSpeed) {

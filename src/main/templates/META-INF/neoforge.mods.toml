@@ -76,6 +76,15 @@ TODO: mod description.
     ordering="AFTER"
     side="BOTH"
 
+# Better Combat 非强制依赖:装了,近战武器和法杖按种类自带它的攻击动作预设(写在物品的 bettercombat:preset_id 组件里),
+# 双手盾的普通攻击用 data/ibx_lib/weapon_attributes 里的预设。不引用它的类,没装本模组照常加载(左键是原版挥臂)。
+[[dependencies."${mod_id}"]]
+    modId="bettercombat"
+    type="optional"
+    versionRange="[3.2.2,)"
+    ordering="NONE"
+    side="BOTH"
+
 # Jade 非强制依赖:装了就首次进世界关掉它的「显示Boss」,提示框里在护甲后面显示魔抗。
 [[dependencies."${mod_id}"]]
     modId="jade"

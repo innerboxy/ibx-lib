@@ -1,14 +1,14 @@
 package ibx.lib.item;
 
-import ibx.lib.item.general.IbxShieldItem;
+import ibx.lib.item.general.IbxAbstractShieldItem;
 import net.minecraft.world.item.Item;
 
 /**
- * Ibx 单手盾：只挡，主手副手都同原版盾（没有普通攻击和盾击），能和单手武器一起拿。格挡数值见 {@link IbxShieldItem}。
+ * Ibx 盾牌（单手盾）：只挡，主手副手都同原版盾（没有普通攻击和盾击），能和单手武器一起拿；双手盾见 {@link IbxTwoHandedShieldItem}。格挡数值见 {@link IbxAbstractShieldItem}。
  */
-public class IbxOneHandedShieldItem extends IbxShieldItem {
+public class IbxShieldItem extends IbxAbstractShieldItem {
     /** 格挡数值全原版。 */
-    public IbxOneHandedShieldItem(Item.Properties properties) {
+    public IbxShieldItem(Item.Properties properties) {
         this(properties, BASELINE_BLOCK_DELAY, BASELINE_BLOCK_FACTOR, BASELINE_BLOCK_ANGLE);
     }
 
@@ -18,7 +18,7 @@ public class IbxOneHandedShieldItem extends IbxShieldItem {
      * @param blockFactor 挡掉的比例 0~1；不大于 0 用原版值
      * @param blockAngle  水平格挡角度；不大于 0 用原版值
      */
-    public IbxOneHandedShieldItem(Item.Properties properties, float blockDelay, float blockFactor, float blockAngle) {
+    public IbxShieldItem(Item.Properties properties, float blockDelay, float blockFactor, float blockAngle) {
         super(properties, blockDelay, blockFactor, blockAngle);
     }
 }

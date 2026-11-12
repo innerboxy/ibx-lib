@@ -12,13 +12,13 @@ This mod provides a set of item base classes. Other mods use them directly or ex
 
 | What you want to make | Class to use | See |
 | --- | --- | --- |
-| A melee weapon (sword, dagger, cutlass, etc.) | `ibx.lib.item.general.IbxMeleeWeaponItem` | [2](#2-melee-weapons) |
+| A melee weapon (sword, dagger, cutlass, claymore, axe, spear...) | one of the kind classes in `ibx.lib.item`, such as `IbxSwordItem`, `IbxAxeItem` | [2](#2-melee-weapons) |
 | A bow | `ibx.lib.item.IbxBowItem` | [3](#3-ranged-weapons) |
 | A crossbow | `ibx.lib.item.IbxCrossbowItem` | [3](#3-ranged-weapons) |
 | A tome | `ibx.lib.item.IbxTomeItem` | [5](#5-magic-implements) |
 | A staff | `ibx.lib.item.IbxStaffItem` | [5](#5-magic-implements) |
 | Another kind of magic implement | extend `ibx.lib.item.general.IbxMagicWeaponItem` | [5](#5-magic-implements) |
-| A one-handed shield (blocks only) | `ibx.lib.item.IbxOneHandedShieldItem` | [6](#6-shields) |
+| A plain shield (one-handed, blocks only) | `ibx.lib.item.IbxShieldItem` | [6](#6-shields) |
 | A two-handed shield (normal attacks and shield bash) | `ibx.lib.item.IbxTwoHandedShieldItem` | [6](#6-shields) |
 | 3D armor (worn look drawn by GeckoLib) | `ibx.lib.item.IbxGeoArmorItem` | [7](#7-3d-armor) |
 | Armor material with spell resistance | `ibx.lib.item.general.IbxArmorMaterial` | [7](#armor-material) |
@@ -30,6 +30,7 @@ This mod provides a set of item base classes. Other mods use them directly or ex
 - **Registration is the same for all**: `Item.Properties` must carry the item id before an item can be constructed, so register with `DeferredRegister.Items#registerItem` and use the `Properties` passed into the factory; rarity, fire resistance and so on are set on it too.
 - **Numbers go on the main hand**: the base classes bake their numbers into main-hand attribute modifiers with a "base id", so the tooltip shows them as the dark green merged line vanilla swords use (e.g. "8 Ranged Damage").
 - **Extra passive attributes are written the usual way**: attribute modifiers you give with `attributes(...)` on the `Properties` at registration are merged with the base class's own, after them, and neither replaces the other (armor is the exception: use `add` on `IbxArmorProperties`, see [7](#armor-item-properties)). Writing the same attribute, modifier id and slot twice is an error at load time. When writing your own item base class that adds modifiers, call `ibx.lib.item.general.IbxAttributeModifiers.add(properties, modifiers)` before passing `properties` to the parent; to wrap a vanilla setup that replaces all attributes, such as `sword()`, use `IbxAttributeModifiers.keeping(properties, p -> p.sword(...))`.
+- **Left-click moves come with the class**: with Better Combat installed, melee weapons, staves and two-handed shields bring their attack moves by kind; no `weapon_attributes` file to write (see [2](#hand-models-and-left-click-moves)).
 - **Tags are added automatically**: items join common tags according to their base class; nothing to write in data (see [9](#9-automatic-item-tags)). 3D armor is the exception.
 - **Usable as they are**: for plain equipment just `new` the base class; extend it and override the relevant methods only when the item has its own mechanics.
 
@@ -44,39 +45,77 @@ Not covered here:
 
 ## 2. Melee weapons
 
-`ibx.lib.item.general.IbxMeleeWeaponItem`: the base class for melee weapons, registered like a vanilla sword (`Properties#sword`). Plain weapons use it directly; weapons with their own mechanics (bonus damage on hit, special actions) extend it and put them in the subclass.
+Melee weapons are split into one class per kind, all in the `ibx.lib.item` package and all extending `ibx.lib.item.general.IbxMeleeWeaponItem` (abstract, not usable directly). Plain weapons use the kind class directly; weapons with their own mechanics (bonus damage on hit, special actions) extend the kind class and put them in the subclass.
 
-**What you get**:
+| Class | Kind | Vanilla rules | Left-click moves (Better Combat preset) | Kind tag |
+| --- | --- | --- | --- | --- |
+| `IbxSwordItem` | Sword | Sword | `bettercombat:sword`: one-handed, left and right slashes, a stab | `#c:tools/sword` |
+| `IbxDaggerItem` | Dagger | Sword | `bettercombat:dagger`: one-handed, range -0.5; an extra two-handed stab when dual-wielding two | `#c:tools/dagger` |
+| `IbxCutlassItem` | Cutlass | Sword | `bettercombat:cutlass`: one-handed, left and right slashes, range -0.25 | `#c:tools/cutlass` |
+| `IbxClaymoreItem` | Claymore | Sword | `bettercombat:claymore`: two-handed, slash, stab, slam | `#c:tools/claymore` |
+| `IbxScytheItem` | Scythe | Sword | `bettercombat:scythe`: two-handed, left and right sweeps, range +0.5 | `#c:tools/scythe` |
+| `IbxFistItem` | Fist weapon | Sword | `bettercombat:fist`: one-handed, punch, range -0.75 | `#c:tools/fist` |
+| `IbxHammerItem` | Hammer | Sword, and disables shields | `bettercombat:hammer`: two-handed, slam | `#c:tools/hammer` |
+| `IbxAxeItem` | Axe | Axe | `bettercombat:axe`: one-handed, left and right slashes | `#c:tools/axe` |
+| `IbxDoubleAxeItem` | Double axe (a subclass of the axe) | Axe | `bettercombat:double_axe`: two-handed, slash, spin | `#c:tools/axe`, `#c:tools/double_axe` |
+| `IbxSpearItem` | Spear | Spear | `bettercombat:spear`: two-handed, stab, range +1 | `#c:tools/spear` |
 
-- The material gives durability, repair items and enchantability.
-- Like a vanilla sword: cuts cobwebs quickly, loses 1 durability per attack.
-- Attack damage and attack speed on the main hand, with the vanilla base ids, shown as the dark green merged line.
-- Automatically in `#c:tools` and `#c:tools/melee_weapon`.
+The three sets of vanilla rules:
 
-**Constructor** `IbxMeleeWeaponItem(properties, material, attackDamage, attackSpeed)`:
+- **Sword** (`Properties#sword`): cuts cobwebs and bamboo fast; loses 1 durability per attack; cannot disable shields.
+- **Axe** (`Properties#axe`): mines axe blocks at the material's speed, and blocks above its tier drop nothing; loses 2 durability per attack and 1 per block mined; a hit on someone raising a shield disables it for 5 seconds. Right-clicking a block works like the vanilla axe: it tries stripping, scraping and waxing off in that order and loses 1 durability on success; it does nothing while the off hand holds something that can block and you are not sneaking, so the right-click raises the shield instead.
+- **Spear** (`Properties#spear`): left-click stabs and can hit several targets in a line, with a longer reach than a sword, and only once the attack bar is full; holding right-click charges, with damage from the relative speed of the wielder and the target, and when fast enough it also knocks back and dismounts riders. Attack damage is only the material's bonus with no damage base, and attack speed comes from how long one stab takes.
+
+The hammer changes one thing on top of the sword rules: a hit on someone raising a shield disables it for `IbxHammerItem.DISABLE_BLOCKING_SECONDS` (5) seconds, like the vanilla axe.
+
+Every kind: the material gives durability, repair items and enchantability; attack damage and attack speed go on the main hand with vanilla's base ids, shown as the dark green merged line in the tooltip; automatically in `#c:tools`, `#c:tools/melee_weapon` and the kind tag above.
+
+> Items are not added to vanilla's `#minecraft:swords`, `#minecraft:axes` or `#minecraft:spears` automatically.
+
+### Constructor parameters
+
+Every kind except the spear takes `(properties, material, attackDamage, attackSpeed)`:
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| `properties` | `Item.Properties` | The one passed into the registration factory. Durability comes from the material; don't set it yourself. |
-| `material` | `ToolMaterial` | Durability, repair items, enchantability; its damage bonus is added to the attack damage. |
-| `attackDamage` | `float` | Damage base. Displayed attack damage = this + material bonus + 1 (bare hand). |
-| `attackSpeed` | `float` | Attack speed base. Displayed attack speed = this + 4 (the player's). |
+| `properties` | `Item.Properties` | The one passed into the registration factory. Durability comes from the material; no need to set it. |
+| `material` | `ToolMaterial` | Durability, repair items, enchantability; its bonus is added to attack damage. The axe also uses its mining speed and tier. |
+| `attackDamage` | `float` | Damage base. Displayed attack damage = this + material bonus + 1 for the bare hand. |
+| `attackSpeed` | `float` | Attack speed base. Displayed attack speed = this + the player's 4. |
 
-The class has no hooks of its own; to add mechanics, override `Item` methods.
+The spear's parameters match vanilla's `Properties#spear`; all times are in seconds:
+
+| Constructor | Description |
+| --- | --- |
+| `IbxSpearItem(properties, material)` | The other nine numbers are the vanilla iron spear's (the `BASELINE_*` constants). |
+| `IbxSpearItem(properties, material, attackDuration, damageMultiplier, delay, dismountTime, dismountThreshold, knockbackTime, knockbackThreshold, damageTime, damageThreshold)` | All parameters. |
+
+| Parameter | Description |
+| --- | --- |
+| `attackDuration` | How long one left-click stab takes. Attack speed = 1 ÷ this, and the stab animation plays for this long. |
+| `damageMultiplier` | Damage multiplier of the charge: damage = the wielder's base attack damage (1 for a player) + relative speed × this (rounded down). |
+| `delay` | How long right-click must be held before the charge takes effect. |
+| `dismountTime` / `dismountThreshold` | For this long after it takes effect, the charge dismounts riders while the wielder's speed is at least the threshold. |
+| `knockbackTime` / `knockbackThreshold` | For this long after it takes effect, the charge knocks back while the wielder's speed is at least the threshold. |
+| `damageTime` / `damageThreshold` | For this long after it takes effect, the charge deals damage while the relative speed is at least the threshold; after that this charge is over. |
+
+The kind classes have no hooks of their own (apart from the axe's right-click); to add mechanics, override `Item` methods.
 
 ```java
 public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems("examplemod");
 
-// shows 4 attack damage (1 + 2 from iron + 1 bare hand) and 2 attack speed
-public static final DeferredItem<IbxMeleeWeaponItem> IRON_DIRK = ITEMS.registerItem("iron_dirk",
-        p -> new IbxMeleeWeaponItem(p, ToolMaterial.IRON, 1.0F, -2.0F));
-```
+// shows 4 attack damage (1 + iron's 2 + bare hand 1), 2 attack speed
+public static final DeferredItem<IbxDaggerItem> IRON_DIRK = ITEMS.registerItem("iron_dirk",
+        p -> new IbxDaggerItem(p, ToolMaterial.IRON, 1.0F, -2.0F));
 
-> Items are not added to `#minecraft:swords` or any `#minecraft:enchantable/...` tag automatically. For enchantments such as Sharpness, add the item to the relevant tags in your own data.
+// the vanilla iron spear's numbers
+public static final DeferredItem<IbxSpearItem> IRON_PIKE = ITEMS.registerItem("iron_pike",
+        p -> new IbxSpearItem(p, ToolMaterial.IRON));
+```
 
 ### Hand models and left-click moves
 
-The in-hand display and the left-click moves depend on the kind of weapon and are given in resources, not in the item class. This mod ships two generic hand models. Both have `minecraft:item/handheld` as parent and only change the first- and third-person display for both hands; the texture goes in `layer0`:
+The in-hand display depends on the kind of weapon and is given in resources, not in the item class. This mod ships two generic hand models. Both have `minecraft:item/handheld` as parent and only change the first- and third-person display for both hands; the texture goes in `layer0`:
 
 | Model | For |
 | --- | --- |
@@ -94,13 +133,32 @@ The in-hand display and the left-click moves depend on the kind of weapon and ar
 }
 ```
 
-Left-click moves are left to Better Combat (this mod does not depend on it; without it you get the vanilla swing): name a preset in `data/<namespace>/weapon_attributes/<item>.json`, for a dagger:
+**Left-click moves** are left to Better Combat (this mod does not depend on it or reference its classes; without it you get the vanilla swing). With it installed, the kind classes write the preset from the table above into the item's default component `bettercombat:preset_id`, so no weapon needs its own `weapon_attributes` file; a `data/<namespace>/weapon_attributes/<item>.json` keyed by the item id no longer applies either.
 
-```json
-{
-  "parent": "bettercombat:dagger"
+To change the moves, call `ibx.lib.compat.BetterCombatCompat.preset(properties, preset id)` once on the `Properties` passed in at registration; the kind then no longer sets its default:
+
+```java
+// sword rules, katana moves
+public static final DeferredItem<IbxSwordItem> IRON_KATANA = ITEMS.registerItem("iron_katana",
+        p -> new IbxSwordItem(BetterCombatCompat.preset(p, BetterCombatCompat.builtin("katana")), ToolMaterial.IRON, 3.0F, -2.4F));
+```
+
+`BetterCombatCompat.builtin(name)` gives the id of a preset Better Combat ships; a preset file you write yourself, `data/examplemod/weapon_attributes/my_blade.json`, has the id `examplemod:my_blade`.
+
+### Making a new kind
+
+Extend `IbxMeleeWeaponItem` and hand it two things in the constructor: the rules this kind of weapon is set up with (`setup`) and its default left-click moves (`preset`).
+
+```java
+public class RapierItem extends IbxMeleeWeaponItem {
+    public RapierItem(Item.Properties properties, ToolMaterial material, float attackDamage, float attackSpeed) {
+        super(properties, p -> p.sword(material, attackDamage, attackSpeed), BetterCombatCompat.builtin("rapier"));
+    }
 }
 ```
+
+- `setup` uses vanilla's `sword` / `axe` / `spear` and can change more components after that (the hammer replaces the `weapon` component after `sword` with one that disables shields). Passive attributes given at registration are merged with what `setup` writes by the base class.
+- With a `null` `preset` no preset is set, and Better Combat picks the moves from the item id by itself (it recognises ids containing words such as `sword`, `axe` and `spear`).
 
 ---
 
@@ -562,17 +620,17 @@ In the item model definition, switch between closed and open with the condition 
 
 This mod ships no staff model. The staff cast animations (right hand raised, staff tilted forward) assume this grip: the hand model runs along +Y, the grip point is at the model's center, and the third-person display has no rotation, i.e. the staff is perpendicular to the arm. Set up a new staff's hand model with this grip and the bundled animations work as they are.
 
-A staff carries a main-hand attack speed modifier; when it is used in melee (for instance with a Better Combat `weapon_attributes` file), that is what sets the swing speed.
+A staff carries a main-hand attack speed modifier; when it is used in melee, that is what sets the swing speed. With Better Combat installed a staff uses `bettercombat:wand` by default (one-handed stab, constant `IbxStaffItem.PRESET`), written into the item's default components, so no `weapon_attributes` file is needed; change it as for melee weapons (see [2](#hand-models-and-left-click-moves)).
 
 ---
 
 ## 6. Shields
 
-The base class `ibx.lib.item.general.IbxShieldItem` (abstract) handles blocking; subclasses are split by one- or two-handed:
+The base class `ibx.lib.item.general.IbxAbstractShieldItem` (abstract) handles blocking; subclasses are split by one- or two-handed:
 
 | Class | Description |
 | --- | --- |
-| `ibx.lib.item.IbxOneHandedShieldItem` | One-handed shield: blocks only, works like a vanilla shield in either hand, and can be held together with a one-handed weapon. |
+| `ibx.lib.item.IbxShieldItem` | Plain (one-handed) shield: blocks only, works like a vanilla shield in either hand, and can be held together with a one-handed weapon. |
 | `ibx.lib.item.IbxTwoHandedShieldItem` | Two-handed shield: in the main hand it can also attack normally and shield bash. |
 
 ### Blocking
@@ -594,13 +652,13 @@ Blocking goes entirely through the vanilla `blocks_attacks` component, baked fro
 
 | Constructor | Description |
 | --- | --- |
-| `IbxOneHandedShieldItem(properties)` | All blocking numbers are the vanilla shield's. |
-| `IbxOneHandedShieldItem(properties, blockDelay, blockFactor, blockAngle)` | Custom blocking numbers. |
+| `IbxShieldItem(properties)` | All blocking numbers are the vanilla shield's. |
+| `IbxShieldItem(properties, blockDelay, blockFactor, blockAngle)` | Custom blocking numbers. |
 
 ```java
 // quick to raise, but blocks only 60%, within 60° to each side
-public static final DeferredItem<IbxOneHandedShieldItem> BUCKLER = ITEMS.registerItem("buckler",
-        p -> new IbxOneHandedShieldItem(p.durability(250).repairable(ItemTags.IRON_TOOL_MATERIALS), 0.1F, 0.6F, 60.0F));
+public static final DeferredItem<IbxShieldItem> BUCKLER = ITEMS.registerItem("buckler",
+        p -> new IbxShieldItem(p.durability(250).repairable(ItemTags.IRON_TOOL_MATERIALS), 0.1F, 0.6F, 60.0F));
 ```
 
 ### Two-handed shield
@@ -661,12 +719,8 @@ Resolution:
 
 ```java
 public class TowerShieldItem extends IbxTwoHandedShieldItem {
-    private static final Identifier RESISTANCE_ID = Identifier.fromNamespaceAndPath("examplemod", "tower_shield_resistance");
-
     public TowerShieldItem(Item.Properties properties) {
-        super(properties, 5.0F, -3.0F, modifiers -> modifiers.add(AttributeRegistry.SPELL_RESISTANCE,
-                new AttributeModifier(RESISTANCE_ID, 4.0, AttributeModifier.Operation.ADD_VALUE),
-                EquipmentSlotGroup.MAINHAND));
+        super(properties, 5.0F, -3.0F);
     }
 
     @Override
@@ -681,8 +735,14 @@ public class TowerShieldItem extends IbxTwoHandedShieldItem {
     }
 }
 
+private static final Identifier TOWER_SHIELD_RESISTANCE = Identifier.fromNamespaceAndPath("examplemod", "tower_shield_resistance");
+
 public static final DeferredItem<TowerShieldItem> TOWER_SHIELD = ITEMS.registerItem("tower_shield",
-        p -> new TowerShieldItem(p.durability(600).repairable(ItemTags.IRON_TOOL_MATERIALS)));
+        p -> new TowerShieldItem(p.durability(600).repairable(ItemTags.IRON_TOOL_MATERIALS)
+                .attributes(ItemAttributeModifiers.builder()
+                        .add(AttributeRegistry.SPELL_RESISTANCE, new AttributeModifier(TOWER_SHIELD_RESISTANCE, 4.0, AttributeModifier.Operation.ADD_VALUE),
+                                EquipmentSlotGroup.MAINHAND)
+                        .build())));
 ```
 
 ### ShieldApi, ShieldBash and ShieldBashEvent
@@ -713,13 +773,7 @@ This mod's `assets/ibx_lib/player_animations/shield_attack.json` has five: `shie
 
 ### Resource files for two-handed shields
 
-**Better Combat**: this mod ships a preset, `data/ibx_lib/weapon_attributes/two_handed_shield.json`: two-handed, idle pose `ibx_lib:shield.pose`, attack range -0.5, and a two-move normal attack: a swipe (120°) and a slam (90°, damage ×1.2). Each two-handed shield references it in `data/<namespace>/weapon_attributes/<item>.json`:
-
-```json
-{
-  "parent": "ibx_lib:two_handed_shield"
-}
-```
+**Better Combat**: this mod ships a preset, `data/ibx_lib/weapon_attributes/two_handed_shield.json` (id `ibx_lib:two_handed_shield`, constant `IbxTwoHandedShieldItem.PRESET`): two-handed, idle pose `ibx_lib:shield.pose`, attack range -0.5, and a two-move normal attack: a swipe (120°) and a slam (90°, damage ×1.2). Two-handed shields use it by default, written into the item's default components, so no shield needs its own `weapon_attributes` file. To change it, call `BetterCombatCompat.preset` at registration, as for melee weapons (see [2](#hand-models-and-left-click-moves)).
 
 **In-hand display**: this mod ships two parent models that only contain display transforms (`display`); geometry and textures come from your own models:
 
@@ -1027,20 +1081,21 @@ Items registered with this mod's base classes and interfaces (subclasses include
 | Base class / interface | Tags added automatically |
 | --- | --- |
 | `IbxMeleeWeaponItem` | `#c:tools`, `#c:tools/melee_weapon` |
+| Melee kind classes | Those of `IbxMeleeWeaponItem`, plus their own kind tag (see [2](#2-melee-weapons)); `IbxDoubleAxeItem` also has the axe's |
 | `IbxRangedWeaponItem` (interface) | `#c:tools`, `#c:tools/ranged_weapon` |
 | `IbxBowItem` | Those of `IbxRangedWeaponItem`, plus `#c:tools/bow` |
 | `IbxCrossbowItem` | Those of `IbxRangedWeaponItem`, plus `#c:tools/crossbow` |
-| `IbxShieldItem` | `#c:tools`, `#c:tools/shield` |
-| `IbxOneHandedShieldItem` | Those of `IbxShieldItem`, plus `#c:tools/one_handed_shield` |
-| `IbxTwoHandedShieldItem` | Those of `IbxShieldItem`, plus `#c:tools/two_handed_shield` |
+| `IbxAbstractShieldItem` | `#c:tools`, `#c:tools/shield` |
+| `IbxShieldItem` | Those of `IbxAbstractShieldItem`, plus `#c:tools/one_handed_shield` |
+| `IbxTwoHandedShieldItem` | Those of `IbxAbstractShieldItem`, plus `#c:tools/two_handed_shield` |
 | `IbxMagicWeaponItem` | `#ibx_lib:can_cast_spell`, `#c:tools`, `#c:tools/magic_weapon` |
 | `IbxTomeItem` | Those of `IbxMagicWeaponItem`, plus `#c:tools/tome` |
 | `IbxStaffItem` | Those of `IbxMagicWeaponItem`, plus `#c:tools/staff` |
 
 - They are real tag members: synced to the client and recognised by commands, JEI and other mods.
 - The items are inserted at the front of each tag, so a data pack can take one out with `"remove"`; `"replace": true` does not remove them.
-- `#c:tools/magic_weapon`, `#c:tools/tome`, `#c:tools/staff`, `#c:tools/one_handed_shield` and `#c:tools/two_handed_shield` are common tags created by this mod. They have no data files and are filled entirely automatically.
-- The tag keys are in `ibx.lib.registry.TagRegistry`: `CAN_CAST_SPELL`, `TOOLS_MAGIC_WEAPON`, `TOOLS_TOME`, `TOOLS_STAFF`, `TOOLS_ONE_HANDED_SHIELD`, `TOOLS_TWO_HANDED_SHIELD`.
+- The ten melee kind tags, plus `#c:tools/magic_weapon`, `#c:tools/tome`, `#c:tools/staff`, `#c:tools/one_handed_shield` and `#c:tools/two_handed_shield`, are common tags created by this mod. They have no data files and are filled entirely automatically.
+- The tag keys are in `ibx.lib.registry.TagRegistry`: `CAN_CAST_SPELL`, `TOOLS_MAGIC_WEAPON`, `TOOLS_TOME`, `TOOLS_STAFF`, `TOOLS_ONE_HANDED_SHIELD`, `TOOLS_TWO_HANDED_SHIELD`, and for melee `TOOLS_SWORD`, `TOOLS_DAGGER`, `TOOLS_CUTLASS`, `TOOLS_CLAYMORE`, `TOOLS_SCYTHE`, `TOOLS_FIST`, `TOOLS_HAMMER`, `TOOLS_AXE`, `TOOLS_DOUBLE_AXE`, `TOOLS_SPEAR`.
 
 **`#ibx_lib:can_cast_spell`** (items that can cast): right-clicking with one in hand casts the selected spell, and its use duration is fixed at 72000 ticks (like a bow, so it can be held). For an item that is not an Ibx implement to cast, the mod that owns it adds it in `data/ibx_lib/tags/item/can_cast_spell.json`. Don't put items that already have a use duration, such as food and potions, in this tag, or they can never be finished.
 
@@ -1065,6 +1120,8 @@ Vanilla components the base classes use:
 | Component | Set by |
 | --- | --- |
 | `attribute_modifiers` | Every base class (the main-hand numbers); for the taken-over vanilla bow and crossbow and the adjusted vanilla armor, the default components are changed. |
-| `tool`, `weapon` | `IbxMeleeWeaponItem` (as a vanilla sword). |
-| `use_effects` | `IbxMagicWeaponItem` (movement speed while casting). |
-| `blocks_attacks`, `break_sound`, off-hand equipment slot | `IbxShieldItem`. |
+| `tool`, `weapon` | The melee kind classes (as the vanilla sword, axe and spear; the hammer replaces `weapon`). |
+| `kinetic_weapon`, `piercing_weapon`, `attack_range`, `swing_animation`, `minimum_attack_charge`, `damage_type` | `IbxSpearItem` (as the vanilla spear). |
+| `use_effects`, `unbreakable` | `IbxMagicWeaponItem` (movement speed while casting; unbreakable when durability is negative). |
+| `blocks_attacks`, `break_sound`, off-hand equipment slot | `IbxAbstractShieldItem`. |
+| `bettercombat:preset_id` (Better Combat's, only with it installed) | The melee kind classes, `IbxStaffItem`, `IbxTwoHandedShieldItem` (left-click moves). |

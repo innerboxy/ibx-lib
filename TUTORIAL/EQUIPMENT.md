@@ -12,13 +12,13 @@
 
 | 想做什么 | 用哪个类 | 见 |
 | --- | --- | --- |
-| 近战武器(剑、匕首、砍刀等) | `ibx.lib.item.general.IbxMeleeWeaponItem` | [2](#2-近战武器) |
+| 近战武器(剑、匕首、砍刀、大剑、斧、矛……) | `ibx.lib.item` 下按种类分的类,比如 `IbxSwordItem`、`IbxAxeItem` | [2](#2-近战武器) |
 | 弓 | `ibx.lib.item.IbxBowItem` | [3](#3-远程武器) |
 | 弩 | `ibx.lib.item.IbxCrossbowItem` | [3](#3-远程武器) |
 | 法典 | `ibx.lib.item.IbxTomeItem` | [5](#5-法器) |
 | 法杖 | `ibx.lib.item.IbxStaffItem` | [5](#5-法器) |
 | 别的种类的法器 | 继承 `ibx.lib.item.general.IbxMagicWeaponItem` | [5](#5-法器) |
-| 单手盾(只挡) | `ibx.lib.item.IbxOneHandedShieldItem` | [6](#6-盾牌) |
+| 普通盾(单手,只挡) | `ibx.lib.item.IbxShieldItem` | [6](#6-盾牌) |
 | 双手盾(能普通攻击和盾击) | `ibx.lib.item.IbxTwoHandedShieldItem` | [6](#6-盾牌) |
 | 3D 盔甲(穿上的样子由 GeckoLib 画) | `ibx.lib.item.IbxGeoArmorItem` | [7](#7-3d-盔甲) |
 | 带法术抗性的盔甲材质 | `ibx.lib.item.general.IbxArmorMaterial` | [7](#盔甲材质) |
@@ -30,6 +30,7 @@
 - **注册方式都一样**:`Item.Properties` 必须先带上物品 id 才能构造物品,所以用 `DeferredRegister.Items#registerItem` 注册,在工厂里使用传进来的 `Properties`;稀有度、防火等也设在它上面。
 - **数值挂在主手**:基类把数值烤成主手的属性修饰符,用「基础 id」,tooltip 显示成原版剑那样的深绿合并行(比如「8 远程伤害」)。
 - **额外的被动属性照常写**:注册时在 `Properties` 上调 `attributes(...)` 给的属性修饰符,会和基类自己的合并,排在基类的后面,不会互相顶掉(盔甲除外,用 `IbxArmorProperties` 的 `add`,见 [7](#盔甲的物品属性))。同一个属性、同一个修饰符 id、同一个槽位写了两次会在加载时报错。自己写物品基类要加修饰符时,在把 `properties` 交给父类之前调 `ibx.lib.item.general.IbxAttributeModifiers.add(properties, modifiers)`;要包住原版 `sword()` 这类整份改写属性的设置,用 `IbxAttributeModifiers.keeping(properties, p -> p.sword(...))`。
+- **左键动作自带**:近战武器、法杖、双手盾在装了 Better Combat 时按种类自带攻击动作,不用写 `weapon_attributes` 文件(见 [2](#手持模型与左键动作))。
 - **标签自动加**:物品按基类自动进通用标签,data 里不用写(见 [9](#9-自动物品标签))。3D 盔甲除外。
 - **能直接用**:普通装备直接 `new` 基类;有自己机制的再继承,重写对应的方法。
 
@@ -44,39 +45,77 @@
 
 ## 2. 近战武器
 
-`ibx.lib.item.general.IbxMeleeWeaponItem`:近战武器的基类,按原版剑注册(`Properties#sword`)。普通武器直接用它;有自己机制的(命中附加伤害、特殊操作)继承它,写在子类里。
+近战武器按种类分成几个类,都在 `ibx.lib.item` 包里,都继承 `ibx.lib.item.general.IbxMeleeWeaponItem`(抽象,不能直接用)。普通武器直接用种类类;有自己机制的(命中附加伤害、特殊操作)继承种类类,写在子类里。
 
-**自带的**:
+| 类 | 种类 | 原版规则 | 左键动作(Better Combat 预设) | 种类标签 |
+| --- | --- | --- | --- | --- |
+| `IbxSwordItem` | 剑 | 剑 | `bettercombat:sword`:单手,左右横斩、直刺 | `#c:tools/sword` |
+| `IbxDaggerItem` | 匕首 | 剑 | `bettercombat:dagger`:单手,距离 -0.5;双持两把时多一段双手刺 | `#c:tools/dagger` |
+| `IbxCutlassItem` | 砍刀 | 剑 | `bettercombat:cutlass`:单手,左右横斩,距离 -0.25 | `#c:tools/cutlass` |
+| `IbxClaymoreItem` | 大剑 | 剑 | `bettercombat:claymore`:双手,横斩、直刺、下砸 | `#c:tools/claymore` |
+| `IbxScytheItem` | 镰刀 | 剑 | `bettercombat:scythe`:双手,左右横扫,距离 +0.5 | `#c:tools/scythe` |
+| `IbxFistItem` | 拳套 | 剑 | `bettercombat:fist`:单手,出拳,距离 -0.75 | `#c:tools/fist` |
+| `IbxHammerItem` | 战锤 | 剑,另外能打掉盾 | `bettercombat:hammer`:双手,下砸 | `#c:tools/hammer` |
+| `IbxAxeItem` | 斧 | 斧 | `bettercombat:axe`:单手,左右横斩 | `#c:tools/axe` |
+| `IbxDoubleAxeItem` | 双刃斧(斧的子类) | 斧 | `bettercombat:double_axe`:双手,横斩、转身斩 | `#c:tools/axe`、`#c:tools/double_axe` |
+| `IbxSpearItem` | 矛 | 矛 | `bettercombat:spear`:双手,直刺,距离 +1 | `#c:tools/spear` |
 
-- 材料给耐久、修复材料、附魔能力。
-- 同原版剑:砍蜘蛛网快,每次攻击掉 1 点耐久。
-- 主手挂攻击伤害、攻速,用原版的基础 id,tooltip 是深绿合并行。
-- 自动进 `#c:tools`、`#c:tools/melee_weapon`。
+三套原版规则:
 
-**构造参数** `IbxMeleeWeaponItem(properties, material, attackDamage, attackSpeed)`:
+- **剑**(`Properties#sword`):砍蜘蛛网、竹子快;每次攻击掉 1 点耐久;打不掉盾。
+- **斧**(`Properties#axe`):斧类方块按材料的速度挖,等级不够的方块不掉落;每次攻击掉 2 点耐久,挖一个方块掉 1 点;打中举盾的人把盾打掉 5 秒。右键方块同原版斧:依次试剥树皮、刮铜锈、刮蜡,成了掉 1 点耐久;副手拿着能格挡的东西又没蹲下时不触发,让右键去举盾。
+- **矛**(`Properties#spear`):左键直刺,一条线上能扎到多个目标,攻击距离比剑长,攻击条转满才能打;右键按住冲刺突刺,伤害看持矛者和目标的相对速度,够快还能击退、把骑着东西的目标撞下来。攻击伤害只有材料加成、没有伤害基数,攻速由「刺一下多久」算出来。
+
+战锤在剑的规则上只改一处:打中举盾的人把盾打掉 `IbxHammerItem.DISABLE_BLOCKING_SECONDS`(5)秒,同原版斧。
+
+所有种类都:材料给耐久、修复材料、附魔能力;主手挂攻击伤害、攻速,用原版的基础 id,tooltip 是深绿合并行;自动进 `#c:tools`、`#c:tools/melee_weapon` 和上表的种类标签。
+
+> 不会自动进原版的 `#minecraft:swords`、`#minecraft:axes`、`#minecraft:spears`。
+
+### 构造参数
+
+除了矛,都是 `(properties, material, attackDamage, attackSpeed)`:
 
 | 参数 | 类型 | 说明 |
 | --- | --- | --- |
 | `properties` | `Item.Properties` | 注册工厂传进来的那个。耐久由材料给,不用自己设。 |
-| `material` | `ToolMaterial` | 耐久、修复材料、附魔能力;攻击伤害再加上它的加成。 |
+| `material` | `ToolMaterial` | 耐久、修复材料、附魔能力;攻击伤害再加上它的加成。斧还用它的挖掘速度和等级。 |
 | `attackDamage` | `float` | 伤害基数。显示的攻击伤害 = 本值 + 材料加成 + 空手的 1。 |
 | `attackSpeed` | `float` | 攻速基数。显示的攻速 = 本值 + 玩家的 4。 |
 
-这个类没有自己的钩子,要加机制就重写 `Item` 的方法。
+矛的参数同原版的 `Properties#spear`,时间都是秒:
+
+| 构造方法 | 说明 |
+| --- | --- |
+| `IbxSpearItem(properties, material)` | 其余九个数用原版铁矛的(`BASELINE_*` 常量)。 |
+| `IbxSpearItem(properties, material, attackDuration, damageMultiplier, delay, dismountTime, dismountThreshold, knockbackTime, knockbackThreshold, damageTime, damageThreshold)` | 全部参数。 |
+
+| 参数 | 说明 |
+| --- | --- |
+| `attackDuration` | 左键刺一下多久。攻速 = 1 ÷ 本值,刺的动作也放这么久。 |
+| `damageMultiplier` | 冲刺突刺的伤害倍率:伤害 = 持矛者攻击伤害的基础值(玩家是 1)+ 相对速度 × 本值(向下取整)。 |
+| `delay` | 右键按住多久之后冲刺突刺才开始生效。 |
+| `dismountTime` / `dismountThreshold` | 生效后这么久以内,持矛者的速度不低于门槛时能把骑着东西的目标撞下来。 |
+| `knockbackTime` / `knockbackThreshold` | 生效后这么久以内,持矛者的速度不低于门槛时带击退。 |
+| `damageTime` / `damageThreshold` | 生效后这么久以内,相对速度不低于门槛时有伤害;过了这次冲刺就结束。 |
+
+种类类没有自己的钩子(斧的右键除外),要加机制就重写 `Item` 的方法。
 
 ```java
 public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems("examplemod");
 
 // 显示 4 攻击伤害(1 + 铁的 2 + 空手 1)、2 攻速
-public static final DeferredItem<IbxMeleeWeaponItem> IRON_DIRK = ITEMS.registerItem("iron_dirk",
-        p -> new IbxMeleeWeaponItem(p, ToolMaterial.IRON, 1.0F, -2.0F));
-```
+public static final DeferredItem<IbxDaggerItem> IRON_DIRK = ITEMS.registerItem("iron_dirk",
+        p -> new IbxDaggerItem(p, ToolMaterial.IRON, 1.0F, -2.0F));
 
-> 不会自动进 `#minecraft:swords` 和各个 `#minecraft:enchantable/...` 标签。要能附锋利之类的魔咒,自己在 data 里把物品加进对应标签。
+// 原版铁矛的数值
+public static final DeferredItem<IbxSpearItem> IRON_PIKE = ITEMS.registerItem("iron_pike",
+        p -> new IbxSpearItem(p, ToolMaterial.IRON));
+```
 
 ### 手持模型与左键动作
 
-手持显示和左键动作按武器种类在资源里给,不在物品类里。本模组带两个通用手持模型,都以 `minecraft:item/handheld` 为父模型,只改了第一、第三人称左右手的显示,贴图填 `layer0`:
+手持显示按武器种类在资源里给,不在物品类里。本模组带两个通用手持模型,都以 `minecraft:item/handheld` 为父模型,只改了第一、第三人称左右手的显示,贴图填 `layer0`:
 
 | 模型 | 用于 |
 | --- | --- |
@@ -94,13 +133,32 @@ public static final DeferredItem<IbxMeleeWeaponItem> IRON_DIRK = ITEMS.registerI
 }
 ```
 
-左键动作交给 Better Combat(本模组不依赖它,没装就是原版挥臂):在 `data/<命名空间>/weapon_attributes/<物品名>.json` 里指定一个预设,比如匕首:
+**左键动作**交给 Better Combat(本模组不依赖它,也不引用它的类;没装就是原版挥臂)。装了时,种类类把上表的预设写进物品的默认组件 `bettercombat:preset_id`,每件武器不用再写 `weapon_attributes` 文件;按物品 id 放的 `data/<命名空间>/weapon_attributes/<物品名>.json` 这时也不再生效。
 
-```json
-{
-  "parent": "bettercombat:dagger"
+想换动作,注册时在传进来的 `Properties` 上先调一次 `ibx.lib.compat.BetterCombatCompat.preset(properties, 预设 id)`,种类就不再设默认的:
+
+```java
+// 剑的规则,太刀的动作
+public static final DeferredItem<IbxSwordItem> IRON_KATANA = ITEMS.registerItem("iron_katana",
+        p -> new IbxSwordItem(BetterCombatCompat.preset(p, BetterCombatCompat.builtin("katana")), ToolMaterial.IRON, 3.0F, -2.4F));
+```
+
+`BetterCombatCompat.builtin(名字)` 得到 Better Combat 自带的预设 id;自己写的预设文件 `data/examplemod/weapon_attributes/my_blade.json` 的 id 是 `examplemod:my_blade`。
+
+### 自己做新种类
+
+继承 `IbxMeleeWeaponItem`,构造时交给它两样:这一种武器按什么规则设置物品(`setup`),和默认的左键动作(`preset`)。
+
+```java
+public class RapierItem extends IbxMeleeWeaponItem {
+    public RapierItem(Item.Properties properties, ToolMaterial material, float attackDamage, float attackSpeed) {
+        super(properties, p -> p.sword(material, attackDamage, attackSpeed), BetterCombatCompat.builtin("rapier"));
+    }
 }
 ```
+
+- `setup` 用原版的 `sword` / `axe` / `spear`,后面还可以接着改组件(战锤就是在 `sword` 后面把 `weapon` 组件换成能打掉盾的)。注册时给的被动属性,基类会和 `setup` 写的合并。
+- `preset` 给 `null` 就不挂预设,用哪份动作由 Better Combat 按物品 id 自己认(它认得 id 里带 `sword`、`axe`、`spear` 这类词的物品)。
 
 ---
 
@@ -562,17 +620,17 @@ public static final DeferredItem<IbxStaffItem> OAK_STAFF = ITEMS.registerItem("o
 
 本模组不带法杖模型。法杖的施法动作(右手抬起、法杖向前倾)按这样的握法做:手持模型沿 +Y 方向、握点在模型中心、第三人称显示不旋转,也就是法杖和手臂垂直。新法杖的手持模型照这个握法摆,就能直接用自带的动作。
 
-法杖主手带攻速修饰符,拿去近战(比如给它写 Better Combat 的 `weapon_attributes`)时挥一下的快慢看它。
+法杖主手带攻速修饰符,拿去近战时挥一下的快慢看它。装了 Better Combat 时,法杖默认用 `bettercombat:wand`(单手直刺,常量 `IbxStaffItem.PRESET`),写在物品的默认组件里,不用写 `weapon_attributes` 文件;要换同近战武器(见 [2](#手持模型与左键动作))。
 
 ---
 
 ## 6. 盾牌
 
-基类 `ibx.lib.item.general.IbxShieldItem`(抽象)管格挡,子类按单双手分:
+基类 `ibx.lib.item.general.IbxAbstractShieldItem`(抽象)管格挡,子类按单双手分:
 
 | 类 | 说明 |
 | --- | --- |
-| `ibx.lib.item.IbxOneHandedShieldItem` | 单手盾:只挡,主手副手都同原版盾,能和单手武器一起拿。 |
+| `ibx.lib.item.IbxShieldItem` | 普通盾(单手盾):只挡,主手副手都同原版盾,能和单手武器一起拿。 |
 | `ibx.lib.item.IbxTwoHandedShieldItem` | 双手盾:主手拿着还能普通攻击和盾击。 |
 
 ### 格挡
@@ -594,13 +652,13 @@ public static final DeferredItem<IbxStaffItem> OAK_STAFF = ITEMS.registerItem("o
 
 | 构造方法 | 说明 |
 | --- | --- |
-| `IbxOneHandedShieldItem(properties)` | 格挡数值全用原版盾的。 |
-| `IbxOneHandedShieldItem(properties, blockDelay, blockFactor, blockAngle)` | 自定格挡数值。 |
+| `IbxShieldItem(properties)` | 格挡数值全用原版盾的。 |
+| `IbxShieldItem(properties, blockDelay, blockFactor, blockAngle)` | 自定格挡数值。 |
 
 ```java
 // 举得快,但只挡 60%、正面左右各 60°
-public static final DeferredItem<IbxOneHandedShieldItem> BUCKLER = ITEMS.registerItem("buckler",
-        p -> new IbxOneHandedShieldItem(p.durability(250).repairable(ItemTags.IRON_TOOL_MATERIALS), 0.1F, 0.6F, 60.0F));
+public static final DeferredItem<IbxShieldItem> BUCKLER = ITEMS.registerItem("buckler",
+        p -> new IbxShieldItem(p.durability(250).repairable(ItemTags.IRON_TOOL_MATERIALS), 0.1F, 0.6F, 60.0F));
 ```
 
 ### 双手盾
@@ -661,12 +719,8 @@ public static final DeferredItem<IbxOneHandedShieldItem> BUCKLER = ITEMS.registe
 
 ```java
 public class TowerShieldItem extends IbxTwoHandedShieldItem {
-    private static final Identifier RESISTANCE_ID = Identifier.fromNamespaceAndPath("examplemod", "tower_shield_resistance");
-
     public TowerShieldItem(Item.Properties properties) {
-        super(properties, 5.0F, -3.0F, modifiers -> modifiers.add(AttributeRegistry.SPELL_RESISTANCE,
-                new AttributeModifier(RESISTANCE_ID, 4.0, AttributeModifier.Operation.ADD_VALUE),
-                EquipmentSlotGroup.MAINHAND));
+        super(properties, 5.0F, -3.0F);
     }
 
     @Override
@@ -681,8 +735,14 @@ public class TowerShieldItem extends IbxTwoHandedShieldItem {
     }
 }
 
+private static final Identifier TOWER_SHIELD_RESISTANCE = Identifier.fromNamespaceAndPath("examplemod", "tower_shield_resistance");
+
 public static final DeferredItem<TowerShieldItem> TOWER_SHIELD = ITEMS.registerItem("tower_shield",
-        p -> new TowerShieldItem(p.durability(600).repairable(ItemTags.IRON_TOOL_MATERIALS)));
+        p -> new TowerShieldItem(p.durability(600).repairable(ItemTags.IRON_TOOL_MATERIALS)
+                .attributes(ItemAttributeModifiers.builder()
+                        .add(AttributeRegistry.SPELL_RESISTANCE, new AttributeModifier(TOWER_SHIELD_RESISTANCE, 4.0, AttributeModifier.Operation.ADD_VALUE),
+                                EquipmentSlotGroup.MAINHAND)
+                        .build())));
 ```
 
 ### ShieldApi、ShieldBash 与 ShieldBashEvent
@@ -713,13 +773,7 @@ public static final DeferredItem<TowerShieldItem> TOWER_SHIELD = ITEMS.registerI
 
 ### 双手盾的资源文件
 
-**Better Combat**:本模组带一份预设 `data/ibx_lib/weapon_attributes/two_handed_shield.json`:双手持握、站姿 `ibx_lib:shield.pose`、攻击距离 -0.5,普通攻击两段——横扫(120°)和下砸(90°,伤害 ×1.2)。每面双手盾在 `data/<命名空间>/weapon_attributes/<物品名>.json` 里引用它:
-
-```json
-{
-  "parent": "ibx_lib:two_handed_shield"
-}
-```
+**Better Combat**:本模组带一份预设 `data/ibx_lib/weapon_attributes/two_handed_shield.json`(id `ibx_lib:two_handed_shield`,常量 `IbxTwoHandedShieldItem.PRESET`):双手持握、站姿 `ibx_lib:shield.pose`、攻击距离 -0.5,普通攻击两段——横扫(120°)和下砸(90°,伤害 ×1.2)。双手盾默认就用它,写在物品的默认组件里,不用每面盾再写 `weapon_attributes` 文件。想换,注册时调 `BetterCombatCompat.preset`,同近战武器(见 [2](#手持模型与左键动作))。
 
 **手持显示**:本模组带两个只有显示变换(`display`)的父模型,几何和贴图由你的模型自己给:
 
@@ -1027,20 +1081,21 @@ public class VampireFangItem extends IbxCurioItem {
 | 基类 / 接口 | 自动进的标签 |
 | --- | --- |
 | `IbxMeleeWeaponItem` | `#c:tools`、`#c:tools/melee_weapon` |
+| 近战的种类类 | `IbxMeleeWeaponItem` 的,加各自的种类标签(见 [2](#2-近战武器));`IbxDoubleAxeItem` 同时有斧的 |
 | `IbxRangedWeaponItem`(接口) | `#c:tools`、`#c:tools/ranged_weapon` |
 | `IbxBowItem` | `IbxRangedWeaponItem` 的,加 `#c:tools/bow` |
 | `IbxCrossbowItem` | `IbxRangedWeaponItem` 的,加 `#c:tools/crossbow` |
-| `IbxShieldItem` | `#c:tools`、`#c:tools/shield` |
-| `IbxOneHandedShieldItem` | `IbxShieldItem` 的,加 `#c:tools/one_handed_shield` |
-| `IbxTwoHandedShieldItem` | `IbxShieldItem` 的,加 `#c:tools/two_handed_shield` |
+| `IbxAbstractShieldItem` | `#c:tools`、`#c:tools/shield` |
+| `IbxShieldItem` | `IbxAbstractShieldItem` 的,加 `#c:tools/one_handed_shield` |
+| `IbxTwoHandedShieldItem` | `IbxAbstractShieldItem` 的,加 `#c:tools/two_handed_shield` |
 | `IbxMagicWeaponItem` | `#ibx_lib:can_cast_spell`、`#c:tools`、`#c:tools/magic_weapon` |
 | `IbxTomeItem` | `IbxMagicWeaponItem` 的,加 `#c:tools/tome` |
 | `IbxStaffItem` | `IbxMagicWeaponItem` 的,加 `#c:tools/staff` |
 
 - 是真的标签成员:同步到客户端,指令、JEI、别的模组都认得。
 - 物品插在各标签的最前面,数据包可以用 `"remove"` 把某件物品去掉;`"replace": true` 去不掉。
-- `#c:tools/magic_weapon`、`#c:tools/tome`、`#c:tools/staff`、`#c:tools/one_handed_shield`、`#c:tools/two_handed_shield` 是本模组自建的通用标签,没有数据文件,全靠自动填。
-- 标签的 key 在 `ibx.lib.registry.TagRegistry`:`CAN_CAST_SPELL`、`TOOLS_MAGIC_WEAPON`、`TOOLS_TOME`、`TOOLS_STAFF`、`TOOLS_ONE_HANDED_SHIELD`、`TOOLS_TWO_HANDED_SHIELD`。
+- 近战的十个种类标签,以及 `#c:tools/magic_weapon`、`#c:tools/tome`、`#c:tools/staff`、`#c:tools/one_handed_shield`、`#c:tools/two_handed_shield` 是本模组自建的通用标签,没有数据文件,全靠自动填。
+- 标签的 key 在 `ibx.lib.registry.TagRegistry`:`CAN_CAST_SPELL`、`TOOLS_MAGIC_WEAPON`、`TOOLS_TOME`、`TOOLS_STAFF`、`TOOLS_ONE_HANDED_SHIELD`、`TOOLS_TWO_HANDED_SHIELD`,近战的 `TOOLS_SWORD`、`TOOLS_DAGGER`、`TOOLS_CUTLASS`、`TOOLS_CLAYMORE`、`TOOLS_SCYTHE`、`TOOLS_FIST`、`TOOLS_HAMMER`、`TOOLS_AXE`、`TOOLS_DOUBLE_AXE`、`TOOLS_SPEAR`。
 
 **`#ibx_lib:can_cast_spell`**(能施法的物品):手持右键放当前选中的法术,使用时长统一为 72000 tick(同弓,能一直按着)。不是 Ibx 法器的物品要施法,由物品所在模组在 `data/ibx_lib/tags/item/can_cast_spell.json` 里加进去。食物、药水这类本来有使用时长的物品不要进这个标签,否则吃不完、喝不完。
 
@@ -1065,6 +1120,8 @@ public class VampireFangItem extends IbxCurioItem {
 | 组件 | 谁设的 |
 | --- | --- |
 | `attribute_modifiers` | 所有基类(主手的数值);被接管的原版弓弩、调整过的原版盔甲是改默认组件。 |
-| `tool`、`weapon` | `IbxMeleeWeaponItem`(同原版剑)。 |
-| `use_effects` | `IbxMagicWeaponItem`(施法时的移速)。 |
-| `blocks_attacks`、`break_sound`、副手装备位 | `IbxShieldItem`。 |
+| `tool`、`weapon` | 近战的种类类(同原版剑、斧、矛;战锤换了 `weapon`)。 |
+| `kinetic_weapon`、`piercing_weapon`、`attack_range`、`swing_animation`、`minimum_attack_charge`、`damage_type` | `IbxSpearItem`(同原版矛)。 |
+| `use_effects`、`unbreakable` | `IbxMagicWeaponItem`(施法时的移速;耐久给负数时无法破坏)。 |
+| `blocks_attacks`、`break_sound`、副手装备位 | `IbxAbstractShieldItem`。 |
+| `bettercombat:preset_id`(Better Combat 的,装了它才有) | 近战的种类类、`IbxStaffItem`、`IbxTwoHandedShieldItem`(左键动作)。 |

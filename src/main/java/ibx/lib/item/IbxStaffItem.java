@@ -1,6 +1,7 @@
 package ibx.lib.item;
 
 import ibx.lib.IbxLib;
+import ibx.lib.compat.BetterCombatCompat;
 import ibx.lib.item.general.IbxAttributeModifiers;
 import ibx.lib.item.general.IbxMagicWeaponItem;
 import ibx.lib.spell.CastType;
@@ -18,7 +19,10 @@ import java.util.List;
  * 参数含义和注册方式见 {@link IbxMagicWeaponItem}。
  *
  * <p>主手攻速：烤 {@code attack_speed} 修饰符（基础 id，tooltip 同剑的深绿行），不填用 {@link #DEFAULT_ATTACK_SPEED}。
- * 法杖拿去近战（比如给它写 Better Combat 的 {@code weapon_attributes}）时，挥一下的快慢看它。</p>
+ * 法杖拿去近战时，挥一下的快慢看它。</p>
+ *
+ * <p>左键动作默认用 Better Combat 的 {@code bettercombat:wand}（{@link #PRESET}），写成物品的默认组件，不用每根法杖再写
+ * {@code weapon_attributes} 文件；想换，在传进来的 Properties 上先调一次 {@link BetterCombatCompat#preset}。没装 Better Combat 时是原版挥臂。</p>
  *
  * <p>施法动作用法杖自己的三段（lib 的 {@code player_animations/staff_cast.json}）：右手抬起、法杖向前倾、左手微微往后；
  * 瞬发摆一下就收回，吟唱时右手连着法杖微微转圈，引导、蓄力时微微抖动。
@@ -28,6 +32,8 @@ import java.util.List;
 public class IbxStaffItem extends IbxMagicWeaponItem {
     /** 攻速基数默认值：+ 玩家的 4 = 显示的 1.2，同镐。 */
     public static final float DEFAULT_ATTACK_SPEED = -2.8F;
+    /** 左键动作的默认预设。 */
+    public static final Identifier PRESET = BetterCombatCompat.builtin("wand");
 
     private static final Identifier CAST_INSTANT = Identifier.fromNamespaceAndPath(IbxLib.MODID, "staff.cast_instant");
     private static final Identifier CAST_HOLD = Identifier.fromNamespaceAndPath(IbxLib.MODID, "staff.cast_hold");
@@ -57,11 +63,11 @@ public class IbxStaffItem extends IbxMagicWeaponItem {
     public IbxStaffItem(Item.Properties properties, int durability, float spellPower, float castMoveSpeed, float attackSpeed,
                         List<Identifier> spells) {
         // 先加攻速、父类再加法强：后加的排前面，说明框里是法强、攻速、注册时给的被动属性
-        super(IbxAttributeModifiers.add(properties, ItemAttributeModifiers.builder()
+        super(BetterCombatCompat.preset(IbxAttributeModifiers.add(properties, ItemAttributeModifiers.builder()
                 .add(Attributes.ATTACK_SPEED,
                         new AttributeModifier(Item.BASE_ATTACK_SPEED_ID, attackSpeed, AttributeModifier.Operation.ADD_VALUE),
                         EquipmentSlotGroup.MAINHAND)
-                .build()), durability, spellPower, castMoveSpeed, spells);
+                .build()), PRESET), durability, spellPower, castMoveSpeed, spells);
     }
 
     /** 瞬发放一遍；吟唱、引导循环，引导和蓄力共用一段。 */

@@ -35,6 +35,7 @@ import java.util.List;
  *       （见 {@link IbxAttributeModifiers}），子类要加自己的修饰符也用它。</li>
  *   <li>施法时的移速倍率写进 {@code use_effects} 组件，0 是施法时站住不动，不填用 {@link #BASELINE_CAST_MOVE_SPEED}。</li>
  *   <li>不可堆叠（无法破坏的也是）。</li>
+ *   <li>附魔能力默认 {@link #BASELINE_ENCHANTABILITY}，能上附魔台；注册时自己调 {@code enchantable} 的以注册的为准。无法破坏的不加。</li>
  *   <li>自带法术按 id 给，不填为空。物品栈带 {@code spells} 组件时以组件为准（指令、战利品可以覆盖，给空列表就是没有法术）。
  *       id 查不到的跳过，所以可以写别的子模组的法术而不依赖它。</li>
  *   <li>施法动作见 {@link #castAnimation}，法术自己指定了动作时以法术为准。</li>
@@ -49,12 +50,15 @@ import java.util.List;
 public class IbxMagicWeaponItem extends Item implements SpellContainer {
     /** 施法时移速倍率的基准值（原版使用物品默认 0.2，太慢）。 */
     public static final float BASELINE_CAST_MOVE_SPEED = 0.5F;
+    /** 附魔能力的默认值，同原版弓、弩、三叉戟。注册时自己调 {@code enchantable} 的以注册的为准。 */
+    public static final int BASELINE_ENCHANTABILITY = 1;
     /** 默认施法动作（法典的），见 {@link #defaultCastAnimation}。动画在 lib 的 {@code player_animations/}。 */
     private static final Identifier CAST_INSTANT = Identifier.fromNamespaceAndPath(IbxLib.MODID, "tome.cast_instant");
     private static final Identifier CAST_HOLD = Identifier.fromNamespaceAndPath(IbxLib.MODID, "tome.cast_hold");
     private static final Identifier CAST_CHANNEL = Identifier.fromNamespaceAndPath(IbxLib.MODID, "tome.cast_channel");
 
     private final float spellPower;
+    private final boolean breakable;
     private final List<Identifier> defaultSpellIds;
     /** 自带法术解析成的 Holder；法术注册表在启动时就定了，第一次用到时解析一次。 */
     private @Nullable List<Holder<Spell>> defaultSpells;
@@ -85,12 +89,13 @@ public class IbxMagicWeaponItem extends Item implements SpellContainer {
         super(durability(IbxAttributeModifiers.add(properties, modifiers(spellPower)), durability).component(DataComponents.USE_EFFECTS,
                 new UseEffects(false, true, castMoveSpeed >= 0.0F ? Mth.clamp(castMoveSpeed, 0.0F, 1.0F) : BASELINE_CAST_MOVE_SPEED)));
         this.spellPower = spellPower;
+        this.breakable = durability >= 0;
         this.defaultSpellIds = List.copyOf(spells);
     }
 
-    /** 负数：无法破坏，不设耐久（没有耐久条），照样不可堆叠。 */
+    /** 负数：无法破坏，不设耐久（没有耐久条）、不加附魔能力，照样不可堆叠。 */
     private static Item.Properties durability(Item.Properties properties, int durability) {
-        return durability >= 0 ? properties.durability(durability)
+        return durability >= 0 ? IbxItemComponents.enchantableIfUnset(properties.durability(durability), BASELINE_ENCHANTABILITY)
                 : properties.stacksTo(1).component(DataComponents.UNBREAKABLE, Unit.INSTANCE);
     }
 
@@ -105,6 +110,11 @@ public class IbxMagicWeaponItem extends Item implements SpellContainer {
 
     public float spellPower() {
         return this.spellPower;
+    }
+
+    /** 会不会掉耐久：构造时耐久给了负数（无法破坏）就是 false。 */
+    public boolean breakable() {
+        return this.breakable;
     }
 
     /**

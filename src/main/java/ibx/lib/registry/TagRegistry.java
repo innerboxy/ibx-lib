@@ -46,11 +46,46 @@ public final class TagRegistry {
     public static final TagKey<Item> TOOLS_STAFF = commonItem("tools/staff");
 
     /*
+     * 近战武器按种类分的通用标签。NeoForge 只有 c:tools/melee_weapon，这几个是本模组自建的，挂在它下面一层。
+     * 都由 AutoItemTags 按物品类自动填，没有数据文件。和原版的 minecraft:swords、minecraft:axes、minecraft:spears 无关（那几个不自动进）。
+     */
+
+    /** 剑（{@link ibx.lib.item.IbxSwordItem}）。 */
+    public static final TagKey<Item> TOOLS_SWORD = commonItem("tools/sword");
+
+    /** 匕首（{@link ibx.lib.item.IbxDaggerItem}）。 */
+    public static final TagKey<Item> TOOLS_DAGGER = commonItem("tools/dagger");
+
+    /** 砍刀（{@link ibx.lib.item.IbxCutlassItem}）。 */
+    public static final TagKey<Item> TOOLS_CUTLASS = commonItem("tools/cutlass");
+
+    /** 大剑（{@link ibx.lib.item.IbxClaymoreItem}）。 */
+    public static final TagKey<Item> TOOLS_CLAYMORE = commonItem("tools/claymore");
+
+    /** 斧（{@link ibx.lib.item.IbxAxeItem} 及子类）。 */
+    public static final TagKey<Item> TOOLS_AXE = commonItem("tools/axe");
+
+    /** 双刃斧（{@link ibx.lib.item.IbxDoubleAxeItem}），同时也在斧的标签里。 */
+    public static final TagKey<Item> TOOLS_DOUBLE_AXE = commonItem("tools/double_axe");
+
+    /** 矛（{@link ibx.lib.item.IbxSpearItem}）。 */
+    public static final TagKey<Item> TOOLS_SPEAR = commonItem("tools/spear");
+
+    /** 镰刀（{@link ibx.lib.item.IbxScytheItem}）。 */
+    public static final TagKey<Item> TOOLS_SCYTHE = commonItem("tools/scythe");
+
+    /** 战锤（{@link ibx.lib.item.IbxHammerItem}）。 */
+    public static final TagKey<Item> TOOLS_HAMMER = commonItem("tools/hammer");
+
+    /** 拳套（{@link ibx.lib.item.IbxFistItem}）。 */
+    public static final TagKey<Item> TOOLS_FIST = commonItem("tools/fist");
+
+    /*
      * 盾牌按单双手分的通用标签。NeoForge 只有 c:tools/shield，这两个是本模组自建的，挂在它下面一层。
      * 都由 AutoItemTags 按物品类自动填，没有数据文件。
      */
 
-    /** 单手盾（{@link ibx.lib.item.IbxOneHandedShieldItem}）。 */
+    /** 单手盾（{@link ibx.lib.item.IbxShieldItem}）。 */
     public static final TagKey<Item> TOOLS_ONE_HANDED_SHIELD = commonItem("tools/one_handed_shield");
 
     /** 双手盾（{@link ibx.lib.item.IbxTwoHandedShieldItem}）。 */
