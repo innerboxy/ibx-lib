@@ -8,7 +8,7 @@ import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
 import com.zigythebird.playeranimcore.easing.EasingType;
 import ibx.lib.IbxLib;
 import ibx.lib.api.event.ShieldBashEvent;
-import ibx.lib.item.IbxTwoHandedShieldItem;
+import ibx.lib.item.IbxHeavyShieldItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
@@ -27,10 +27,10 @@ import java.util.WeakHashMap;
  * 动作按右手做，主手是左手时整段镜像。主手普通攻击的动作不在这里：交给 Better Combat 的 {@code weapon_attributes}。
  *
  * <ul>
- *   <li>格挡：主手举着双手盾时循环放 {@link IbxTwoHandedShieldItem#guardAnimation}（双手持盾，就是盾击的预备姿势），放下时淡回原来的姿势。
+ *   <li>格挡：主手举着双手盾时循环放 {@link IbxHeavyShieldItem#guardAnimation}（双手持盾，就是盾击的预备姿势），放下时淡回原来的姿势。
  *       只管第三人称，第一人称照原版画举盾（图层的第一人称模式设成 {@code DISABLED}）：第三人称的盾立在身前、顶到头顶，
  *       第一人称照搬会把准星挡住。每 tick 按"在不在举盾"看（使用物品的标记是同步的，周围玩家也一样）。</li>
- *   <li>盾击：收到 {@link ShieldBashEvent} 时放一遍 {@link IbxTwoHandedShieldItem#bashAnimation}（从格挡姿势起手），
+ *   <li>盾击：收到 {@link ShieldBashEvent} 时放一遍 {@link IbxHeavyShieldItem#bashAnimation}（从格挡姿势起手），
  *       第一人称也显示（用第三人称模型画手臂和盾，同施法动作）。盾击会让盾放下，放完回到双手站姿；右键还按着的话
  *       盾失效一过客户端重新举盾，再接回格挡。</li>
  * </ul>
@@ -62,7 +62,7 @@ public final class ShieldAnimations {
     }
 
     private static void onBash(ShieldBashEvent event) {
-        if (!(event.getEntity() instanceof Avatar avatar) || !(avatar.getMainHandItem().getItem() instanceof IbxTwoHandedShieldItem shield)) {
+        if (!(event.getEntity() instanceof Avatar avatar) || !(avatar.getMainHandItem().getItem() instanceof IbxHeavyShieldItem shield)) {
             return;
         }
         PlayerAnimationController controller = PlayerAnimLayers.controller(avatar, LAYER);
@@ -104,7 +104,7 @@ public final class ShieldAnimations {
             PLAYING.remove(avatar);
             playing = null;
         }
-        IbxTwoHandedShieldItem guardingWith = guardingWith(avatar);
+        IbxHeavyShieldItem guardingWith = guardingWith(avatar);
         if ((guardingWith != null) == (playing != null)) {
             return;
         }
@@ -128,8 +128,8 @@ public final class ShieldAnimations {
     }
 
     /** 主手正举着一面双手盾格挡就返回它，否则 null。 */
-    private static @Nullable IbxTwoHandedShieldItem guardingWith(Avatar avatar) {
-        return avatar.getMainHandItem().getItem() instanceof IbxTwoHandedShieldItem shield
+    private static @Nullable IbxHeavyShieldItem guardingWith(Avatar avatar) {
+        return avatar.getMainHandItem().getItem() instanceof IbxHeavyShieldItem shield
                 && avatar.isUsingItem() && avatar.getUsedItemHand() == InteractionHand.MAIN_HAND ? shield : null;
     }
 }

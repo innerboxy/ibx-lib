@@ -88,8 +88,8 @@ public final class TagRegistry {
     /** 单手盾（{@link ibx.lib.item.IbxShieldItem}）。 */
     public static final TagKey<Item> TOOLS_ONE_HANDED_SHIELD = commonItem("tools/one_handed_shield");
 
-    /** 双手盾（{@link ibx.lib.item.IbxTwoHandedShieldItem}）。 */
-    public static final TagKey<Item> TOOLS_TWO_HANDED_SHIELD = commonItem("tools/two_handed_shield");
+    /** 双手盾（{@link ibx.lib.item.IbxHeavyShieldItem}）。 */
+    public static final TagKey<Item> TOOLS_HEAVY_SHIELD = commonItem("tools/heavy_shield");
 
     private static TagKey<Item> commonItem(String path) {
         return TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("c", path));

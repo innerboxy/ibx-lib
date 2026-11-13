@@ -33,7 +33,7 @@ import java.util.List;
  * Ibx 双手盾：双手拿，主手多出普通攻击和盾击。格挡部分见 {@link IbxAbstractShieldItem}。
  *
  * <ul>
- *   <li>双手和普通攻击的动作都交给 Better Combat：默认用 lib 的预设 {@code ibx_lib:two_handed_shield}（{@link #PRESET}，双手 + 横扫 / 下砸两段），
+ *   <li>双手和普通攻击的动作都交给 Better Combat：默认用 lib 的预设 {@code ibx_lib:heavy_shield}（{@link #PRESET}，双手 + 横扫 / 下砸两段），
  *       写成物品的默认组件，不用每面盾再写 {@code weapon_attributes} 文件；想换，在传进来的 Properties 上先调一次
  *       {@link BetterCombatCompat#preset}。主手拿着它时副手被当成空手，放在副手也当空手；
  *       没装 BC 时不限双手，副手照常拿东西、放在副手就是原版盾，普通攻击是原版挥臂。</li>
@@ -49,12 +49,12 @@ import java.util.List;
  *       打中后的附加效果（比如定身）分别重写 {@link #bashTargets} / {@link #bashHit} / {@link #onBashHit}，整个换掉重写 {@link #onBash}。</li>
  *   <li>举着它时左键只能是盾击：客户端吃掉按键，服务端取消这期间的普通攻击（{@link ShieldApi}）。</li>
  *   <li>主手举盾时放双手格挡动作 {@link #guardAnimation}（{@code client.ShieldAnimations}），盾击从这个姿势起手。物品定义里
- *       {@code using_item} 两个分支除了第一人称，其它显示都要一样（lib 的 {@code general_two_handed_shield_hand} / {@code general_two_handed_shield_block}，
+ *       {@code using_item} 两个分支除了第一人称，其它显示都要一样（lib 的 {@code heavy_shield_in_hand} / {@code heavy_shield_in_hand_blocking}，
  *       后者只把第一人称换成原版举盾）：第三人称不一样，盾击那一下停止使用、换回不举盾的显示，盾会在手里转 90°；
  *       物品栏里的这面盾举着时也走举盾分支，缺了 {@code gui} 显示图标就会变。</li>
  * </ul>
  */
-public class IbxTwoHandedShieldItem extends IbxAbstractShieldItem {
+public class IbxHeavyShieldItem extends IbxAbstractShieldItem {
     /** 盾击冷却 tick（独立计时），{@link #bashCooldownTicks} 的默认值。 */
     public static final int BASH_COOLDOWN_TICKS = 60;
     /** 盾击后盾失效 tick，{@link #bashDisableTicks} 的默认值。 */
@@ -66,14 +66,14 @@ public class IbxTwoHandedShieldItem extends IbxAbstractShieldItem {
     /** 盾击击退：受伤本身的击退之外再推这么多，{@link #bashKnockback} 的默认值。 */
     public static final float BASH_KNOCKBACK = 0.6F;
 
-    /** 普通攻击动作的默认预设：lib 的 {@code data/ibx_lib/weapon_attributes/two_handed_shield.json}。 */
-    public static final Identifier PRESET = Identifier.fromNamespaceAndPath(IbxLib.MODID, "two_handed_shield");
+    /** 普通攻击动作的默认预设：lib 的 {@code data/ibx_lib/weapon_attributes/heavy_shield.json}。 */
+    public static final Identifier PRESET = Identifier.fromNamespaceAndPath(IbxLib.MODID, "heavy_shield");
 
     private static final Identifier BASH_ANIMATION = Identifier.fromNamespaceAndPath(IbxLib.MODID, "shield.bash");
     private static final Identifier GUARD_ANIMATION = Identifier.fromNamespaceAndPath(IbxLib.MODID, "shield.guard");
 
     /** 格挡数值全原版。 */
-    public IbxTwoHandedShieldItem(Item.Properties properties, float attackDamage, float attackSpeed) {
+    public IbxHeavyShieldItem(Item.Properties properties, float attackDamage, float attackSpeed) {
         this(properties, BASELINE_BLOCK_DELAY, BASELINE_BLOCK_FACTOR, BASELINE_BLOCK_ANGLE, attackDamage, attackSpeed);
     }
 
@@ -85,7 +85,7 @@ public class IbxTwoHandedShieldItem extends IbxAbstractShieldItem {
      * @param attackDamage 主手普通攻击的伤害基数
      * @param attackSpeed  主手攻速基数
      */
-    public IbxTwoHandedShieldItem(Item.Properties properties, float blockDelay, float blockFactor, float blockAngle,
+    public IbxHeavyShieldItem(Item.Properties properties, float blockDelay, float blockFactor, float blockAngle,
                                   float attackDamage, float attackSpeed) {
         super(BetterCombatCompat.preset(IbxAttributeModifiers.add(properties, modifiers(attackDamage, attackSpeed)), PRESET),
                 blockDelay, blockFactor, blockAngle);

@@ -15,7 +15,7 @@ import ibx.lib.item.IbxSpearItem;
 import ibx.lib.item.IbxStaffItem;
 import ibx.lib.item.IbxSwordItem;
 import ibx.lib.item.IbxTomeItem;
-import ibx.lib.item.IbxTwoHandedShieldItem;
+import ibx.lib.item.IbxHeavyShieldItem;
 import ibx.lib.item.general.IbxMagicWeaponItem;
 import ibx.lib.item.general.IbxMeleeWeaponItem;
 import ibx.lib.item.general.IbxRangedWeaponItem;
@@ -65,7 +65,7 @@ public final class AutoItemTags {
             new Rule(IbxCrossbowItem.class, List.of(Tags.Items.TOOLS_CROSSBOW)),
             new Rule(IbxAbstractShieldItem.class, List.of(Tags.Items.TOOLS, Tags.Items.TOOLS_SHIELD)),
             new Rule(IbxShieldItem.class, List.of(TagRegistry.TOOLS_ONE_HANDED_SHIELD)),
-            new Rule(IbxTwoHandedShieldItem.class, List.of(TagRegistry.TOOLS_TWO_HANDED_SHIELD)),
+            new Rule(IbxHeavyShieldItem.class, List.of(TagRegistry.TOOLS_HEAVY_SHIELD)),
             new Rule(IbxMagicWeaponItem.class, List.of(TagRegistry.CAN_CAST_SPELL, Tags.Items.TOOLS, TagRegistry.TOOLS_MAGIC_WEAPON)),
             new Rule(IbxTomeItem.class, List.of(TagRegistry.TOOLS_TOME)),
             new Rule(IbxStaffItem.class, List.of(TagRegistry.TOOLS_STAFF)),

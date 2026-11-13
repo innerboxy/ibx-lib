@@ -1,7 +1,7 @@
 package ibx.lib.client;
 
 import ibx.lib.api.ShieldApi;
-import ibx.lib.item.IbxTwoHandedShieldItem;
+import ibx.lib.item.IbxHeavyShieldItem;
 import ibx.lib.network.ShieldBashPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -27,10 +27,10 @@ public final class ShieldInput {
         if (player == null || mc.screen != null || mc.getOverlay() != null) {
             return;
         }
-        if (!(player.getMainHandItem().getItem() instanceof IbxTwoHandedShieldItem)) {
+        if (!(player.getMainHandItem().getItem() instanceof IbxHeavyShieldItem)) {
             return;
         }
-        boolean raised = ShieldApi.isRaisingTwoHandedShield(player);
+        boolean raised = ShieldApi.isRaisingHeavyShield(player);
         if (!raised && !mc.options.keyUse.isDown()) {
             return;
         }

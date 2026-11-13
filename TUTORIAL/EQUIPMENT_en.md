@@ -19,7 +19,7 @@ This mod provides a set of item base classes. Other mods use them directly or ex
 | A staff | `ibx.lib.item.IbxStaffItem` | [5](#5-magic-implements) |
 | Another kind of magic implement | extend `ibx.lib.item.general.IbxMagicWeaponItem` | [5](#5-magic-implements) |
 | A plain shield (one-handed, blocks only) | `ibx.lib.item.IbxShieldItem` | [6](#6-shields) |
-| A two-handed shield (normal attacks and shield bash) | `ibx.lib.item.IbxTwoHandedShieldItem` | [6](#6-shields) |
+| A two-handed shield (normal attacks and shield bash) | `ibx.lib.item.IbxHeavyShieldItem` | [6](#6-shields) |
 | 3D armor (worn look drawn by GeckoLib) | `ibx.lib.item.IbxGeoArmorItem` | [7](#7-3d-armor) |
 | Armor material with spell resistance | `ibx.lib.item.general.IbxArmorMaterial` | [7](#armor-material) |
 | Attributes beyond the material on an armor piece | `ibx.lib.item.general.IbxArmorProperties` | [7](#armor-item-properties) |
@@ -115,20 +115,47 @@ public static final DeferredItem<IbxSpearItem> IRON_PIKE = ITEMS.registerItem("i
 
 ### Hand models and left-click moves
 
-The in-hand display depends on the kind of weapon and is given in resources, not in the item class. This mod ships two generic hand models. Both have `minecraft:item/handheld` as parent and only change the first- and third-person display for both hands; the texture goes in `layer0`:
+The in-hand display depends on the kind of weapon and is given in resources, not in the item class. This mod ships five generic hand models. All have `minecraft:item/handheld` as parent and change the first- and third-person display for both hands; the texture goes in `layer0`:
 
 | Model | For |
 | --- | --- |
-| `ibx_lib:item/general_dagger_hand` | Daggers |
-| `ibx_lib:item/general_cutlass_hand` | Cutlasses |
+| `ibx_lib:item/dagger_in_hand` | Daggers |
+| `ibx_lib:item/cutlass_in_hand` | Cutlasses |
+| `ibx_lib:item/claymore_in_hand` | Claymores. Scaled up to 1.7x in hand at a two-handed angle; the dropped-item display is changed too (slightly smaller, raised). |
+| `ibx_lib:item/hammer_in_hand` | Hammers. Same angle as the vanilla handheld, scaled up to 1.275x (1.02x in first person). |
+| `ibx_lib:item/scythe_in_hand` | Scythes and other long-hafted weapons. Held upright by the haft, scaled up to 2.125x in third person; the dropped-item display is changed too. Made for a long 32×32 texture; for the inventory icon see below. |
 
 `assets/examplemod/models/item/iron_dirk.json`:
 
 ```json
 {
-  "parent": "ibx_lib:item/general_dagger_hand",
+  "parent": "ibx_lib:item/dagger_in_hand",
   "textures": {
     "layer0": "examplemod:item/iron_dirk"
+  }
+}
+```
+
+A long-hafted weapon usually has two textures: a long one in hand and a small 16×16 icon in the inventory. Make two models and pick one by display context in the item model definition (the same way as the vanilla spear). The icon model `examplemod:item/iron_scythe` uses `minecraft:item/generated` as parent, the hand model `examplemod:item/iron_scythe_in_hand` uses `ibx_lib:item/scythe_in_hand`; `assets/examplemod/items/iron_scythe.json`:
+
+```json
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": ["gui", "ground", "fixed", "on_shelf"],
+        "model": {
+          "type": "minecraft:model",
+          "model": "examplemod:item/iron_scythe"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "examplemod:item/iron_scythe_in_hand"
+    }
   }
 }
 ```
@@ -557,7 +584,7 @@ public static final DeferredItem<IbxStaffItem> OAK_STAFF = ITEMS.registerItem("o
 
 ### Tome hand models
 
-This mod ships a pair of 3D hand models for tomes: the closed `ibx_lib:item/general_tome_hand` and the open `ibx_lib:item/general_tome_hand_open`. The pages use a texture bundled with this mod; you only supply the cover texture `cover`:
+This mod ships a pair of 3D hand models for tomes: the closed `ibx_lib:item/tome_in_hand` and the open `ibx_lib:item/tome_in_hand_open`. The pages use a texture bundled with this mod; you only supply the cover texture `cover`:
 
 | Region of the `cover` texture (as 16×16) | Used for |
 | --- | --- |
@@ -566,11 +593,11 @@ This mod ships a pair of 3D hand models for tomes: the closed `ibx_lib:item/gene
 | The pixel at (0, 6) | Edges of the front and back cover |
 | The pixel at (0, 9) | Spine |
 
-`assets/examplemod/models/item/ember_tome_hand.json` (the open one is the same with `general_tome_hand_open` as parent):
+`assets/examplemod/models/item/ember_tome_in_hand.json` (the open one is the same with `tome_in_hand_open` as parent):
 
 ```json
 {
-  "parent": "ibx_lib:item/general_tome_hand",
+  "parent": "ibx_lib:item/tome_in_hand",
   "textures": {
     "cover": "examplemod:item/ember_tome_cover"
   }
@@ -599,11 +626,11 @@ In the item model definition, switch between closed and open with the condition 
           "property": "ibx_lib:casting",
           "on_true": {
             "type": "minecraft:model",
-            "model": "examplemod:item/ember_tome_hand_open"
+            "model": "examplemod:item/ember_tome_in_hand_open"
           },
           "on_false": {
             "type": "minecraft:model",
-            "model": "examplemod:item/ember_tome_hand"
+            "model": "examplemod:item/ember_tome_in_hand"
           }
         }
       }
@@ -631,7 +658,7 @@ The base class `ibx.lib.item.general.IbxAbstractShieldItem` (abstract) handles b
 | Class | Description |
 | --- | --- |
 | `ibx.lib.item.IbxShieldItem` | Plain (one-handed) shield: blocks only, works like a vanilla shield in either hand, and can be held together with a one-handed weapon. |
-| `ibx.lib.item.IbxTwoHandedShieldItem` | Two-handed shield: in the main hand it can also attack normally and shield bash. |
+| `ibx.lib.item.IbxHeavyShieldItem` | Two-handed shield: in the main hand it can also attack normally and shield bash. |
 
 ### Blocking
 
@@ -646,7 +673,7 @@ Blocking goes entirely through the vanilla `blocks_attacks` component, baked fro
 
 - Everything else matches the vanilla shield: damage in `#minecraft:bypasses_shield` is not blocked, and the durability loss on block, block sound and break sound are the same.
 - It extends the vanilla `ShieldItem`, so the first-person raised display matches the vanilla shield.
-- Tags: automatically in `#c:tools` and `#c:tools/shield`, plus `#c:tools/one_handed_shield` or `#c:tools/two_handed_shield` by subclass.
+- Tags: automatically in `#c:tools` and `#c:tools/shield`, plus `#c:tools/one_handed_shield` or `#c:tools/heavy_shield` by subclass.
 
 ### One-handed shield
 
@@ -683,7 +710,7 @@ public static final DeferredItem<IbxShieldItem> BUCKLER = ITEMS.registerItem("bu
 
 1. **Client input** (`ibx.lib.client.ShieldInput`): while a two-handed shield is in the main hand and right-click is held, left-click is no longer passed to vanilla or Better Combat. Pressing left-click while the shield is raised and the bash is off cooldown sends a `ShieldBashPayload` (`ibx_lib:shield_bash`, no data).
 2. **Server check** `ShieldApi.tryBash(player)`: only if the main hand holds a two-handed shield, the main hand is raising it and the cooldown is over does it call `shield.bash(player, stack)`.
-3. **`IbxTwoHandedShieldItem#bash`**, in order:
+3. **`IbxHeavyShieldItem#bash`**, in order:
    - `ShieldApi.markBash` records the bash and starts the cooldown (`bashCooldownTicks()`); the state is synced to the player and those nearby;
    - swings the arm and plays a sound;
    - calls `onBash` while the shield is still raised, then passes the mobs hit to the curio trigger hooks (see [8](#trigger-hooks));
@@ -718,7 +745,7 @@ Resolution:
 | `public Identifier guardAnimation()` | `ibx_lib:shield.guard` | The player animation looped while the shield is raised in the main hand. |
 
 ```java
-public class TowerShieldItem extends IbxTwoHandedShieldItem {
+public class TowerShieldItem extends IbxHeavyShieldItem {
     public TowerShieldItem(Item.Properties properties) {
         super(properties, 5.0F, -3.0F);
     }
@@ -751,7 +778,7 @@ public static final DeferredItem<TowerShieldItem> TOWER_SHIELD = ITEMS.registerI
 
 | Method | Description |
 | --- | --- |
-| `isRaisingTwoHandedShield(entity)` | Whether the main hand is raising a two-handed shield (the precondition for a bash). Readable on both sides. |
+| `isRaisingHeavyShield(entity)` | Whether the main hand is raising a two-handed shield (the precondition for a bash). Readable on both sides. |
 | `isBashReady(entity)` | Whether the bash cooldown is over. Readable on both sides. |
 | `getState(entity)` | The bash state `ShieldBash`; `null` if the entity has never bashed. |
 | `tryBash(player)` | Checks, then bashes. Server only. |
@@ -773,14 +800,14 @@ This mod's `assets/ibx_lib/player_animations/shield_attack.json` has five: `shie
 
 ### Resource files for two-handed shields
 
-**Better Combat**: this mod ships a preset, `data/ibx_lib/weapon_attributes/two_handed_shield.json` (id `ibx_lib:two_handed_shield`, constant `IbxTwoHandedShieldItem.PRESET`): two-handed, idle pose `ibx_lib:shield.pose`, attack range -0.5, and a two-move normal attack: a swipe (120°) and a slam (90°, damage ×1.2). Two-handed shields use it by default, written into the item's default components, so no shield needs its own `weapon_attributes` file. To change it, call `BetterCombatCompat.preset` at registration, as for melee weapons (see [2](#hand-models-and-left-click-moves)).
+**Better Combat**: this mod ships a preset, `data/ibx_lib/weapon_attributes/heavy_shield.json` (id `ibx_lib:heavy_shield`, constant `IbxHeavyShieldItem.PRESET`): two-handed, idle pose `ibx_lib:shield.pose`, attack range -0.5, and a two-move normal attack: a swipe (120°) and a slam (90°, damage ×1.2). Two-handed shields use it by default, written into the item's default components, so no shield needs its own `weapon_attributes` file. To change it, call `BetterCombatCompat.preset` at registration, as for melee weapons (see [2](#hand-models-and-left-click-moves)).
 
 **In-hand display**: this mod ships two parent models that only contain display transforms (`display`); geometry and textures come from your own models:
 
 | Model | For |
 | --- | --- |
-| `ibx_lib:item/general_two_handed_shield_hand` | Not raised |
-| `ibx_lib:item/general_two_handed_shield_block` | Raised. Differs from the other only in the first-person display (moved to the vanilla raised-shield position). |
+| `ibx_lib:item/heavy_shield_in_hand` | Not raised |
+| `ibx_lib:item/heavy_shield_in_hand_blocking` | Raised. Differs from the other only in the first-person display (moved to the vanilla raised-shield position). |
 
 The item model definition branches on `minecraft:using_item`, with each branch's model using one of these as parent:
 
@@ -1042,7 +1069,7 @@ public class VampireFangItem extends IbxCurioItem {
 - **Cooldowns and trigger chances are up to the curio** (for example `Player#getCooldowns`, `slot.entity().getRandom()`); the framework does not handle them.
 - **Damage**: melee, projectiles (the wearer being the shooter) and spells all go through `onDealDamage` / `onDamageDealt`; tell them apart by `source`. Changed damage is still reduced by armor and spell resistance, like vanilla enchantment damage bonuses. On a killing blow, `onKill` is called before `onDamageDealt`.
 - **Anything canceled by another mod does not trigger**: canceled damage, deaths and blocks are never passed on.
-- **Shield bash**: called from the server flow of `IbxTwoHandedShieldItem`. For shields that override `onBash`, its return value is the `hits` passed here.
+- **Shield bash**: called from the server flow of `IbxHeavyShieldItem`. For shields that override `onBash`, its return value is the `hits` passed here.
 - Dispatch lives in `ibx.lib.compat.curios.CurioTriggerHandler`.
 
 > `CurioTriggers` references Curios classes (`SlotContext`): the mod containing a curio that implements it must require Curios.
@@ -1087,15 +1114,15 @@ Items registered with this mod's base classes and interfaces (subclasses include
 | `IbxCrossbowItem` | Those of `IbxRangedWeaponItem`, plus `#c:tools/crossbow` |
 | `IbxAbstractShieldItem` | `#c:tools`, `#c:tools/shield` |
 | `IbxShieldItem` | Those of `IbxAbstractShieldItem`, plus `#c:tools/one_handed_shield` |
-| `IbxTwoHandedShieldItem` | Those of `IbxAbstractShieldItem`, plus `#c:tools/two_handed_shield` |
+| `IbxHeavyShieldItem` | Those of `IbxAbstractShieldItem`, plus `#c:tools/heavy_shield` |
 | `IbxMagicWeaponItem` | `#ibx_lib:can_cast_spell`, `#c:tools`, `#c:tools/magic_weapon` |
 | `IbxTomeItem` | Those of `IbxMagicWeaponItem`, plus `#c:tools/tome` |
 | `IbxStaffItem` | Those of `IbxMagicWeaponItem`, plus `#c:tools/staff` |
 
 - They are real tag members: synced to the client and recognised by commands, JEI and other mods.
 - The items are inserted at the front of each tag, so a data pack can take one out with `"remove"`; `"replace": true` does not remove them.
-- The ten melee kind tags, plus `#c:tools/magic_weapon`, `#c:tools/tome`, `#c:tools/staff`, `#c:tools/one_handed_shield` and `#c:tools/two_handed_shield`, are common tags created by this mod. They have no data files and are filled entirely automatically.
-- The tag keys are in `ibx.lib.registry.TagRegistry`: `CAN_CAST_SPELL`, `TOOLS_MAGIC_WEAPON`, `TOOLS_TOME`, `TOOLS_STAFF`, `TOOLS_ONE_HANDED_SHIELD`, `TOOLS_TWO_HANDED_SHIELD`, and for melee `TOOLS_SWORD`, `TOOLS_DAGGER`, `TOOLS_CUTLASS`, `TOOLS_CLAYMORE`, `TOOLS_SCYTHE`, `TOOLS_FIST`, `TOOLS_HAMMER`, `TOOLS_AXE`, `TOOLS_DOUBLE_AXE`, `TOOLS_SPEAR`.
+- The ten melee kind tags, plus `#c:tools/magic_weapon`, `#c:tools/tome`, `#c:tools/staff`, `#c:tools/one_handed_shield` and `#c:tools/heavy_shield`, are common tags created by this mod. They have no data files and are filled entirely automatically.
+- The tag keys are in `ibx.lib.registry.TagRegistry`: `CAN_CAST_SPELL`, `TOOLS_MAGIC_WEAPON`, `TOOLS_TOME`, `TOOLS_STAFF`, `TOOLS_ONE_HANDED_SHIELD`, `TOOLS_HEAVY_SHIELD`, and for melee `TOOLS_SWORD`, `TOOLS_DAGGER`, `TOOLS_CUTLASS`, `TOOLS_CLAYMORE`, `TOOLS_SCYTHE`, `TOOLS_FIST`, `TOOLS_HAMMER`, `TOOLS_AXE`, `TOOLS_DOUBLE_AXE`, `TOOLS_SPEAR`.
 
 **`#ibx_lib:can_cast_spell`** (items that can cast): right-clicking with one in hand casts the selected spell, and its use duration is fixed at 72000 ticks (like a bow, so it can be held). For an item that is not an Ibx implement to cast, the mod that owns it adds it in `data/ibx_lib/tags/item/can_cast_spell.json`. Don't put items that already have a use duration, such as food and potions, in this tag, or they can never be finished.
 
@@ -1124,4 +1151,4 @@ Vanilla components the base classes use:
 | `kinetic_weapon`, `piercing_weapon`, `attack_range`, `swing_animation`, `minimum_attack_charge`, `damage_type` | `IbxSpearItem` (as the vanilla spear). |
 | `use_effects`, `unbreakable` | `IbxMagicWeaponItem` (movement speed while casting; unbreakable when durability is negative). |
 | `blocks_attacks`, `break_sound`, off-hand equipment slot | `IbxAbstractShieldItem`. |
-| `bettercombat:preset_id` (Better Combat's, only with it installed) | The melee kind classes, `IbxStaffItem`, `IbxTwoHandedShieldItem` (left-click moves). |
+| `bettercombat:preset_id` (Better Combat's, only with it installed) | The melee kind classes, `IbxStaffItem`, `IbxHeavyShieldItem` (left-click moves). |

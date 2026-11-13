@@ -31,7 +31,7 @@ import java.util.Map;
  *   <li>改伤害（{@code onDealDamage} / {@code onTakeDamage}）在 {@link LivingIncomingDamageEvent} 的 {@code HIGH}：
  *       排在本模组定基础伤害（{@code HIGHEST}）之后、护甲和法术抗性之前；先攻击方、再挨打的一方。</li>
  *   <li>其余的都在 {@code LOWEST}：别的模组取消了的（格挡、免死）就不触发。</li>
- *   <li>盾击没有服务端事件，由 {@code IbxTwoHandedShieldItem#bash} 直接调 {@link #onShieldBash}。</li>
+ *   <li>盾击没有服务端事件，由 {@code IbxHeavyShieldItem#bash} 直接调 {@link #onShieldBash}。</li>
  * </ul>
  *
  * 引用了 Curios 的类，只在装了 Curios 时由本模组注册、调用（先过 {@code CuriosCompat.isLoaded()}）。

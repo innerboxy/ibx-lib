@@ -14,7 +14,7 @@ import java.util.Optional;
 
 /**
  * Ibx 盾牌的基类：格挡部分。子类按单双手分：{@link ibx.lib.item.IbxShieldItem} 只挡（同原版盾），
- * {@link ibx.lib.item.IbxTwoHandedShieldItem} 双手拿，主手还能普通攻击和盾击。
+ * {@link ibx.lib.item.IbxHeavyShieldItem} 双手拿，主手还能普通攻击和盾击。
  *
  * <ul>
  *   <li>格挡全走原版的 {@code blocks_attacks} 组件，由构造参数烤：举盾延迟（0 是一举起来就能挡，负数用原版盾的 0.25 秒）、
@@ -22,7 +22,7 @@ import java.util.Optional;
  *       附魔能力默认 {@link #BASELINE_ENCHANTABILITY}（原版盾没有，这里加上才能上附魔台），注册时自己调 {@code enchantable} 的以注册的为准。
  *       副手装备位（{@code equippableUnswappable(OFFHAND)}）也在这里挂，注册时只给耐久和修复材料。</li>
  *   <li>自动进 {@code #c:tools}、{@code #c:tools/shield}，子类再进各自的 {@code #c:tools/one_handed_shield}、
- *       {@code #c:tools/two_handed_shield}（见 {@link ibx.lib.registry.AutoItemTags}）。</li>
+ *       {@code #c:tools/heavy_shield}（见 {@link ibx.lib.registry.AutoItemTags}）。</li>
  *   <li>继承 {@link ShieldItem}：原版第一人称渲染给"不是 ShieldItem 的格挡物品"额外加一套举剑格挡的位移旋转，
  *       盾会被转出视野；{@code ShieldItem} 本身只多一个按旗帜颜色换名字的 {@code getName}。</li>
  * </ul>

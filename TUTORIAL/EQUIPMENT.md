@@ -19,7 +19,7 @@
 | 法杖 | `ibx.lib.item.IbxStaffItem` | [5](#5-法器) |
 | 别的种类的法器 | 继承 `ibx.lib.item.general.IbxMagicWeaponItem` | [5](#5-法器) |
 | 普通盾(单手,只挡) | `ibx.lib.item.IbxShieldItem` | [6](#6-盾牌) |
-| 双手盾(能普通攻击和盾击) | `ibx.lib.item.IbxTwoHandedShieldItem` | [6](#6-盾牌) |
+| 双手盾(能普通攻击和盾击) | `ibx.lib.item.IbxHeavyShieldItem` | [6](#6-盾牌) |
 | 3D 盔甲(穿上的样子由 GeckoLib 画) | `ibx.lib.item.IbxGeoArmorItem` | [7](#7-3d-盔甲) |
 | 带法术抗性的盔甲材质 | `ibx.lib.item.general.IbxArmorMaterial` | [7](#盔甲材质) |
 | 给盔甲加材质以外的属性 | `ibx.lib.item.general.IbxArmorProperties` | [7](#盔甲的物品属性) |
@@ -115,20 +115,47 @@ public static final DeferredItem<IbxSpearItem> IRON_PIKE = ITEMS.registerItem("i
 
 ### 手持模型与左键动作
 
-手持显示按武器种类在资源里给,不在物品类里。本模组带两个通用手持模型,都以 `minecraft:item/handheld` 为父模型,只改了第一、第三人称左右手的显示,贴图填 `layer0`:
+手持显示按武器种类在资源里给,不在物品类里。本模组带五个通用手持模型,都以 `minecraft:item/handheld` 为父模型,改了第一、第三人称左右手的显示,贴图填 `layer0`:
 
 | 模型 | 用于 |
 | --- | --- |
-| `ibx_lib:item/general_dagger_hand` | 匕首类 |
-| `ibx_lib:item/general_cutlass_hand` | 砍刀类 |
+| `ibx_lib:item/dagger_in_hand` | 匕首类 |
+| `ibx_lib:item/cutlass_in_hand` | 砍刀类 |
+| `ibx_lib:item/claymore_in_hand` | 大剑类。拿在手里放大到 1.7 倍、双手握的角度;掉在地上的显示也改了(略小、抬高)。 |
+| `ibx_lib:item/hammer_in_hand` | 锤类。角度同原版手持,放大到 1.275 倍(第一人称 1.02 倍)。 |
+| `ibx_lib:item/scythe_in_hand` | 镰刀等长柄武器。竖着握柄,第三人称放大到 2.125 倍;掉在地上的显示也改了。按 32×32 的长贴图配的,物品栏的图标见下面。 |
 
 `assets/examplemod/models/item/iron_dirk.json`:
 
 ```json
 {
-  "parent": "ibx_lib:item/general_dagger_hand",
+  "parent": "ibx_lib:item/dagger_in_hand",
   "textures": {
     "layer0": "examplemod:item/iron_dirk"
+  }
+}
+```
+
+长柄武器一般有两张贴图:拿在手里的长贴图,和物品栏里 16×16 的小图标。做两个模型,在物品模型定义里按显示场景选(同原版的矛)。图标模型 `examplemod:item/iron_scythe` 以 `minecraft:item/generated` 为父模型,手持模型 `examplemod:item/iron_scythe_in_hand` 以 `ibx_lib:item/scythe_in_hand` 为父模型;`assets/examplemod/items/iron_scythe.json`:
+
+```json
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": ["gui", "ground", "fixed", "on_shelf"],
+        "model": {
+          "type": "minecraft:model",
+          "model": "examplemod:item/iron_scythe"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "examplemod:item/iron_scythe_in_hand"
+    }
   }
 }
 ```
@@ -557,7 +584,7 @@ public static final DeferredItem<IbxStaffItem> OAK_STAFF = ITEMS.registerItem("o
 
 ### 法典的手持模型
 
-本模组带一对法典的 3D 手持模型:合上的 `ibx_lib:item/general_tome_hand` 和翻开的 `ibx_lib:item/general_tome_hand_open`。书页用本模组自带的贴图,你只要给封面贴图 `cover`:
+本模组带一对法典的 3D 手持模型:合上的 `ibx_lib:item/tome_in_hand` 和翻开的 `ibx_lib:item/tome_in_hand_open`。书页用本模组自带的贴图,你只要给封面贴图 `cover`:
 
 | `cover` 贴图上的区域(按 16×16 算) | 用在哪 |
 | --- | --- |
@@ -566,11 +593,11 @@ public static final DeferredItem<IbxStaffItem> OAK_STAFF = ITEMS.registerItem("o
 | (0, 6) 一格 | 封面、封底的侧边 |
 | (0, 9) 一格 | 书脊 |
 
-`assets/examplemod/models/item/ember_tome_hand.json`(翻开的那个同理,父模型换成 `general_tome_hand_open`):
+`assets/examplemod/models/item/ember_tome_in_hand.json`(翻开的那个同理,父模型换成 `tome_in_hand_open`):
 
 ```json
 {
-  "parent": "ibx_lib:item/general_tome_hand",
+  "parent": "ibx_lib:item/tome_in_hand",
   "textures": {
     "cover": "examplemod:item/ember_tome_cover"
   }
@@ -599,11 +626,11 @@ public static final DeferredItem<IbxStaffItem> OAK_STAFF = ITEMS.registerItem("o
           "property": "ibx_lib:casting",
           "on_true": {
             "type": "minecraft:model",
-            "model": "examplemod:item/ember_tome_hand_open"
+            "model": "examplemod:item/ember_tome_in_hand_open"
           },
           "on_false": {
             "type": "minecraft:model",
-            "model": "examplemod:item/ember_tome_hand"
+            "model": "examplemod:item/ember_tome_in_hand"
           }
         }
       }
@@ -631,7 +658,7 @@ public static final DeferredItem<IbxStaffItem> OAK_STAFF = ITEMS.registerItem("o
 | 类 | 说明 |
 | --- | --- |
 | `ibx.lib.item.IbxShieldItem` | 普通盾(单手盾):只挡,主手副手都同原版盾,能和单手武器一起拿。 |
-| `ibx.lib.item.IbxTwoHandedShieldItem` | 双手盾:主手拿着还能普通攻击和盾击。 |
+| `ibx.lib.item.IbxHeavyShieldItem` | 双手盾:主手拿着还能普通攻击和盾击。 |
 
 ### 格挡
 
@@ -646,7 +673,7 @@ public static final DeferredItem<IbxStaffItem> OAK_STAFF = ITEMS.registerItem("o
 
 - 其余同原版盾:`#minecraft:bypasses_shield` 的伤害挡不住,格挡时掉耐久的算法、格挡音、破碎音都一样。
 - 继承原版的 `ShieldItem`,第一人称举盾的显示和原版盾一致。
-- 标签:自动进 `#c:tools`、`#c:tools/shield`,再按子类进 `#c:tools/one_handed_shield` 或 `#c:tools/two_handed_shield`。
+- 标签:自动进 `#c:tools`、`#c:tools/shield`,再按子类进 `#c:tools/one_handed_shield` 或 `#c:tools/heavy_shield`。
 
 ### 单手盾
 
@@ -683,7 +710,7 @@ public static final DeferredItem<IbxShieldItem> BUCKLER = ITEMS.registerItem("bu
 
 1. **客户端输入**(`ibx.lib.client.ShieldInput`):主手拿着双手盾并按着右键时,左键不再交给原版和 Better Combat。盾举着、盾击不在冷却时按下左键,发一个 `ShieldBashPayload`(`ibx_lib:shield_bash`,没有数据)。
 2. **服务端校验** `ShieldApi.tryBash(player)`:主手是双手盾、主手正举着、冷却已过,才调 `shield.bash(player, stack)`。
-3. **`IbxTwoHandedShieldItem#bash`** 依次:
+3. **`IbxHeavyShieldItem#bash`** 依次:
    - `ShieldApi.markBash` 记下这次盾击并进冷却(`bashCooldownTicks()`),状态同步给自己和周围玩家;
    - 挥臂、播放音效;
    - 趁盾还举着调 `onBash` 结算,打中的生物再交给饰品的触发钩子(见 [8](#触发钩子));
@@ -718,7 +745,7 @@ public static final DeferredItem<IbxShieldItem> BUCKLER = ITEMS.registerItem("bu
 | `public Identifier guardAnimation()` | `ibx_lib:shield.guard` | 主手举盾时循环放的玩家动作。 |
 
 ```java
-public class TowerShieldItem extends IbxTwoHandedShieldItem {
+public class TowerShieldItem extends IbxHeavyShieldItem {
     public TowerShieldItem(Item.Properties properties) {
         super(properties, 5.0F, -3.0F);
     }
@@ -751,7 +778,7 @@ public static final DeferredItem<TowerShieldItem> TOWER_SHIELD = ITEMS.registerI
 
 | 方法 | 说明 |
 | --- | --- |
-| `isRaisingTwoHandedShield(entity)` | 主手正举着一面双手盾(盾击的前提)。两端都能读。 |
+| `isRaisingHeavyShield(entity)` | 主手正举着一面双手盾(盾击的前提)。两端都能读。 |
 | `isBashReady(entity)` | 盾击冷却过了没。两端都能读。 |
 | `getState(entity)` | 盾击状态 `ShieldBash`,没出过盾击为 `null`。 |
 | `tryBash(player)` | 校验后出盾击。只在服务端调。 |
@@ -773,14 +800,14 @@ public static final DeferredItem<TowerShieldItem> TOWER_SHIELD = ITEMS.registerI
 
 ### 双手盾的资源文件
 
-**Better Combat**:本模组带一份预设 `data/ibx_lib/weapon_attributes/two_handed_shield.json`(id `ibx_lib:two_handed_shield`,常量 `IbxTwoHandedShieldItem.PRESET`):双手持握、站姿 `ibx_lib:shield.pose`、攻击距离 -0.5,普通攻击两段——横扫(120°)和下砸(90°,伤害 ×1.2)。双手盾默认就用它,写在物品的默认组件里,不用每面盾再写 `weapon_attributes` 文件。想换,注册时调 `BetterCombatCompat.preset`,同近战武器(见 [2](#手持模型与左键动作))。
+**Better Combat**:本模组带一份预设 `data/ibx_lib/weapon_attributes/heavy_shield.json`(id `ibx_lib:heavy_shield`,常量 `IbxHeavyShieldItem.PRESET`):双手持握、站姿 `ibx_lib:shield.pose`、攻击距离 -0.5,普通攻击两段——横扫(120°)和下砸(90°,伤害 ×1.2)。双手盾默认就用它,写在物品的默认组件里,不用每面盾再写 `weapon_attributes` 文件。想换,注册时调 `BetterCombatCompat.preset`,同近战武器(见 [2](#手持模型与左键动作))。
 
 **手持显示**:本模组带两个只有显示变换(`display`)的父模型,几何和贴图由你的模型自己给:
 
 | 模型 | 用于 |
 | --- | --- |
-| `ibx_lib:item/general_two_handed_shield_hand` | 没举盾时 |
-| `ibx_lib:item/general_two_handed_shield_block` | 举盾时。和上一个只差第一人称的显示(换成原版举盾的位置)。 |
+| `ibx_lib:item/heavy_shield_in_hand` | 没举盾时 |
+| `ibx_lib:item/heavy_shield_in_hand_blocking` | 举盾时。和上一个只差第一人称的显示(换成原版举盾的位置)。 |
 
 物品模型定义用 `minecraft:using_item` 分两支,两支的模型分别以这两个为父模型:
 
@@ -1042,7 +1069,7 @@ public class VampireFangItem extends IbxCurioItem {
 - **冷却、触发几率由饰品自己处理**(比如 `Player#getCooldowns`、`slot.entity().getRandom()`),框架不管。
 - **伤害**:近战、弹射物(穿戴者是射手)、法术都走 `onDealDamage` / `onDamageDealt`,用 `source` 区分。改的伤害会再被护甲、法术抗性减免,和原版附魔的伤害加成一样。致命的那一下,`onKill` 在 `onDamageDealt` 之前调。
 - **被别的模组取消的不触发**:取消了的伤害、死亡、格挡都不会调到。
-- **盾击**:由 `IbxTwoHandedShieldItem` 的服务端流程调用。重写了 `onBash` 的盾,返回值就是交给这里的 `hits`。
+- **盾击**:由 `IbxHeavyShieldItem` 的服务端流程调用。重写了 `onBash` 的盾,返回值就是交给这里的 `hits`。
 - 分发在 `ibx.lib.compat.curios.CurioTriggerHandler`。
 
 > `CurioTriggers` 引用了 Curios 的类(`SlotContext`):实现它的饰品所在的模组要把 Curios 设成必需。
@@ -1087,15 +1114,15 @@ public class VampireFangItem extends IbxCurioItem {
 | `IbxCrossbowItem` | `IbxRangedWeaponItem` 的,加 `#c:tools/crossbow` |
 | `IbxAbstractShieldItem` | `#c:tools`、`#c:tools/shield` |
 | `IbxShieldItem` | `IbxAbstractShieldItem` 的,加 `#c:tools/one_handed_shield` |
-| `IbxTwoHandedShieldItem` | `IbxAbstractShieldItem` 的,加 `#c:tools/two_handed_shield` |
+| `IbxHeavyShieldItem` | `IbxAbstractShieldItem` 的,加 `#c:tools/heavy_shield` |
 | `IbxMagicWeaponItem` | `#ibx_lib:can_cast_spell`、`#c:tools`、`#c:tools/magic_weapon` |
 | `IbxTomeItem` | `IbxMagicWeaponItem` 的,加 `#c:tools/tome` |
 | `IbxStaffItem` | `IbxMagicWeaponItem` 的,加 `#c:tools/staff` |
 
 - 是真的标签成员:同步到客户端,指令、JEI、别的模组都认得。
 - 物品插在各标签的最前面,数据包可以用 `"remove"` 把某件物品去掉;`"replace": true` 去不掉。
-- 近战的十个种类标签,以及 `#c:tools/magic_weapon`、`#c:tools/tome`、`#c:tools/staff`、`#c:tools/one_handed_shield`、`#c:tools/two_handed_shield` 是本模组自建的通用标签,没有数据文件,全靠自动填。
-- 标签的 key 在 `ibx.lib.registry.TagRegistry`:`CAN_CAST_SPELL`、`TOOLS_MAGIC_WEAPON`、`TOOLS_TOME`、`TOOLS_STAFF`、`TOOLS_ONE_HANDED_SHIELD`、`TOOLS_TWO_HANDED_SHIELD`,近战的 `TOOLS_SWORD`、`TOOLS_DAGGER`、`TOOLS_CUTLASS`、`TOOLS_CLAYMORE`、`TOOLS_SCYTHE`、`TOOLS_FIST`、`TOOLS_HAMMER`、`TOOLS_AXE`、`TOOLS_DOUBLE_AXE`、`TOOLS_SPEAR`。
+- 近战的十个种类标签,以及 `#c:tools/magic_weapon`、`#c:tools/tome`、`#c:tools/staff`、`#c:tools/one_handed_shield`、`#c:tools/heavy_shield` 是本模组自建的通用标签,没有数据文件,全靠自动填。
+- 标签的 key 在 `ibx.lib.registry.TagRegistry`:`CAN_CAST_SPELL`、`TOOLS_MAGIC_WEAPON`、`TOOLS_TOME`、`TOOLS_STAFF`、`TOOLS_ONE_HANDED_SHIELD`、`TOOLS_HEAVY_SHIELD`,近战的 `TOOLS_SWORD`、`TOOLS_DAGGER`、`TOOLS_CUTLASS`、`TOOLS_CLAYMORE`、`TOOLS_SCYTHE`、`TOOLS_FIST`、`TOOLS_HAMMER`、`TOOLS_AXE`、`TOOLS_DOUBLE_AXE`、`TOOLS_SPEAR`。
 
 **`#ibx_lib:can_cast_spell`**(能施法的物品):手持右键放当前选中的法术,使用时长统一为 72000 tick(同弓,能一直按着)。不是 Ibx 法器的物品要施法,由物品所在模组在 `data/ibx_lib/tags/item/can_cast_spell.json` 里加进去。食物、药水这类本来有使用时长的物品不要进这个标签,否则吃不完、喝不完。
 
@@ -1124,4 +1151,4 @@ public class VampireFangItem extends IbxCurioItem {
 | `kinetic_weapon`、`piercing_weapon`、`attack_range`、`swing_animation`、`minimum_attack_charge`、`damage_type` | `IbxSpearItem`(同原版矛)。 |
 | `use_effects`、`unbreakable` | `IbxMagicWeaponItem`(施法时的移速;耐久给负数时无法破坏)。 |
 | `blocks_attacks`、`break_sound`、副手装备位 | `IbxAbstractShieldItem`。 |
-| `bettercombat:preset_id`(Better Combat 的,装了它才有) | 近战的种类类、`IbxStaffItem`、`IbxTwoHandedShieldItem`(左键动作)。 |
+| `bettercombat:preset_id`(Better Combat 的,装了它才有) | 近战的种类类、`IbxStaffItem`、`IbxHeavyShieldItem`(左键动作)。 |

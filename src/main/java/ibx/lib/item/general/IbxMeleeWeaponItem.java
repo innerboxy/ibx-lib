@@ -28,7 +28,7 @@ import java.util.function.UnaryOperator;
  *       见 {@link IbxAttributeModifiers}）。</li>
  *   <li>自动进 {@code #c:tools}、{@code #c:tools/melee_weapon}，种类类再进各自的标签（见 {@link ibx.lib.registry.AutoItemTags}），data 里不用再写。</li>
  * </ul>
- * 手持显示（lib 的 {@code general_*_hand} 模型）按武器种类在资源里给，不在这里。
+ * 手持显示（lib 的 {@code *_in_hand} 模型）按武器种类在资源里给，不在这里。
  *
  * <p>注册：用 {@code DeferredRegister.Items#registerItem}，在工厂里使用传进来的 Properties，例如
  * {@code ITEMS.registerItem("my_blade", p -> new IbxSwordItem(p, ToolMaterial.IRON, 3.0F, -2.4F))}。
