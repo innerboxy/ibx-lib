@@ -5,6 +5,7 @@
   "attribute.name.ibx_lib.critical_chance": "暴击率",
   "attribute.name.ibx_lib.critical_damage": "暴击伤害",
   "attribute.name.ibx_lib.armor_penetration": "护甲穿透",
+  "attribute.name.ibx_lib.health_regeneration": "生命回复",
   "attribute.name.ibx_lib.heal_efficiency": "回复效率",
   "attribute.name.ibx_lib.thorns": "反甲",
   "attribute.name.ibx_lib.max_mana": "最大法力值",

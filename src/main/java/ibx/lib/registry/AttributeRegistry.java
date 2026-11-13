@@ -171,6 +171,21 @@ public final class AttributeRegistry {
     public static final String PER_SECOND_VALUE_KEY = "attribute.value." + IbxLib.MODID + ".per_second";
 
     /**
+     * 生命回复：每秒回复的生命点数（固定值，不按上限比例）。默认 0（不回复），最小 0，最大 2048。tooltip 数值带"/秒"。
+     * 每秒结算一次，走原版 {@code heal}，所以也乘 {@link #HEAL_EFFICIENCY}；满血时不结算。
+     * 结算见 {@link ibx.lib.event.HealHandler}。
+     */
+    public static final DeferredHolder<Attribute, Attribute> HEALTH_REGENERATION =
+            ATTRIBUTES.register("health_regeneration",
+                    () -> new UnitAttribute(
+                            "attribute.name." + IbxLib.MODID + ".health_regeneration",
+                            0.0D,     // 默认值
+                            0.0D,     // 最小值
+                            2048.0D,  // 最大值
+                            PER_SECOND_VALUE_KEY
+                    ).setSyncable(true));
+
+    /**
      * 最大法力值：当前法力的上限。默认 100，最小 0，最大 1,000,000。
      * 上限降低时当前法力被截断，上限提高时不自动补满（同原版血量）。
      * 当前法力存在附加数据里，读写见 {@link ibx.lib.api.ManaApi}。

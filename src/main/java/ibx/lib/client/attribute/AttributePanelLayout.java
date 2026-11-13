@@ -41,7 +41,7 @@ public final class AttributePanelLayout {
             "ibx_lib:spell_resistance", "ibx_lib:spell_penetration", "ibx_lib:spell_cast_speed", "ibx_lib:spell_cooldown_ratio",
             "ibx_lib:can_spell_crit", "ibx_lib:critical_chance", "ibx_lib:critical_damage", "ibx_lib:armor_penetration",
             "ibx_lib:ranged_damage", "ibx_lib:draw_speed",
-            "ibx_lib:draw_time", "ibx_lib:heal_efficiency", "ibx_lib:thorns", "ibx_lib:max_summons"));
+            "ibx_lib:draw_time", "ibx_lib:health_regeneration", "ibx_lib:heal_efficiency", "ibx_lib:thorns", "ibx_lib:max_summons"));
     /** 别的模组登记的「默认不显示」。 */
     private static final List<String> HIDDEN_BY_DEFAULT = new CopyOnWriteArrayList<>();
     /** 有还没并进玩家配置的登记项。 */

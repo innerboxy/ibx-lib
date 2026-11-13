@@ -29,6 +29,7 @@
 | `ibx_lib:critical_chance` | `CRITICAL_CHANCE` | 暴击率 | 0.05 | 0~1024 | 近战、远程、法术共用。0~1 按概率,**大于等于 1 必定暴击**。 |
 | `ibx_lib:critical_damage` | `CRITICAL_DAMAGE` | 暴击伤害 | 0.5 | 0~2048 | 暴击时的**额外**伤害比例:最终伤害 = 原伤害 × (1 + 本值)。 |
 | `ibx_lib:armor_penetration` | `ARMOR_PENETRATION` | 护甲穿透 | 0 | 0~1 | 实际护甲减免 = 护甲减免 × (1 − 本值)。读攻击者,弹射物读射手。只打折护甲这一步,保护附魔和抗性效果照常。 |
+| `ibx_lib:health_regeneration` | `HEALTH_REGENERATION` | 生命回复 | 0 | 0~2048 | 每秒回复的生命点数(固定值,不按上限比例)。每秒结算一次,走 `heal`,所以也乘回复效率;满血时不结算。 |
 | `ibx_lib:heal_efficiency` | `HEAL_EFFICIENCY` | 回复效率 | 1 | 0~1024 | 实际回复量 = 回复量 × 本值。0 为完全无法回复。 |
 | `ibx_lib:thorns` | `THORNS` | 反甲 | 0 | 0~2048 | 被攻击后对攻击者造成本值点 `minecraft:thorns` 伤害。原版荆棘附魔改成了每级 +1 本属性。 |
 | `ibx_lib:max_mana` | `MAX_MANA` | 最大法力值 | 100 | 0~1000000 | 法力上限。上限降低时当前法力被截断,提高时不自动补满。 |
@@ -77,7 +78,8 @@
 其余两处:
 
 - **近战暴击**(`CriticalHitEvent`):概率走暴击率,倍率走暴击伤害,不再是原版写死的 1.5 倍。原版的跳劈必暴默认关掉,由服务端配置 `enableVanillaCritical` 决定保不保留(见 [配置](CONFIG.md))。
-- **治疗**(`ibx.lib.event.HealHandler`,`LivingHealEvent`):回复量 × 回复效率。走 `LivingEntity#heal` 的回复都经过(自然回复、生命恢复、瞬间治疗……);直接改血量的(如不死图腾)不经过。
+- **治疗**(`ibx.lib.event.HealHandler`,`LivingHealEvent`):回复量 × 回复效率。走 `LivingEntity#heal` 的回复都经过(自然回复、生命恢复、瞬间治疗、生命回复属性……);直接改血量的(如不死图腾)不经过。
+- **生命回复**(`ibx.lib.event.HealHandler`,`EntityTickEvent.Post`):服务端每个生物每 20 tick 按 `health_regeneration` 调一次 `heal`,属性为 0 或满血时跳过。
 
 ---
 

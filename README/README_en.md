@@ -34,7 +34,7 @@ See [Equipment base classes](../TUTORIAL/EQUIPMENT_en.md).
 
 ### Attributes
 
-18 attributes: ranged damage, draw, critical strikes, armor penetration, heal efficiency, thorns, mana, spell power, spell resistance and penetration, max summons… Every living entity has them and all are synced to the client. An attribute panel left of the inventory lists every attribute the player has; other mods can register their attributes' default order and default hiding, and get icons just by putting images at the right path.
+19 attributes: ranged damage, draw, critical strikes, armor penetration, health regeneration, heal efficiency, thorns, mana, spell power, spell resistance and penetration, max summons… Every living entity has them and all are synced to the client. An attribute panel left of the inventory lists every attribute the player has; other mods can register their attributes' default order and default hiding, and get icons just by putting images at the right path.
 
 See [Attributes](../TUTORIAL/ATTRIBUTE_en.md).
 

@@ -29,6 +29,7 @@ Reference an attribute with `AttributeRegistry.XXX` (a `DeferredHolder<Attribute
 | `ibx_lib:critical_chance` | `CRITICAL_CHANCE` | Critical Chance | 0.05 | 0–1024 | Shared by melee, ranged and spells. 0–1 is a probability; **1 or more always crits**. |
 | `ibx_lib:critical_damage` | `CRITICAL_DAMAGE` | Critical Damage | 0.5 | 0–2048 | The **extra** damage ratio on a crit: final damage = damage × (1 + this value). |
 | `ibx_lib:armor_penetration` | `ARMOR_PENETRATION` | Armor Penetration | 0 | 0–1 | Actual armor reduction = armor reduction × (1 − this value). Read from the attacker; projectiles read the shooter. Only the armor step is discounted; protection enchantments and the Resistance effect still apply in full. |
+| `ibx_lib:health_regeneration` | `HEALTH_REGENERATION` | Health Regeneration | 0 | 0–2048 | Health regenerated per second (a flat amount, not a share of max health). Resolved once a second through `heal`, so heal efficiency applies; skipped at full health. |
 | `ibx_lib:heal_efficiency` | `HEAL_EFFICIENCY` | Heal Efficiency | 1 | 0–1024 | Actual healing = healing × this value. 0 means no healing at all. |
 | `ibx_lib:thorns` | `THORNS` | Thorns | 0 | 0–2048 | When attacked, deals this much `minecraft:thorns` damage to the attacker. The vanilla Thorns enchantment was changed to +1 of this attribute per level. |
 | `ibx_lib:max_mana` | `MAX_MANA` | Max Mana | 100 | 0–1000000 | Mana cap. Lowering it truncates current mana; raising it does not refill. |
@@ -77,7 +78,8 @@ After damage is resolved (`LivingDamageEvent.Post`; the amount is no longer chan
 Two more places:
 
 - **Melee crits** (`CriticalHitEvent`): chance comes from critical chance and the multiplier from critical damage, no longer vanilla's fixed 1.5×. Vanilla's guaranteed jump crit is off by default; the server config option `enableVanillaCritical` decides whether to keep it (see [Configuration](CONFIG_en.md)).
-- **Healing** (`ibx.lib.event.HealHandler`, `LivingHealEvent`): healing × heal efficiency. Any healing that goes through `LivingEntity#heal` passes here (natural regeneration, Regeneration, Instant Health…); things that set health directly (such as the Totem of Undying) don't.
+- **Healing** (`ibx.lib.event.HealHandler`, `LivingHealEvent`): healing × heal efficiency. Any healing that goes through `LivingEntity#heal` passes here (natural regeneration, Regeneration, Instant Health, the Health Regeneration attribute…); things that set health directly (such as the Totem of Undying) don't.
+- **Health regeneration** (`ibx.lib.event.HealHandler`, `EntityTickEvent.Post`): on the server, every living entity calls `heal` with its `health_regeneration` once every 20 ticks; skipped when the attribute is 0 or at full health.
 
 ---
 
