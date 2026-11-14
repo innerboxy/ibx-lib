@@ -77,7 +77,7 @@ public final class GroundWarningRendering {
                 continue;
             }
             Vec3 c = w.center();
-            double reach = w.shape() == GroundWarningPayload.Shape.CIRCLE ? w.size() : w.size() * 0.5 + w.width();
+            double reach = w.shape() == GroundWarningPayload.Shape.LINE ? w.size() * 0.5 + w.width() : w.size();
             if (!event.getFrustum().isVisible(new AABB(c, c).inflate(reach + 1.0, 3.0, reach + 1.0))) {
                 continue;
             }
@@ -88,6 +88,8 @@ public final class GroundWarningRendering {
                 case CIRCLE -> GroundShapes.sector(quads, level, base, 0.0F, w.size(), Mth.PI, fill, edge, camera);
                 case LINE -> GroundShapes.rect(quads, level, base, Mth.cos(w.yaw()), Mth.sin(w.yaw()), w.size() / 2.0, w.width() / 2.0,
                         fill, edge, camera);
+                case FAN -> GroundShapes.sector(quads, level, base, w.yaw(), w.size(), w.width(), fill, edge, camera);
+                case RING -> GroundShapes.ring(quads, level, base, w.width(), w.size(), fill, edge, camera);
             }
         }
         event.getRenderState().setRenderData(QUADS, quads);

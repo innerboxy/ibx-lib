@@ -22,10 +22,10 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 
 /**
- * 地上的提示形状：圆 / 扇形 / 长条，中间填色、边框稍深，贴着地形起伏（每个顶点往上 / 往下找地面）。目标选择读条时的提示
+ * 地上的提示形状：圆 / 扇形 / 环 / 长条，中间填色、边框稍深，贴着地形起伏（每个顶点往上 / 往下找地面）。目标选择读条时的提示
  * （{@code client.target.TargetIndicatorRendering}）和地面预警（{@link GroundWarningRendering}）都用它画，看着是同一套。
  *
- * <p>先用 {@link #sector} / {@link #rect} 把形状切成小四边形（坐标相对 {@code origin}），再 {@link #submit} 画出来；
+ * <p>先用 {@link #sector} / {@link #ring} / {@link #rect} 把形状切成小四边形（坐标相对 {@code origin}），再 {@link #submit} 画出来；
  * 颜色用 {@link #color} 取客户端配置里那个阵营的颜色，{@link #fill} / {@link #edge} 换成填充、边框色。</p>
  */
 public final class GroundShapes {
@@ -82,14 +82,44 @@ public final class GroundShapes {
         if (radius <= EDGE) {
             return;
         }
-        int segments = Mth.clamp(Mth.ceil(radius * halfAngle * 2.0 / STEP), 8, 96);
-        int rings = Mth.clamp(Mth.ceil((radius - EDGE) / STEP), 1, 32);
-        double[] radii = new double[rings + 2];
-        for (int i = 0; i <= rings; i++) {
-            radii[i] = (radius - EDGE) * i / rings;
+        band(out, level, base, yaw, 0.0, radius, halfAngle, fill, edge, origin);
+        if (halfAngle < Mth.PI - 1.0E-3) {
+            radialEdge(out, level, base, yaw, -halfAngle, radius, 1.0, edge, origin);
+            radialEdge(out, level, base, yaw, halfAngle, radius, -1.0, edge, origin);
         }
-        radii[rings + 1] = radius;
-        Vec3[][] grid = new Vec3[rings + 2][segments + 1];
+    }
+
+    /**
+     * 环：圆心 {@code base}，离圆心 {@code inner} ~ {@code outer} 格的一圈填色，里外两条边各描 {@value #EDGE} 格宽；
+     * {@code inner} ≤ 0 时就是半径 {@code outer} 的整圆。
+     */
+    public static void ring(List<Quad> out, BlockGetter level, Vec3 base, double inner, double outer, int fill, int edge, Vec3 origin) {
+        if (inner <= 0.0) {
+            sector(out, level, base, 0.0F, outer, Mth.PI, fill, edge, origin);
+        } else if (outer > inner) {
+            band(out, level, base, 0.0F, inner, outer, Mth.PI, fill, edge, origin);
+        }
+    }
+
+    /**
+     * 一段环带（{@link #sector}、{@link #ring} 共用）：离圆心 {@code inner} ~ {@code outer} 格、左右各 {@code halfAngle}，
+     * 按环、按段切成小格；最外一圈 {@value #EDGE} 格是边框，{@code inner} > 0 时最里一圈也是边框，中间填色。
+     */
+    private static void band(List<Quad> out, BlockGetter level, Vec3 base, float yaw, double inner, double outer, double halfAngle,
+                             int fill, int edge, Vec3 origin) {
+        boolean innerEdge = inner > 0.0;
+        double from = innerEdge ? Math.max(inner, Math.min(inner + EDGE, outer - EDGE)) : 0.0;
+        double to = Math.max(from, outer - EDGE);
+        int segments = Mth.clamp(Mth.ceil(outer * halfAngle * 2.0 / STEP), 8, 96);
+        int rings = Mth.clamp(Mth.ceil((to - from) / STEP), 1, 32);
+        int offset = innerEdge ? 1 : 0;
+        double[] radii = new double[offset + rings + 2];
+        if (innerEdge) radii[0] = inner;
+        for (int i = 0; i <= rings; i++) {
+            radii[offset + i] = from + (to - from) * i / rings;
+        }
+        radii[radii.length - 1] = outer;
+        Vec3[][] grid = new Vec3[radii.length][segments + 1];
         for (int i = 0; i < radii.length; i++) {
             for (int j = 0; j <= segments; j++) {
                 double angle = -halfAngle + 2.0 * halfAngle * j / segments;
@@ -97,14 +127,10 @@ public final class GroundShapes {
             }
         }
         for (int i = 0; i < radii.length - 1; i++) {
-            int color = i == rings ? edge : fill;
+            int color = i == radii.length - 2 || (innerEdge && i == 0) ? edge : fill;
             for (int j = 0; j < segments; j++) {
                 quad(out, origin, grid[i][j], grid[i][j + 1], grid[i + 1][j + 1], grid[i + 1][j], color);
             }
-        }
-        if (halfAngle < Mth.PI - 1.0E-3) {
-            radialEdge(out, level, base, yaw, -halfAngle, radius, 1.0, edge, origin);
-            radialEdge(out, level, base, yaw, halfAngle, radius, -1.0, edge, origin);
         }
     }
 

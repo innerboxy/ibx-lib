@@ -12,7 +12,7 @@
 
 | 特效 | 类 | 画什么 |
 | --- | --- | --- |
-| 地面预警 | `GroundWarnings` | 地上标一块圆或长条,提醒这里马上要挨打(见 [2](#2-地面预警))。 |
+| 地面预警 | `GroundWarnings` | 地上标一块圆、长条、扇形或环,提醒这里马上要挨打(见 [2](#2-地面预警))。 |
 | 地面起伏 | `BlockWave` | 地表方块从一点往外像浪一样弹起来再落回去(见 [3](#3-地面起伏))。 |
 | 换颜色的火 | `CustomFire` | 实体身上和第一人称屏幕上的火换成别的贴图(见 [4](#4-换颜色的火))。 |
 
@@ -32,9 +32,13 @@
 | `circle(level, center, radius, duration, color)` | 同上,`color` 是 `Faction`,决定用哪个阵营的颜色。 |
 | `line(level, from, dir, length, width, duration)` | 从 `from` 沿 `dir`(水平单位向量)长 `length`、宽 `width` 的长条,敌方颜色。返回编号。 |
 | `line(level, from, dir, length, width, duration, color)` | 同上,指定颜色。 |
+| `fan(level, center, dir, range, halfAngle, duration)` | 以 `center` 为圆心、朝 `dir`(水平方向)的扇形:半径 `range` 格,左右各 `halfAngle` 度(和 `Targeting.fan` 一样),敌方颜色。返回编号。 |
+| `fan(level, center, dir, range, halfAngle, duration, color)` | 同上,指定颜色。 |
+| `ring(level, center, inner, outer, duration)` | 以 `center` 为圆心的环:离圆心 `inner` ~ `outer` 格的一圈,中间空着,里外两条边都描边,敌方颜色;`inner` ≤ 0 时就是半径 `outer` 的圆。返回编号。 |
+| `ring(level, center, inner, outer, duration, color)` | 同上,指定颜色。 |
 | `cancel(level, id)` | 提前撤掉编号 `id` 那一块(已经到点没了的也没关系),比如 Boss 死了提前收掉。 |
 
-- `level` 是 `ServerLevel`;`center` / `from` 是贴在地面上的点。
+- `level` 是 `ServerLevel`;`center` / `from` 是贴在地面上的点;`fan` 的 `dir` 只看水平方向,不用归一化(`line` 的要是水平单位向量)。
 - 颜色取看的那个玩家客户端配置里的阵营颜色:`ENEMY` 用 `targetColorEnemy`(默认红),`ALLY` 用 `targetColorAlly`(默认绿),`ALL` / `NONE` 用 `targetColorAll`(默认黄),见 [配置](CONFIG.md)。
 - 不跟客户端的「显示敌方生物的提示」开关走,关了也照样显示。
 - 客户端按收到那一刻的世界时间到点自己删,`duration` 最少 1 tick。
@@ -50,6 +54,12 @@ Vec3 dir = boss.getLookAngle().multiply(1.0, 0.0, 1.0).normalize();
 int id = GroundWarnings.line(level, boss.position(), dir, 12.0F, 3.0F, 30);
 // 招式被打断时
 GroundWarnings.cancel(level, id);
+
+// 身前 4.5 格、左右各 60° 的横扫
+GroundWarnings.fan(level, boss.position(), boss.getLookAngle(), 4.5F, 60.0F, 25);
+
+// 落地后的冲击波:5 ~ 12 格的一圈,站在里面那 5 格打不到
+GroundWarnings.ring(level, boss.position(), 5.0F, 12.0F, 10);
 ```
 
 ---

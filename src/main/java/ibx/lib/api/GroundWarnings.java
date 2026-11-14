@@ -10,7 +10,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 地面预警：地上标一块范围（圆 {@link #circle} / 长条 {@link #line}）一段时间，提醒这里马上要挨打。只管画，到点要触发什么由调用的一方自己算。
+ * 地面预警：地上标一块范围（圆 {@link #circle} / 长条 {@link #line} / 扇形 {@link #fan} / 环 {@link #ring}）一段时间，提醒这里马上要挨打。只管画，到点要触发什么由调用的一方自己算。
  * 画法和目标选择读条时地上的提示一样（{@code client.ground.GroundShapes}：中间填色、边框稍深、贴着地形起伏、自发光），
  * 颜色取客户端配置里那个阵营的颜色（默认敌方红）；不跟「显示敌方生物的提示」开关走，关了也照样显示。
  *
@@ -45,6 +45,37 @@ public final class GroundWarnings {
         Vec3 center = from.add(dir.scale(length * 0.5));
         send(level, center, new GroundWarningPayload(id, GroundWarningPayload.Shape.LINE, center, length, width,
                 (float) Mth.atan2(dir.z, dir.x), color, Math.max(1, duration)));
+        return id;
+    }
+
+    /**
+     * 以 center（贴在地面上）为圆心、朝 dir（水平方向）的扇形：半径 range 格、左右各 halfAngle 度（同 {@code Targeting#fan}），
+     * 标 duration tick，敌方红。返回编号。
+     */
+    public static int fan(ServerLevel level, Vec3 center, Vec3 dir, float range, float halfAngle, int duration) {
+        return fan(level, center, dir, range, halfAngle, duration, Faction.ENEMY);
+    }
+
+    public static int fan(ServerLevel level, Vec3 center, Vec3 dir, float range, float halfAngle, int duration, Faction color) {
+        int id = NEXT_ID.incrementAndGet();
+        float yRot = (float) Mth.atan2(-dir.x, dir.z);
+        float half = Mth.clamp(halfAngle, 0.0F, 180.0F) * Mth.DEG_TO_RAD;
+        send(level, center, new GroundWarningPayload(id, GroundWarningPayload.Shape.FAN, center, range, half, yRot, color, Math.max(1, duration)));
+        return id;
+    }
+
+    /**
+     * 以 center（贴在地面上）为圆心的环：离圆心 inner ~ outer 格的一圈（中间空着，站进去打不到），里外两条边都描边，
+     * 标 duration tick，敌方红。inner ≤ 0 时就是半径 outer 的圆。返回编号。
+     */
+    public static int ring(ServerLevel level, Vec3 center, float inner, float outer, int duration) {
+        return ring(level, center, inner, outer, duration, Faction.ENEMY);
+    }
+
+    public static int ring(ServerLevel level, Vec3 center, float inner, float outer, int duration, Faction color) {
+        int id = NEXT_ID.incrementAndGet();
+        send(level, center, new GroundWarningPayload(id, GroundWarningPayload.Shape.RING, center, outer, Math.max(0.0F, inner), 0.0F, color,
+                Math.max(1, duration)));
         return id;
     }
 

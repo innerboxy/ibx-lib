@@ -12,7 +12,7 @@ Three purely visual effects with no gameplay resolution of their own, all in the
 
 | Effect | Class | What it draws |
 | --- | --- | --- |
-| Ground warning | `GroundWarnings` | Marks a circle or strip on the ground to warn that a hit is coming (see [2](#2-ground-warnings)). |
+| Ground warning | `GroundWarnings` | Marks a circle, strip, fan or ring on the ground to warn that a hit is coming (see [2](#2-ground-warnings)). |
 | Block wave | `BlockWave` | Surface blocks pop up and fall back in a wave spreading out from a point (see [3](#3-block-wave)). |
 | Colored fire | `CustomFire` | Replaces the fire texture on an entity and on the first-person screen (see [4](#4-colored-fire)). |
 
@@ -32,9 +32,13 @@ Three purely visual effects with no gameplay resolution of their own, all in the
 | `circle(level, center, radius, duration, color)` | Same; `color` is a `Faction` that picks whose color to use. |
 | `line(level, from, dir, length, width, duration)` | A strip from `from` along `dir` (a horizontal unit vector), `length` long and `width` wide, in the enemy color. Returns an id. |
 | `line(level, from, dir, length, width, duration, color)` | Same, with a color. |
+| `fan(level, center, dir, range, halfAngle, duration)` | A fan centered on `center` facing `dir` (horizontal direction): radius `range`, `halfAngle` degrees to each side (same as `Targeting.fan`), in the enemy color. Returns an id. |
+| `fan(level, center, dir, range, halfAngle, duration, color)` | Same, with a color. |
+| `ring(level, center, inner, outer, duration)` | A ring around `center`: the band from `inner` to `outer` blocks out, hollow in the middle, with both the inner and outer edges outlined, in the enemy color; with `inner` ≤ 0 it is a circle of radius `outer`. Returns an id. |
+| `ring(level, center, inner, outer, duration, color)` | Same, with a color. |
 | `cancel(level, id)` | Removes area `id` early (fine if it has already expired), e.g. when the boss dies. |
 
-- `level` is a `ServerLevel`; `center` / `from` are points on the ground.
+- `level` is a `ServerLevel`; `center` / `from` are points on the ground; `fan` only uses the horizontal part of `dir`, which doesn't need to be normalized (`line` needs a horizontal unit vector).
 - The color comes from each viewer's client config for that faction: `ENEMY` uses `targetColorEnemy` (red by default), `ALLY` uses `targetColorAlly` (green), `ALL` / `NONE` use `targetColorAll` (yellow); see [Configuration](CONFIG_en.md).
 - It ignores the client's "show enemy mob indicators" switch and is shown even when that is off.
 - The client removes it on time based on the world time when it was received; `duration` is at least 1 tick.
@@ -50,6 +54,12 @@ Vec3 dir = boss.getLookAngle().multiply(1.0, 0.0, 1.0).normalize();
 int id = GroundWarnings.line(level, boss.position(), dir, 12.0F, 3.0F, 30);
 // if the move is interrupted
 GroundWarnings.cancel(level, id);
+
+// A sweep 4.5 blocks ahead, 60° to each side
+GroundWarnings.fan(level, boss.position(), boss.getLookAngle(), 4.5F, 60.0F, 25);
+
+// A landing shockwave: the band 5 to 12 blocks out; standing within 5 blocks is safe
+GroundWarnings.ring(level, boss.position(), 5.0F, 12.0F, 10);
 ```
 
 ---

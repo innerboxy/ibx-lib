@@ -13,11 +13,11 @@ import net.minecraft.world.phys.Vec3;
  * 客户端按收到那一刻的世界时间到点自己删（{@code client.ground.GroundWarningRendering}）。{@code duration} ≤ 0 是「把这个 id 撤掉」。
  *
  * @param id       这一块预警的编号（撤掉时用）
- * @param shape    圆 / 长条
- * @param center   范围正中（贴在地面上）
- * @param size     圆：半径；长条：长度（格）
- * @param width    长条的宽（格）
- * @param yaw      长条的方向（水平面上的角度，弧度，atan2(z, x)）
+ * @param shape    圆 / 长条 / 扇形 / 环
+ * @param center   范围正中（贴在地面上；扇形、环是圆心）
+ * @param size     圆、扇形：半径；环：外半径；长条：长度（格）
+ * @param width    长条：宽（格）；扇形：左右各多少（弧度）；环：内半径（格）
+ * @param yaw      长条：方向（水平面上的角度，弧度，atan2(z, x)）；扇形：面朝方向（原版 yRot 的弧度，atan2(-x, z)）
  * @param color    按哪个阵营上色
  * @param duration 标多久（tick）
  */
@@ -25,7 +25,9 @@ public record GroundWarningPayload(int id, Shape shape, Vec3 center, float size,
         implements CustomPacketPayload {
     public enum Shape {
         CIRCLE,
-        LINE
+        LINE,
+        FAN,
+        RING
     }
 
     public static final Type<GroundWarningPayload> TYPE = new Type<>(Identifier.fromNamespaceAndPath(IbxLib.MODID, "ground_warning"));
