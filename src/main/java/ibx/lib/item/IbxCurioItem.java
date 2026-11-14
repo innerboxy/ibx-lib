@@ -78,7 +78,7 @@ public class IbxCurioItem extends Item implements ICurioItem, CurioTriggers {
     }
 
     /**
-     * 戴着一直有这个效果：无限时长，不闪、不冒粒子、HUD 不显示图标；摘下来就去掉。
+     * 戴着一直有这个效果：无限时长，不闪、不冒粒子、显示图标；摘下来就去掉。
      * 同一效果的药水：等级更高的生效期间不动它，到期后再补上；等级不比它高的会被盖住。
      * 摘下时只去掉饰品给的那个（无限时长、不显示粒子、等级相同），别处来的留着。
      *
@@ -131,7 +131,7 @@ public class IbxCurioItem extends Item implements ICurioItem, CurioTriggers {
             MobEffectInstance current = entity.getEffect(effect.effect());
             if (current == null || current.getAmplifier() < effect.amplifier()) {
                 entity.addEffect(new MobEffectInstance(effect.effect(), MobEffectInstance.INFINITE_DURATION,
-                        effect.amplifier(), false, false, false));
+                        effect.amplifier(), false, false, true));
             }
         }
     }
