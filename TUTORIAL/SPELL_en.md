@@ -394,7 +394,7 @@ public class ExampleGrimoire extends IbxTomeItem implements SpellPicker {
 
 | `SpellPickerSource` | What the right side lists |
 | --- | --- |
-| `REGISTERED` | Every registered spell, in registration order. |
+| `REGISTERED` | Every registered spell, sorted by mod (the registry id's namespace), then by the id's path, both alphabetically. |
 | `CARRIED` | The item's built-in spells (`innateSpells`) plus the spells the player's other equipment provides right now. |
 
 Neither lists `ibx_lib:dismiss_summons`. `SpellPickerSource.spells(player, stack)` returns the right-side list; `SpellPickerSource.pickable(holder)` tells whether a spell may be put into an item.

@@ -394,7 +394,7 @@ public class ExampleGrimoire extends IbxTomeItem implements SpellPicker {
 
 | `SpellPickerSource` | 右边列什么 |
 | --- | --- |
-| `REGISTERED` | 游戏里注册的全部法术,按注册顺序。 |
+| `REGISTERED` | 游戏里注册的全部法术,先按模组(注册 id 的命名空间)、再按注册 id 的路径,都按字母排。 |
 | `CARRIED` | 这件物品自带的法术(`innateSpells`),加上玩家身上其他装备现在能放的法术。 |
 
 两种都不列 `ibx_lib:dismiss_summons`。`SpellPickerSource.spells(player, stack)` 取右边的列表,`SpellPickerSource.pickable(holder)` 判断一个法术能不能放进物品。
