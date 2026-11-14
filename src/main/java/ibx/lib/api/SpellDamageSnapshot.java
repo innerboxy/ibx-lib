@@ -3,7 +3,7 @@ package ibx.lib.api;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import ibx.lib.registry.DamageTypeRegistry;
+import ibx.lib.registry.SpellDamageTypeRegistry;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -46,12 +46,12 @@ public record SpellDamageSnapshot(ResourceKey<DamageType> damageType, float base
 
     /** 附加数据的默认值，只为满足注册要求；读弹射物上的快照请走 {@link SpellDamageApi#getProjectileSnapshot}。 */
     public static final SpellDamageSnapshot NONE =
-            new SpellDamageSnapshot(DamageTypeRegistry.SPELL_GENERAL, 0.0F, false, 0.0F, 1.0F,
+            new SpellDamageSnapshot(SpellDamageTypeRegistry.GENERIC_SPELL, 0.0F, false, 0.0F, 1.0F,
                     null, false, false, false, 0, 0, 0.0F, 0.0F);
 
     /** 存盘格式（26.1 起附加数据只接受 MapCodec）。除基础值外都可省略，省略即默认值。 */
     public static final MapCodec<SpellDamageSnapshot> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
-            ResourceKey.codec(Registries.DAMAGE_TYPE).optionalFieldOf("damage_type", DamageTypeRegistry.SPELL_GENERAL)
+            ResourceKey.codec(Registries.DAMAGE_TYPE).optionalFieldOf("damage_type", SpellDamageTypeRegistry.GENERIC_SPELL)
                     .forGetter(SpellDamageSnapshot::damageType),
             Codec.FLOAT.fieldOf("base_amount").forGetter(SpellDamageSnapshot::baseAmount),
             Codec.BOOL.optionalFieldOf("can_crit", false).forGetter(SpellDamageSnapshot::canCrit),

@@ -468,7 +468,7 @@ The formula is a `SpellDamageApi.Formula`: it receives a `SpellDamageContext` an
 
 | Method | Description |
 | --- | --- |
-| `snapshot(caster, formula)` | Builds a snapshot with the default damage type `ibx_lib:spell_general`. Works on both sides (the client can use it for estimates). |
+| `snapshot(caster, formula)` | Builds a snapshot with the default damage type `ibx_lib:generic_spell`. Works on both sides (the client can use it for estimates). |
 | `snapshot(caster, damageType, formula)` | With an explicit damage type. |
 | `hurt(target, snapshot, directEntity, caster, sourcePosition)` | Settles one spell hit; returns whether damage was dealt. `directEntity` is the entity directly causing the damage (projectile, area entity; the caster or null for instant spells); `caster` may be null; `sourcePosition` is the source position used for shield facing, and null falls back to `directEntity`'s position. |
 | `setProjectileSnapshot(entity, snapshot)` / `getProjectileSnapshot(entity)` | Writes the snapshot onto an entity (any entity; it survives saving) / reads it back. |
@@ -484,7 +484,7 @@ A snapshot is an immutable record; each `withXxx` returns a changed copy and the
 
 | Method | Default | Description |
 | --- | --- | --- |
-| `withDamageType(key)` | `ibx_lib:spell_general` | Changes the damage type. It should be in `#ibx_lib:is_spell`, otherwise it is reduced by armor and ignores spell resistance. |
+| `withDamageType(key)` | `ibx_lib:generic_spell` | Changes the damage type. It should be in `#ibx_lib:is_spell`, otherwise it is reduced by armor and ignores spell resistance. |
 | `withSpell(id)` | None (`ctx.damage` fills it in) | Which spell it came from, for events. |
 | `withFriendlyFire(boolean)` | `false` | Whether allies can be hit. By default friendly-fire protection is on: pets, summons, teammates and players with PvP off can't be hit. |
 | `withIgnoreIFrames(boolean)` | `false` | Pierce existing i-frames: the target's invulnerable time is zeroed before the hit. |
@@ -545,14 +545,11 @@ if (this.hits.tryHit(target)) {                       // records the hit and ret
 
 ### Damage types and tags
 
-The keys are in `DamageTypeRegistry`; the definitions are in `data/ibx_lib/damage_type/`.
+The keys are in `SpellDamageTypeRegistry`; the definitions are in `data/ibx_lib/damage_type/`.
 
 | Damage type | Spell damage | Traits |
 | --- | --- | --- |
-| `ibx_lib:spell_general` | Yes | General spell damage; used when a spell doesn't specify a type. |
-| `ibx_lib:digest` | No | Ignores armor, shields and i-frames; no knockback. |
-| `ibx_lib:bleeding` | No | Ignores armor, Resistance and Protection enchantments; no knockback. |
-| `ibx_lib:soul_link` | No | Ignores armor, Resistance, Protection enchantments, shields and i-frames; no knockback. |
+| `ibx_lib:generic_spell` | Yes | General spell damage; used when a spell doesn't specify a type. |
 
 Damage type tags (keys in `TagRegistry`):
 
@@ -574,7 +571,7 @@ Adding your own spell damage type (frost, say):
 }
 ```
 
-If a snapshot's damage type can't be found (the data pack providing it was removed), `ibx_lib:spell_general` is used instead. Spell damage can be blocked by a shield from the front; to prevent that, use a damage type that is also in vanilla `bypasses_shield`.
+If a snapshot's damage type can't be found (the data pack providing it was removed), `ibx_lib:generic_spell` is used instead. Spell damage can be blocked by a shield from the front; to prevent that, use a damage type that is also in vanilla `bypasses_shield`.
 
 ---
 

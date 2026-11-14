@@ -468,7 +468,7 @@ SpellDamageSnapshot snapshot = SpellDamageApi.snapshot(caster, c -> 10.0F);
 
 | 方法 | 说明 |
 | --- | --- |
-| `snapshot(caster, formula)` | 用默认伤害类型 `ibx_lib:spell_general` 生成快照。两端都能调(客户端可以拿来算预估值)。 |
+| `snapshot(caster, formula)` | 用默认伤害类型 `ibx_lib:generic_spell` 生成快照。两端都能调(客户端可以拿来算预估值)。 |
 | `snapshot(caster, damageType, formula)` | 指定伤害类型。 |
 | `hurt(target, snapshot, directEntity, caster, sourcePosition)` | 结算一次法术伤害,返回是否造成了伤害。`directEntity` 是直接造成伤害的实体(弹射物、范围实体;瞬发法术填施法者或 null);`caster` 可空;`sourcePosition` 是盾牌判定朝向用的来源位置,null 时取 `directEntity` 的位置。 |
 | `setProjectileSnapshot(entity, snapshot)` / `getProjectileSnapshot(entity)` | 把快照写到实体上(任何实体都行,存盘不丢)/ 读出来。 |
@@ -484,7 +484,7 @@ SpellDamageSnapshot snapshot = SpellDamageApi.snapshot(caster, c -> 10.0F);
 
 | 方法 | 默认 | 说明 |
 | --- | --- | --- |
-| `withDamageType(key)` | `ibx_lib:spell_general` | 换伤害类型。应在 `#ibx_lib:is_spell` 里,否则会被护甲减免、不吃法术抗性。 |
+| `withDamageType(key)` | `ibx_lib:generic_spell` | 换伤害类型。应在 `#ibx_lib:is_spell` 里,否则会被护甲减免、不吃法术抗性。 |
 | `withSpell(id)` | 无(`ctx.damage` 会填上) | 来自哪个法术,给事件用。 |
 | `withFriendlyFire(boolean)` | `false` | 是否允许打友军。默认友伤保护开着:宠物、召唤物、同队、关了 PvP 的玩家打不到。 |
 | `withIgnoreIFrames(boolean)` | `false` | 穿透已有无敌帧:命中前把目标的无敌时间清零。 |
@@ -545,14 +545,11 @@ if (this.hits.tryHit(target)) {                       // 现在能打就记下�
 
 ### 伤害类型与标签
 
-键在 `DamageTypeRegistry`,定义在 `data/ibx_lib/damage_type/`。
+键在 `SpellDamageTypeRegistry`,定义在 `data/ibx_lib/damage_type/`。
 
 | 伤害类型 | 是法术伤害 | 特性 |
 | --- | --- | --- |
-| `ibx_lib:spell_general` | 是 | 通用法术伤害,法术不指定类型时用它。 |
-| `ibx_lib:digest` | 否 | 无视护甲、盾牌和无敌帧,没有击退。 |
-| `ibx_lib:bleeding` | 否 | 无视护甲、抗性提升和保护类附魔,没有击退。 |
-| `ibx_lib:soul_link` | 否 | 无视护甲、抗性提升、保护类附魔、盾牌和无敌帧,没有击退。 |
+| `ibx_lib:generic_spell` | 是 | 通用法术伤害,法术不指定类型时用它。 |
 
 伤害类型标签(键在 `TagRegistry`):
 
@@ -574,7 +571,7 @@ if (this.hits.tryHit(target)) {                       // 现在能打就记下�
 }
 ```
 
-快照里的伤害类型查不到时(提供它的数据包被删了)退回 `ibx_lib:spell_general`。法术伤害正面举盾能挡;不想被挡,就用同时在原版 `bypasses_shield` 里的伤害类型。
+快照里的伤害类型查不到时(提供它的数据包被删了)退回 `ibx_lib:generic_spell`。法术伤害正面举盾能挡;不想被挡,就用同时在原版 `bypasses_shield` 里的伤害类型。
 
 ---
 

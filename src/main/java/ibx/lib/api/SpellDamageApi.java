@@ -5,7 +5,7 @@ import ibx.lib.api.event.SpellDamageEvent;
 import ibx.lib.compat.DummmmmmyCompat;
 import ibx.lib.mixin.LivingEntityAccessor;
 import ibx.lib.registry.AttachmentRegistry;
-import ibx.lib.registry.DamageTypeRegistry;
+import ibx.lib.registry.SpellDamageTypeRegistry;
 import ibx.lib.registry.TagRegistry;
 import ibx.lib.target.TargetApi;
 import net.minecraft.core.Holder;
@@ -53,9 +53,9 @@ public final class SpellDamageApi {
     /** 已经警告过的伤害类型，每个只警告一次。 */
     private static final Set<ResourceKey<DamageType>> WARNED_TYPES = ConcurrentHashMap.newKeySet();
 
-    /** 用默认伤害类型 {@code spell_general} 生成快照。 */
+    /** 用默认伤害类型 {@code generic_spell} 生成快照。 */
     public static SpellDamageSnapshot snapshot(LivingEntity caster, Formula formula) {
-        return snapshot(caster, DamageTypeRegistry.SPELL_GENERAL, formula);
+        return snapshot(caster, SpellDamageTypeRegistry.GENERIC_SPELL, formula);
     }
 
     /**
@@ -205,7 +205,7 @@ public final class SpellDamageApi {
     }
 
     /**
-     * 取伤害类型。类型不存在（提供它的数据包被删了，旧存档里的弹射物还带着）时退回 {@code spell_general} 并警告；
+     * 取伤害类型。类型不存在（提供它的数据包被删了，旧存档里的弹射物还带着）时退回 {@code generic_spell} 并警告；
      * 类型不在 {@code #is_spell} 里时，开发环境每个类型警告一次——它会被护甲减免、却不吃法术抗性，不报错很难发现。
      */
     private static Holder<DamageType> resolveDamageType(ServerLevel level, ResourceKey<DamageType> key) {
@@ -213,9 +213,9 @@ public final class SpellDamageApi {
         Optional<Holder.Reference<DamageType>> type = registry.get(key);
         if (type.isEmpty()) {
             if (WARNED_TYPES.add(key)) {
-                IbxLib.LOGGER.warn("法术伤害类型 {} 不存在，改用 {}", key.identifier(), DamageTypeRegistry.SPELL_GENERAL.identifier());
+                IbxLib.LOGGER.warn("法术伤害类型 {} 不存在，改用 {}", key.identifier(), SpellDamageTypeRegistry.GENERIC_SPELL.identifier());
             }
-            return registry.getOrThrow(DamageTypeRegistry.SPELL_GENERAL);
+            return registry.getOrThrow(SpellDamageTypeRegistry.GENERIC_SPELL);
         }
         if (!FMLEnvironment.isProduction() && !type.get().is(TagRegistry.IS_SPELL) && WARNED_TYPES.add(key)) {
             IbxLib.LOGGER.warn("法术伤害类型 {} 不在 #{} 里：它会被护甲减免、不吃法术抗性",

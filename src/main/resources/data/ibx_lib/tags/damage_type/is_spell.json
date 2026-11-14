@@ -1,6 +1,6 @@
 {
   "replace": false,
   "values": [
-    "ibx_lib:spell_general"
+    "ibx_lib:generic_spell"
   ]
 }
