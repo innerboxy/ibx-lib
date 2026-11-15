@@ -320,7 +320,7 @@ public static final DeferredItem<IbxCrossbowItem> ARBALEST = ITEMS.registerItem(
 
 ### IbxRangedWeaponItem and IbxRangedWeaponStats
 
-- `IbxRangedWeaponItem`: the interface bows and crossbows both implement. `stats()` returns the static numbers given to the constructor; `IbxRangedWeaponItem.appendAutoFireTooltip(stack, tooltip)` adds a gold "Auto Fire" line (lang key `tooltip.ibx_lib.auto_fire`) to stacks with auto fire on, and is already called by the bow's and crossbow's `appendHoverText`.
+- `IbxRangedWeaponItem`: the interface bows and crossbows both implement. `stats()` returns the static numbers given to the constructor; `IbxRangedWeaponItem.appendAutoFireTooltip(stack, tooltip)` adds an "Auto Fire" line in the accent color (`UiPalette.ACCENT`, amber) (lang key `tooltip.ibx_lib.auto_fire`) to stacks with auto fire on, and is already called by the bow's and crossbow's `appendHoverText`.
 - `IbxRangedWeaponStats`: `rangedDamage()`, `drawTime()`, `arrowVelocity()`, `modifiers()` (the baked main-hand attribute modifiers).
 
 > At runtime, do not read ranged damage and draw time from `stats()`. Always read the shooter's attributes through `RangedWeaponApi`, so that armor, curios, potion effects and per-stack component overrides all take effect. Arrow speed has no attribute; read `arrowVelocity()` directly.
@@ -349,7 +349,7 @@ A stack with `ibx_lib:auto_fire=true` releases by itself the moment it is fully 
 
 - Players only; mobs' drawing and shooting are driven by their AI.
 - The component is in no item's default components; only stacks that explicitly turn it on have it, e.g. `/give @s minecraft:bow[ibx_lib:auto_fire=true]`, or in code `stack.set(DataComponentRegistry.AUTO_FIRE.get(), true)`.
-- Such items get a gold "Auto Fire" line right under the item name.
+- Such items get an amber "Auto Fire" line right under the item name.
 
 ### Item models: the pull animation
 

@@ -15,6 +15,7 @@ import ibx.lib.client.spell.SpellPickerInput;
 import ibx.lib.client.spell.SpellWheel;
 import ibx.lib.client.target.TargetIndicatorRendering;
 import ibx.lib.client.target.TargetModeSync;
+import ibx.lib.client.tooltip.ItemTooltips;
 import ibx.lib.compat.CuriosCompat;
 import ibx.lib.compat.InventoryHudCompat;
 import ibx.lib.compat.JadeCompat;
@@ -68,6 +69,8 @@ public final class IbxLibClient {
         NeoForge.EVENT_BUS.addListener(SpellPickerInput::onInteraction);
         // 法术容器的物品提示：名字下面列出提供的法术
         NeoForge.EVENT_BUS.addListener(SpellItemTooltip::onItemTooltip);
+        // 各模组按物品登记的说明（ItemTooltips.register）：插在物品名下面，长句自动换行，详情按住 Shift 展开
+        NeoForge.EVENT_BUS.addListener(ItemTooltips::onItemTooltip);
         // 玩家施法动作（Player Animation Library，可选：没装就不放动作），以及法典施法时翻开用的物品模型条件 ibx_lib:casting
         if (playerAnimationsLoaded) {
             CastAnimations.register();

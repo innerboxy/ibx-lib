@@ -320,7 +320,7 @@ public static final DeferredItem<IbxCrossbowItem> ARBALEST = ITEMS.registerItem(
 
 ### IbxRangedWeaponItem 与 IbxRangedWeaponStats
 
-- `IbxRangedWeaponItem`:弓弩共同实现的接口。`stats()` 返回构造时给的静态数值;`IbxRangedWeaponItem.appendAutoFireTooltip(stack, tooltip)` 给开了自动射击的物品栈加一行金色的「自动发射」(语言键 `tooltip.ibx_lib.auto_fire`),弓弩的 `appendHoverText` 已经调过。
+- `IbxRangedWeaponItem`:弓弩共同实现的接口。`stats()` 返回构造时给的静态数值;`IbxRangedWeaponItem.appendAutoFireTooltip(stack, tooltip)` 给开了自动射击的物品栈加一行强调色(`UiPalette.ACCENT`,琥珀色)的「自动发射」(语言键 `tooltip.ibx_lib.auto_fire`),弓弩的 `appendHoverText` 已经调过。
 - `IbxRangedWeaponStats`:`rangedDamage()`、`drawTime()`、`arrowVelocity()`、`modifiers()`(烤好的主手属性修饰符)。
 
 > 运行时不要直接读 `stats()` 里的远程伤害和拉弦时间,一律走 `RangedWeaponApi` 读射手的属性,护甲、饰品、药水效果和按物品栈覆盖的组件才都能生效。箭速没有对应的属性,直接读 `arrowVelocity()`。
@@ -349,7 +349,7 @@ public static final DeferredItem<IbxCrossbowItem> ARBALEST = ITEMS.registerItem(
 
 - 只对玩家生效,生物的拉弓和射击由 AI 自己掌握。
 - 组件不在物品的默认组件里,只有显式打开的物品栈才带,比如 `/give @s minecraft:bow[ibx_lib:auto_fire=true]`,或代码里 `stack.set(DataComponentRegistry.AUTO_FIRE.get(), true)`。
-- 开了的物品在名称正下方多一行金色的「自动发射」。
+- 开了的物品在名称正下方多一行琥珀色的「自动发射」。
 
 ### 物品模型:拉弓动画
 

@@ -26,6 +26,8 @@ public final class UiPalette {
     public static final int VALUE = 0xFFFFF4DC;
     /** 强调（琥珀）。 */
     public static final int ACCENT = 0xFFFFB347;
+    /** 按键：说明框里的「[Shift]」这类按键名（浅烛光）。 */
+    public static final int KEY = 0xFFFFE38A;
 
     // ---------------------------------------------------------------- 语义色
 

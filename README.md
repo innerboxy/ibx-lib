@@ -6,7 +6,7 @@
 
 ## 简介
 
-本模组是一个前置库:只放框架,不放具体内容。法术、召唤物、目标选择、装备基类、属性、特效、药水效果和创造栏子栏都在这里,其他模组在它上面注册自己的法术、武器和生物。
+本模组是一个前置库:只放框架,不放具体内容。法术、召唤物、目标选择、装备基类、属性、特效、药水效果、创造栏子栏和物品说明都在这里,其他模组在它上面注册自己的法术、武器和生物。
 
 ### 法术
 
@@ -56,6 +56,12 @@
 
 详见 [创造栏子栏](TUTORIAL/CREATIVE_TAB.md)。
 
+### 物品说明
+
+按物品登记说明框里的说明行,插在物品名正下方;长句自动换行、保持颜色,还可以分出一段按住 Shift 才显示的详情。`TooltipLines` 提供一套统一的写法和配色:被动、主动、冷却这些标题行,数值、百分比、秒数、效果名、按键这些带颜色的片段。在客户端入口里调 `ItemTooltips.register`。
+
+详见 [物品说明](TUTORIAL/TOOLTIP.md)。
+
 ---
 
 ## 文档
@@ -70,6 +76,7 @@
 | [特效](TUTORIAL/EFFECT.md) | `GroundWarnings`、`BlockWave`、`CustomFire` |
 | [药水效果](TUTORIAL/MOB_EFFECT.md) | 可叠加、可设上限的 `addEffect`,`IbxEffectTarget`,接口注入配置,修改原版中毒 |
 | [创造栏子栏](TUTORIAL/CREATIVE_TAB.md) | `CreativeSubTabs`、分组规则 |
+| [物品说明](TUTORIAL/TOOLTIP.md) | `ItemTooltips`、`TooltipLines`、按住 Shift 展开、配色 |
 | [配置](TUTORIAL/CONFIG.md) | 服务端配置、启动配置、客户端配置 |
 | [指令](TUTORIAL/COMMAND.md) | `/ibx mana`、`spell`、`summon` |
 

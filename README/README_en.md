@@ -6,7 +6,7 @@
 
 ## Overview
 
-This mod is a library: it holds the frameworks and no content of its own. Spells, summons, target selection, equipment base classes, attributes, visual effects, mob effects and creative sub-tabs live here, and other mods register their own spells, weapons and mobs on top of it.
+This mod is a library: it holds the frameworks and no content of its own. Spells, summons, target selection, equipment base classes, attributes, visual effects, mob effects, creative sub-tabs and item tooltips live here, and other mods register their own spells, weapons and mobs on top of it.
 
 ### Spells
 
@@ -56,6 +56,12 @@ Splits the items of one creative tab into groups: a column of icons appears left
 
 See [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md).
 
+### Item tooltips
+
+Registers tooltip lines per item, inserted right under the item name; long lines wrap automatically and keep their colors, and a part can be split off as details shown only while Shift is held. `TooltipLines` gives one shared way to write and color them: title lines for passive, active and cooldown, and colored fragments for numbers, percentages, seconds, effect names and keys. Call `ItemTooltips.register` from your client entry.
+
+See [Item tooltips](../TUTORIAL/TOOLTIP_en.md).
+
 ---
 
 ## Documentation
@@ -70,6 +76,7 @@ See [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md).
 | [Visual effects](../TUTORIAL/EFFECT_en.md) | `GroundWarnings`, `BlockWave`, `CustomFire` |
 | [Mob effects](../TUTORIAL/MOB_EFFECT_en.md) | Stackable, capped `addEffect`, `IbxEffectTarget`, interface injection setup, modifying vanilla poison |
 | [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md) | `CreativeSubTabs`, grouping rules |
+| [Item tooltips](../TUTORIAL/TOOLTIP_en.md) | `ItemTooltips`, `TooltipLines`, Shift-folded details, colors |
 | [Configuration](../TUTORIAL/CONFIG_en.md) | Server config, startup config, client config |
 | [Commands](../TUTORIAL/COMMAND_en.md) | `/ibx mana`, `spell`, `summon` |
 

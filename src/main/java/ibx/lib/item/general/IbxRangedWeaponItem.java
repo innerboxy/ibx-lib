@@ -2,7 +2,7 @@ package ibx.lib.item.general;
 
 import ibx.lib.IbxLib;
 import ibx.lib.api.RangedWeaponApi;
-import net.minecraft.ChatFormatting;
+import ibx.lib.client.UiPalette;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -25,12 +25,12 @@ public interface IbxRangedWeaponItem {
     IbxRangedWeaponStats stats();
 
     /**
-     * 开了自动射击的武器在物品名称正下方加一行金色"自动发射"。
+     * 开了自动射击的武器在物品名称正下方加一行强调色的"自动发射"。
      * 弓弩的 {@code appendHoverText} 都先调这里再调父类，保证这行排在最前。
      */
     static void appendAutoFireTooltip(ItemStack stack, Consumer<Component> tooltip) {
         if (RangedWeaponApi.isAutoFire(stack)) {
-            tooltip.accept(Component.translatable(AUTO_FIRE_TOOLTIP_KEY).withStyle(ChatFormatting.GOLD));
+            tooltip.accept(Component.translatable(AUTO_FIRE_TOOLTIP_KEY).withColor(UiPalette.ACCENT));
         }
     }
 }
