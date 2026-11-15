@@ -16,7 +16,7 @@ See [Spell system](../TUTORIAL/SPELL_en.md).
 
 ### Summons
 
-Summons are counted in slots: the owner's "Max Summons" is the total, each summon takes as many slots as its spell says, and the oldest one is dismissed when slots run out. All summons leave when the owner dies or logs out; friendly-fire protection, marked targets and kill credit going to the owner are automatic, and a set of AI goals for following and fighting alongside the owner is included.
+Summons are counted in slots: the owner's "Max Summons" is the total, each summon takes as many slots as its spell says, and the oldest one is dismissed when slots run out or the limit drops. All summons leave when the owner dies or logs out; friendly-fire protection, marked targets and kill credit going to the owner are automatic, and a set of AI goals for following and fighting alongside the owner is included.
 
 See [Summons](../TUTORIAL/SUMMON_en.md).
 

@@ -50,6 +50,8 @@ public final class OwnerSummons {
     /** 主人最近打中的生物（召唤物优先打它）和打中的世界时刻，不存盘。 */
     private @Nullable UUID marked;
     private long markedAt;
+    /** 已用名额从哪个世界时刻起一直超过上限（上限变小了），没超是 -1，不存盘。 */
+    private long overSince = -1L;
 
     public OwnerSummons() {
         this(List.of());
@@ -107,5 +109,15 @@ public final class OwnerSummons {
     public void setMarked(@Nullable UUID marked, long time) {
         this.marked = marked;
         this.markedAt = time;
+    }
+
+    /** 已用名额开始超过上限的世界时刻，没超是 -1。 */
+    public long overSince() {
+        return this.overSince;
+    }
+
+    /** 只给召唤物框架用。 */
+    public void setOverSince(long time) {
+        this.overSince = time;
     }
 }

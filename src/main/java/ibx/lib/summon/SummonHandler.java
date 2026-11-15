@@ -30,6 +30,7 @@ import java.util.UUID;
  * <ul>
  *   <li>召唤物每 tick 查到期；每秒查一次主人（找不到、名单里没有自己 → 离场；主人在别的维度 → 搬过去）；</li>
  *   <li>主人死亡、下线 → 全部离场；玩家主人换维度 → 召唤物跟着搬；召唤物自己不走传送门；</li>
+ *   <li>主人的召唤物上限变小、已用名额超出 → 超出持续 2 秒后从最早召唤的开始离场，直到放得下（每 tick 查，期间上限回来了就不算）；</li>
  *   <li>召唤物被打死（死亡那一刻，不等倒地动画）/ 被别的代码移除 → 从主人名单里划掉；</li>
  *   <li>友伤：召唤物打主人和同一主人的召唤物、主人打自己的召唤物，一律取消；玩家主人的召唤物算作主人本人，按玩家打玩家判断（关了 PvP、队友且关了友伤时打不到），两个方向都管：别人打不到主人就打不到他的召唤物，主人打不到的人他的召唤物也打不到；</li>
  *   <li>主人打中谁就标记谁；召唤物打的伤害，主人是玩家时算玩家打的（经验、玩家击杀掉落、统计）；</li>
@@ -77,6 +78,11 @@ public final class SummonHandler {
     // ---------------------------------------------------------------- 召唤物自己
 
     private static void onEntityTick(EntityTickEvent.Post event) {
+        // 主人：上限变小、已用名额超出满了宽限时间，就把多出来的送走
+        if (event.getEntity() instanceof LivingEntity owner && !owner.level().isClientSide() && owner.isAlive()
+                && owner.hasData(AttachmentRegistry.OWNER_SUMMONS) && !owner.getData(AttachmentRegistry.OWNER_SUMMONS).isEmpty()) {
+            checkCapacity(owner, owner.getData(AttachmentRegistry.OWNER_SUMMONS));
+        }
         if (!(event.getEntity() instanceof Mob summon) || !(summon.level() instanceof ServerLevel level)
                 || !summon.hasData(AttachmentRegistry.SUMMON) || summon.isRemoved()) {
             return;
@@ -106,6 +112,21 @@ public final class SummonHandler {
             SummonApi.dismiss(summon, UnsummonReason.OWNER_DIED);
         } else if (owner.level() != summon.level() && owner.level() instanceof ServerLevel ownerLevel) {
             moveTo(summon, ownerLevel, owner.position());
+        }
+    }
+
+    /** 已用名额超过上限时开始计时，一直超着满 {@link SummonApi#OVER_CAPACITY_GRACE_TICKS} tick 才送走多出来的；中途不超了就清零。 */
+    private static void checkCapacity(LivingEntity owner, OwnerSummons list) {
+        if (list.used() <= SummonApi.capacity(owner)) {
+            list.setOverSince(-1L);
+            return;
+        }
+        long now = owner.level().getGameTime();
+        if (list.overSince() < 0L) {
+            list.setOverSince(now);
+        } else if (now - list.overSince() >= SummonApi.OVER_CAPACITY_GRACE_TICKS) {
+            SummonApi.trimToCapacity(owner);
+            list.setOverSince(-1L);
         }
     }
 

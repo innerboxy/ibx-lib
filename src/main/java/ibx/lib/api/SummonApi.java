@@ -47,7 +47,9 @@ import java.util.function.Predicate;
  *
  * <ul>
  *   <li><b>名额</b>：主人的属性「召唤物上限」{@code ibx_lib:max_summons}（默认 1）是总名额，每只召唤物占几个由召唤时给定
- *       （召唤法术的 {@code summonCost}）。名额不够时最早召唤的先消散；单只就超过上限时召不出（{@link #summon} 返回 false）。</li>
+ *       （召唤法术的 {@code summonCost}）。名额不够时最早召唤的先消散；单只就超过上限时召不出（{@link #summon} 返回 false）。
+ *       上限变小（脱下加上限的装备、效果到期……）而已用名额超出时，超出持续 {@link #OVER_CAPACITY_GRACE_TICKS} tick 后多出来的也从最早召唤的开始消散
+ *       （{@link #trimToCapacity}）；这段时间里上限回来了就不消散。</li>
  *   <li><b>寿命</b>：召唤物一律常驻，主人死亡、下线、找不到时全部消散，主人换维度时跟着搬过去。限时的接口（{@code durationTicks}、到点消散）留着，目前不用。</li>
  *   <li><b>强度</b>：召唤时由法术按施法者属性算好，用 {@link #setStat} 写成召唤物自己的属性，之后主人换装备不影响。</li>
  *   <li><b>友伤</b>：召唤物打不到主人和同一主人的其他召唤物，主人也打不到自己的召唤物；玩家主人的召唤物算作主人本人，按玩家打玩家判断（关了 PvP、队友且关了友伤时打不到），两个方向都管；法术友伤按
@@ -66,6 +68,9 @@ public final class SummonApi {
 
     /** 标记目标管多久（tick）：主人最近一次打中它之后 10 秒内有效，过了召唤物就不再追着它打。 */
     public static final int MARK_TICKS = 200;
+
+    /** 上限变小后已用名额超出时，宽限多久（tick）才把多出来的送走：2 秒，切一下武器、换一件装备不至于马上丢召唤物。 */
+    public static final int OVER_CAPACITY_GRACE_TICKS = 40;
 
     /** 名单里的召唤物连续找不到多久（tick）才划掉：区块刚卸载 / 刚加载时先等一等。 */
     private static final int LOST_ENTRY_TICKS = 100;
@@ -208,6 +213,43 @@ public final class SummonApi {
             list.remove(oldest.id());
         }
         changed(owner);
+    }
+
+    /**
+     * 主人的上限变小了（脱下加上限的装备、效果到期……）而已用名额超出时，从最早召唤的开始送走，直到放得下；返回送走了几只。
+     * 不占名额的召唤物（名额 0）不动。这个方法当场就送，不等宽限；框架每 tick 对有召唤物的主人查一次（{@code SummonHandler}），
+     * 超出持续 {@link #OVER_CAPACITY_GRACE_TICKS} tick 后替你调，一般不用自己调。
+     */
+    public static int trimToCapacity(LivingEntity owner) {
+        if (owner.level().isClientSide() || !owner.hasData(AttachmentRegistry.OWNER_SUMMONS)) {
+            return 0;
+        }
+        OwnerSummons list = owner.getData(AttachmentRegistry.OWNER_SUMMONS);
+        int capacity = capacity(owner);
+        int removed = 0;
+        while (list.used() > capacity) {
+            OwnerSummons.Entry oldest = null;
+            for (OwnerSummons.Entry entry : list.entries()) {
+                if (entry.cost() > 0) {
+                    oldest = entry;
+                    break;
+                }
+            }
+            if (oldest == null) {
+                break;
+            }
+            Entity e = find(owner.level(), oldest.id());
+            if (e instanceof Mob mob && !mob.isRemoved()) {
+                dismiss(mob, UnsummonReason.OVER_CAPACITY);
+            }
+            // 没加载的直接划掉；它以后加载时发现自己不在名单里会自己消散
+            list.remove(oldest.id());
+            removed++;
+        }
+        if (removed > 0) {
+            changed(owner);
+        }
+        return removed;
     }
 
     // ---------------------------------------------------------------- 离场

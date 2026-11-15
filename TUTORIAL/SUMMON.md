@@ -150,7 +150,7 @@ SummonApi.summon(boss, minion, null, 0, 1);
 - 已用名额是主人名单里所有召唤物的名额之和,暂时没加载的也算。
 - 召唤时名额不够,就从**最早召唤的**开始挤掉(离场原因 `REPLACED`),直到放得下。
 - 单只的名额就超过总名额时召不出来,`summon` 返回 `false`,不会挤掉任何召唤物。
-- 上限降低(比如脱下加上限的装备)不会让已有的召唤物马上消散,下次召唤时才按新的上限挤。
+- 上限降低(比如脱下加上限的装备)而已用名额超出时,超出持续 2 秒(`SummonApi.OVER_CAPACITY_GRACE_TICKS`)后多出来的消散:同样从**最早召唤的**开始(离场原因 `OVER_CAPACITY`),直到放得下;不占名额的召唤物不动。这 2 秒里上限回来了(比如把装备换回去)就不消散,下次再超出重新计时。框架每 tick 对有召唤物的主人查一次。
 
 ### 寿命与离场
 
@@ -258,6 +258,12 @@ SummonApi.summon(boss, minion, null, 0, 1);
 | `dismiss(summon, reason)` | — | 让一只召唤物离场:从主人名单里划掉 → 发 `SummonEvent.Unsummon` → 调它的 `Summoned.onUnsummon`(没实现 `Summoned` 的冒烟移除)。 |
 | `dismissAll(owner, reason)` | `int` | 让主人的召唤物全部离场,并清空名单和标记目标。返回送走了几只;没加载的直接从名单里划掉,不算数、不发事件。 |
 | `forget(summon, reason)` | — | 只从主人名单里划掉,不移除实体;真的划掉了才发 `SummonEvent.Unsummon`。框架在召唤物被打死、被别的代码移除时自己调,一般用不到。 |
+
+**上限变小**
+
+| 方法 | 返回 | 说明 |
+| --- | --- | --- |
+| `trimToCapacity(owner)` | `int` | 已用名额超过总名额时,从最早召唤的开始送走(离场原因 `OVER_CAPACITY`),直到放得下;返回送走了几只。当场就送,不等宽限;框架在超出持续 2 秒后自己会调,一般不用调。 |
 
 **换主人**
 
@@ -431,6 +437,7 @@ SummonGoals.addTargetGoals(this, this.targetSelector, 1);
 | --- | --- |
 | `EXPIRED` | 限时召唤物到点了。 |
 | `REPLACED` | 名额不够,被新召的挤掉。 |
+| `OVER_CAPACITY` | 主人的召唤物上限变小了,多出来的被送走。 |
 | `DISMISSED` | 主动解散:「解散召唤物」法术、指令、自己的代码调 `dismiss`;也包括被别的代码直接移除。 |
 | `OWNER_DIED` | 主人死了。 |
 | `OWNER_LEFT` | 玩家主人下线。 |

@@ -6,6 +6,8 @@ public enum UnsummonReason {
     EXPIRED,
     /** 名额不够，被新召的挤掉（最早召唤的先走）。 */
     REPLACED,
+    /** 主人的召唤物上限变小了，多出来的被送走（最早召唤的先走）。 */
+    OVER_CAPACITY,
     /** 主动解散（指令、法术、Boss 自己花掉）。 */
     DISMISSED,
     /** 主人死了。 */

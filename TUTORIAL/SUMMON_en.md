@@ -150,7 +150,7 @@ SummonApi.summon(boss, minion, null, 0, 1);
 - Used slots are the sum of the costs of every summon on the owner's list, including ones that aren't loaded at the moment.
 - When there isn't enough room, summons are pushed out starting from the **oldest** (leave reason `REPLACED`) until the new one fits.
 - If a single summon costs more than the total budget, it can't be summoned: `summon` returns `false` and nothing is pushed out.
-- Lowering the limit (taking off gear that raises it, for example) does not dismiss existing summons right away; the new limit is applied on the next summon.
+- When the limit drops (taking off gear that raises it, for example) and the used slots exceed it, the extra summons are dismissed once that has lasted 2 seconds (`SummonApi.OVER_CAPACITY_GRACE_TICKS`), again starting from the **oldest** (leave reason `OVER_CAPACITY`) until the rest fit; summons that cost 0 are left alone. If the limit comes back within those 2 seconds (putting the gear back on, for example) nothing is dismissed, and the timer starts over the next time the limit is exceeded. The framework checks every owner that has summons each tick.
 
 ### Lifetime and leaving
 
@@ -258,6 +258,12 @@ It returns `false` (nothing summoned) when: called on the client, the mob and th
 | `dismiss(summon, reason)` | — | Makes one summon leave: removes it from the owner's list → fires `SummonEvent.Unsummon` → calls its `Summoned.onUnsummon` (mobs that don't implement `Summoned` are removed with a puff of smoke). |
 | `dismissAll(owner, reason)` | `int` | Makes all of the owner's summons leave, and clears the list and the marked target. Returns how many were sent away; unloaded ones are just dropped from the list, aren't counted and fire no event. |
 | `forget(summon, reason)` | — | Only removes it from the owner's list without removing the entity; fires `SummonEvent.Unsummon` only if it was actually on the list. The framework calls this itself when a summon is killed or removed by other code; you rarely need it. |
+
+**Lowered limit**
+
+| Method | Returns | Description |
+| --- | --- | --- |
+| `trimToCapacity(owner)` | `int` | When the used slots exceed the total budget, dismisses summons starting from the oldest (leave reason `OVER_CAPACITY`) until the rest fit; returns how many were dismissed. It dismisses at once, without the grace period; the framework calls it for you after the limit has been exceeded for 2 seconds, so you rarely need to call it. |
 
 **Owner transfer**
 
@@ -431,6 +437,7 @@ Leave reasons, `ibx.lib.summon.UnsummonReason`:
 | --- | --- |
 | `EXPIRED` | A timed summon's time is up. |
 | `REPLACED` | Pushed out by a new summon when slots ran short. |
+| `OVER_CAPACITY` | The owner's max summons dropped and this one no longer fits. |
 | `DISMISSED` | Dismissed on purpose: the "Dismiss Summons" spell, a command, or your own code calling `dismiss`; also used when other code removes it directly. |
 | `OWNER_DIED` | The owner died. |
 | `OWNER_LEFT` | The player owner logged out. |
