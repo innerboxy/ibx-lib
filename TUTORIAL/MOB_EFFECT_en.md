@@ -78,7 +78,20 @@ If you would rather not, cast first; it behaves the same in game:
 
 ---
 
-## 4. Notes
+## 4. Modifying vanilla poison
+
+When the server config option `modifyVanillaPoison` is on (off by default, see [Config](CONFIG_en.md)), vanilla poison changes to:
+
+- **Damage per tick = poison level**: 1 at level I, +1 per level, no cap.
+- **Fixed interval**: every 10 ticks regardless of level (vanilla is every `25 >> amplifier` ticks, faster at higher levels).
+- **Ignores the hurt invulnerability window**: the damage type becomes `ibx_lib:poison`, which is in `neoforge:is_poison` (so it bypasses armor and has no knockback like vanilla poison) and also in `minecraft:bypasses_cooldown`. Vanilla `neoforge:poison` is not changed.
+- **Never kills, as in vanilla**: it stops at 1 health, and one tick never takes the entity below 1.
+
+When the option is off, poison is fully vanilla. The damage is dealt by `ibx.lib.effect.VanillaPoison`; a mixin takes over `PoisonMobEffect#applyEffectTick`.
+
+---
+
+## 5. Notes
 
 - "Stack" and "cap" only apply at the moment the effect is given; they are not stored in the effect. Potions, tipped arrows, lingering clouds and other things carrying effects still store vanilla effects and do not stack.
 - Vanilla `forceAddEffect` replaces the effect directly and ignores stacking.

@@ -21,12 +21,18 @@ enableVanillaCritical = false
 #false = 原版：只藏身体，装备和手里的物品照常显示。
 #旁观者、开了「看见隐身队友」的队友两种情况下都看得见；盔甲架不受影响。
 hideEquipmentWhenInvisible = true
+#是否修改原版中毒。
+#true  = 每次扣血等于中毒等级（I 级 1 点，每级 +1，不封顶），每 10 tick 扣一次（不随等级变），并且不吃受伤无敌时间；
+#false = 原版：每次固定 1 点，间隔随等级缩短，受无敌时间限制。
+#两种情况下中毒都照原版不会把生物毒死。
+modifyVanillaPoison = false
 ```
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
 | `enableVanillaCritical` | boolean | `false` | Whether to keep vanilla's guaranteed jump crit. When on, jump attacks always crit and other attacks still roll critical chance (either one counts). Either way the crit multiplier is `critical_damage` (see [Attributes 3](ATTRIBUTE_en.md#3-damage-and-healing-order)). |
 | `hideEquipmentWhenInvisible` | boolean | `true` | Whether invisible mobs and players also hide their armor, elytra, worn pumpkins / heads and held items; `false` is vanilla, which only hides the body. Viewers who can see invisible entities (spectators, teammates with "see friendly invisibles") still see them as in vanilla; armor stands are not affected; your own held item in first person still shows. The server's value is used, so players cannot change it on their side. |
+| `modifyVanillaPoison` | boolean | `false` | Whether to modify vanilla poison: each tick deals damage equal to the poison level (1 at level I, +1 per level, no cap) every 10 ticks regardless of level, and ignores the hurt invulnerability window; as in vanilla it never kills. See [Mob effects 4](MOB_EFFECT_en.md#4-modifying-vanilla-poison). |
 
 > SERVER configs are only available after a world is loaded. In code, read them through `Config.get(option)`: before the config is loaded (during registration, on the title screen) it returns the default; calling the option's own `get()` throws.
 

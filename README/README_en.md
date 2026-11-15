@@ -46,7 +46,7 @@ See [Visual effects](../TUTORIAL/EFFECT_en.md).
 
 ### Mob effects
 
-Extended versions of vanilla `addEffect` with two extra parameters, "stack" and "cap": stacking adds on top of the target's current level and keeps the longer duration; the cap is an amplifier, and leaving it out means no cap. Added to `LivingEntity` with a mixin and written as `entity.addEffect(effect, source, true, 4)`; vanilla `addEffect` is unchanged.
+Extended versions of vanilla `addEffect` with two extra parameters, "stack" and "cap": stacking adds on top of the target's current level and keeps the longer duration; the cap is an amplifier, and leaving it out means no cap. Added to `LivingEntity` with a mixin and written as `entity.addEffect(effect, source, true, 4)`; vanilla `addEffect` is unchanged. A server config option can also modify vanilla poison: it deals damage equal to its level every 10 ticks and ignores the hurt invulnerability window (off by default).
 
 See [Mob effects](../TUTORIAL/MOB_EFFECT_en.md).
 
@@ -68,7 +68,7 @@ See [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md).
 | [Equipment base classes](../TUTORIAL/EQUIPMENT_en.md) | Base classes for melee, bows and crossbows, implements, shields, 3D armor and curios; `RangedWeaponApi`, `ShieldApi`; automatic item tags |
 | [Attributes](../TUTORIAL/ATTRIBUTE_en.md) | Attribute list, damage and healing order, `CriticalStrikeApi`, attribute types, the attribute panel |
 | [Visual effects](../TUTORIAL/EFFECT_en.md) | `GroundWarnings`, `BlockWave`, `CustomFire` |
-| [Mob effects](../TUTORIAL/MOB_EFFECT_en.md) | Stackable, capped `addEffect`, `IbxEffectTarget`, interface injection setup |
+| [Mob effects](../TUTORIAL/MOB_EFFECT_en.md) | Stackable, capped `addEffect`, `IbxEffectTarget`, interface injection setup, modifying vanilla poison |
 | [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md) | `CreativeSubTabs`, grouping rules |
 | [Configuration](../TUTORIAL/CONFIG_en.md) | Server config, startup config, client config |
 | [Commands](../TUTORIAL/COMMAND_en.md) | `/ibx mana`, `spell`, `summon` |

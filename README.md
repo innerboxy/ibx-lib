@@ -46,7 +46,7 @@
 
 ### 药水效果
 
-原版 `addEffect` 的扩展版本:末尾多「是否叠加」「上限」两个参数,叠加时在目标现有的等级上往上加、时长取较长的,上限用放大等级、不填就是不封顶。用 mixin 加在 `LivingEntity` 上,写法 `entity.addEffect(效果, 来源, true, 4)`;原版的 `addEffect` 行为不变。
+原版 `addEffect` 的扩展版本:末尾多「是否叠加」「上限」两个参数,叠加时在目标现有的等级上往上加、时长取较长的,上限用放大等级、不填就是不封顶。用 mixin 加在 `LivingEntity` 上,写法 `entity.addEffect(效果, 来源, true, 4)`;原版的 `addEffect` 行为不变。另有一个服务端配置可以修改原版中毒:每 10 tick 扣一次、每次扣血等于等级、不吃受伤无敌时间(默认关闭)。
 
 详见 [药水效果](TUTORIAL/MOB_EFFECT.md)。
 
@@ -68,7 +68,7 @@
 | [装备基类](TUTORIAL/EQUIPMENT.md) | 近战、弓弩、法器、盾牌、3D 盔甲、饰品的基类,`RangedWeaponApi`、`ShieldApi`,自动物品标签 |
 | [属性](TUTORIAL/ATTRIBUTE.md) | 属性一览、伤害与治疗的结算顺序、`CriticalStrikeApi`、属性类型、属性面板 |
 | [特效](TUTORIAL/EFFECT.md) | `GroundWarnings`、`BlockWave`、`CustomFire` |
-| [药水效果](TUTORIAL/MOB_EFFECT.md) | 可叠加、可设上限的 `addEffect`,`IbxEffectTarget`,接口注入配置 |
+| [药水效果](TUTORIAL/MOB_EFFECT.md) | 可叠加、可设上限的 `addEffect`,`IbxEffectTarget`,接口注入配置,修改原版中毒 |
 | [创造栏子栏](TUTORIAL/CREATIVE_TAB.md) | `CreativeSubTabs`、分组规则 |
 | [配置](TUTORIAL/CONFIG.md) | 服务端配置、启动配置、客户端配置 |
 | [指令](TUTORIAL/COMMAND.md) | `/ibx mana`、`spell`、`summon` |

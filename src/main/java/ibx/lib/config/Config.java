@@ -39,6 +39,17 @@ public final class Config {
                     "旁观者、开了「看见隐身队友」的队友两种情况下都看得见；盔甲架不受影响。")
             .define("hideEquipmentWhenInvisible", true);
 
+    /**
+     * 是否修改原版中毒（见 {@link ibx.lib.effect.VanillaPoison}）：每次扣血 = 等级（I 级 1 点、每级 +1，不封顶），
+     * 每 10 tick 扣一次（不随等级变），并且不吃受伤无敌时间。默认关闭，单独用 lib 时保持原版。
+     */
+    public static final ModConfigSpec.BooleanValue MODIFY_VANILLA_POISON = BUILDER
+            .comment("是否修改原版中毒。",
+                    "true  = 每次扣血等于中毒等级（I 级 1 点，每级 +1，不封顶），每 10 tick 扣一次（不随等级变），并且不吃受伤无敌时间；",
+                    "false = 原版：每次固定 1 点，间隔随等级缩短，受无敌时间限制。",
+                    "两种情况下中毒都照原版不会把生物毒死。")
+            .define("modifyVanillaPoison", false);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     /** 配置项的当前值；没加载（不在存档里）时取默认值。 */

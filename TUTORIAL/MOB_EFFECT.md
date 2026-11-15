@@ -78,7 +78,20 @@ neoForge {
 
 ---
 
-## 4. 注意
+## 4. 修改原版中毒
+
+服务端配置 `modifyVanillaPoison` 打开时(默认关闭,见 [配置](CONFIG.md)),原版中毒改成:
+
+- **每次扣血 = 中毒等级**:I 级 1 点,每级 +1,不封顶。
+- **固定间隔**:每 10 tick 扣一次,不随等级变(原版是每 `25 >> 放大等级` tick,等级越高越快)。
+- **不吃受伤无敌时间**:伤害类型换成 `ibx_lib:poison`,它在 `neoforge:is_poison` 里(所以照原版中毒无视护甲、没有击退),另外加了 `minecraft:bypasses_cooldown`。原版的 `neoforge:poison` 不改。
+- **照原版不会毒死**:血量剩 1 点就不再扣,一次最多扣到剩 1 点。
+
+关闭时完全走原版。扣血交给 `ibx.lib.effect.VanillaPoison`,由 mixin 接管 `PoisonMobEffect#applyEffectTick`。
+
+---
+
+## 5. 注意
 
 - 「叠加」「上限」只在给效果的那一下起作用,不存进效果里。药水、药箭、滞留药水云这些带着效果的东西,里面存的还是原版效果,不会叠加。
 - 原版的 `forceAddEffect` 直接替换效果,不认叠加。

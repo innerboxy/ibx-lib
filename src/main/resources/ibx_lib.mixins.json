@@ -11,6 +11,7 @@
     "ItemStackMixin",
     "LivingEntityAccessor",
     "LivingEntityEffectMixin",
+    "PoisonMobEffectMixin",
     "ProjectileUtilMixin",
     "RangedBowAttackGoalMixin",
     "TagLoaderMixin"
