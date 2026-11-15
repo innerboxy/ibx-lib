@@ -967,6 +967,15 @@ To test for that pass yourself (for anything else that does not go through the v
 
 Without Player Animation Library both methods return `false` and never touch its classes, so there is no need to check whether it is installed first. To just ask whether it is installed, use `ibx.lib.compat.PlayerAnimCompat.isLoaded()`.
 
+### Swaying capes
+
+Bones whose names start with `sway_` (`IbxGeoArmorRenderer.SWAY_PREFIX`) are treated as hanging cloth: when worn by a player they turn with the vanilla cape's sway values - lifting backward while running, leaning to one side while strafing, and fluttering slightly with each step. No code is needed, only the bone names.
+
+- **How to build it**: make a multi-segment cape as a chain of nested bones under a part bone, for example `armorBody > sway_cape_0 > sway_cape_1 > sway_cape_2`. Put each bone's pivot on the top edge of its segment; how far the cape trails backward at rest goes into the bone's own rotation (relative to the segment above). The sway is added on top of that rotation.
+- **How it is split**: the whole chain lifts as much as a vanilla cape does. The top segment takes 60% and each segment below adds another 20%, so the lower segments swing wider; the sideways lean is applied to the top segment only.
+- **Players only**: the sway values come from the player's vanilla cape state, using the vanilla formula. On armor stands, zombies and other mobs the cape stays as modeled.
+- **Any part**: the bones are drawn with whichever piece owns the part bone they hang under; usually that is `armorBody`, so the cape belongs to the chestplate.
+
 ### What you can override
 
 | What you want | How |
@@ -974,6 +983,7 @@ Without Player Animation Library both methods return `false` and never touch its
 | Add animations | Extend `IbxGeoArmorItem` and override `registerControllers` to add animation controllers; the animation file is `geckolib/animations/armor/<name>.animation.json`. |
 | Change how it is drawn (extra render layers, a different bone mapping, etc.) | Extend `IbxGeoArmorRenderer` (same constructor parameters as the item: model id, `glow`; `glow` can be omitted here too), then override `createGeoRenderer` in an item subclass to use it. |
 | Change which parts the first-person pass draws | Override `IbxGeoArmorRenderer#firstPersonSegments(wearer, slot, segments)` and return the parts to draw; `segments` is what the slot normally draws. |
+| Change how a cape sways (amount, share per segment) | Override `IbxGeoArmorRenderer#swayBone(snapshot, depth, sway)`: `snapshot` is this bone's pose for the frame (rotations in radians; negative X lifts the lower edge backward, positive Z leans it toward the wearer's right hand), `depth` is its position in the chain (0 for the top segment), and `sway` is a `CapeSway(lean, side, flap)` whose three values have the same meaning and range as the vanilla cape's, in degrees. |
 
 ---
 

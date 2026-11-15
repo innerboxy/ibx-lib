@@ -967,6 +967,15 @@ Player Animation Library 播第一人称动作(比如 Better Combat 的攻击)�
 
 没装 Player Animation Library 时两个方法都返回 `false`,不会碰到它的类,不用先判断装没装。只想问装没装,用 `ibx.lib.compat.PlayerAnimCompat.isLoaded()`。
 
+### 会摆的披风
+
+模型里名字以 `sway_` 开头的骨骼(`IbxGeoArmorRenderer.SWAY_PREFIX`)会被当作垂着的布:穿在玩家身上时,它们跟着原版披风的摆动量转——跑起来往后扬、横着走往一边偏、走路时随步子轻抖。不用写代码,只要骨骼这样起名。
+
+- **搭法**:几段披风做成一根套一根的骨骼链,挂在部位骨骼下面,比如 `armorBody > sway_cape_0 > sway_cape_1 > sway_cape_2`。每根骨骼的轴心放在这一段的上沿;披风平时往后飘多少,写成骨骼自带的转角(相对上一段)。摆动是加在这个转角之上的。
+- **怎么分**:整条链合起来和原版披风扬起一样多。最上面一段占六成,往下每一段再加两成,所以越靠下摆得越开;左右偏只加在最上面一段。
+- **只管玩家**:摆动量取自玩家身上的原版披风状态,算法同原版。盔甲架、僵尸这些穿上时不动,保持模型里的样子。
+- **哪个部位都行**:骨骼挂在哪个部位骨骼下面,就跟着那一件画;一般挂在 `armorBody` 下面,跟着胸甲。
+
 ### 可重写的部分
 
 | 想做什么 | 做法 |
@@ -974,6 +983,7 @@ Player Animation Library 播第一人称动作(比如 Better Combat 的攻击)�
 | 加动画 | 继承 `IbxGeoArmorItem`,重写 `registerControllers` 加动画控制器;动画文件是 `geckolib/animations/armor/<名字>.animation.json`。 |
 | 换画法(加渲染层、改骨骼映射等) | 继承 `IbxGeoArmorRenderer`(构造参数同物品:模型 id、`glow`,`glow` 同样可以不填),再在物品子类里重写 `createGeoRenderer` 用它。 |
 | 改第一人称那一遍画哪些部位 | 重写 `IbxGeoArmorRenderer#firstPersonSegments(wearer, slot, segments)`,返回要画的部位;`segments` 是平时这个部位画的。 |
+| 改披风怎么摆(幅度、每段分多少) | 重写 `IbxGeoArmorRenderer#swayBone(snapshot, depth, sway)`:`snapshot` 是这根骨骼这一帧的姿态(转角是弧度,X 负数是下沿往身后扬,Z 正数是下沿偏向穿戴者的右手边),`depth` 是它在链里排第几(最上面一段是 0),`sway` 是 `CapeSway(lean, side, flap)`,三个数的含义和范围同原版披风,单位是度。 |
 
 ---
 
