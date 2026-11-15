@@ -1,10 +1,7 @@
 {
   "replace": false,
   "values": [
-    {
-      "id": "neoforge:poison",
-      "required": false
-    },
+    "#neoforge:is_poison",
     "minecraft:wither",
     "minecraft:on_fire",
     "minecraft:freeze",

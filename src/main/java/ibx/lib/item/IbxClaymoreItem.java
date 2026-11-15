@@ -9,7 +9,8 @@ import net.minecraft.world.item.ToolMaterial;
 /**
  * Ibx 大剑：双手拿的大剑（装了 Better Combat 时副手被当成空手）。规则同原版剑（{@code Properties#sword}）：材料给耐久、修复材料、附魔能力；砍蜘蛛网快、每次攻击掉 1 点耐久、打不掉盾；
  * 主手挂攻击伤害、攻速（基础 id，tooltip 是深绿合并行）。左键动作默认用 Better Combat 的 {@code bettercombat:claymore}。
- * 自动进 {@code #c:tools/claymore}。其余见 {@link IbxMeleeWeaponItem}。
+ * 自动进 {@code #c:tools/claymore} 和 {@code #ibx_lib:enchantable/claymore}（能附原版剑的全部附魔，含横扫之刃）；
+ * 原版的 {@code #minecraft:swords} 不自动进。其余见 {@link IbxMeleeWeaponItem}。
  */
 public class IbxClaymoreItem extends IbxMeleeWeaponItem {
     /** 左键动作的默认预设。 */

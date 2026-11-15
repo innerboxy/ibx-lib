@@ -49,16 +49,16 @@ Melee weapons are split into one class per kind, all in the `ibx.lib.item` packa
 
 | Class | Kind | Vanilla rules | Left-click moves (Better Combat preset) | Kind tag |
 | --- | --- | --- | --- | --- |
-| `IbxSwordItem` | Sword | Sword | `bettercombat:sword`: one-handed, left and right slashes, a stab | `#c:tools/sword` |
-| `IbxDaggerItem` | Dagger | Sword | `bettercombat:dagger`: one-handed, range -0.5; an extra two-handed stab when dual-wielding two | `#c:tools/dagger` |
-| `IbxCutlassItem` | Cutlass | Sword | `bettercombat:cutlass`: one-handed, left and right slashes, range -0.25 | `#c:tools/cutlass` |
-| `IbxClaymoreItem` | Claymore | Sword | `bettercombat:claymore`: two-handed, slash, stab, slam | `#c:tools/claymore` |
-| `IbxScytheItem` | Scythe | Sword | `bettercombat:scythe`: two-handed, left and right sweeps, range +0.5 | `#c:tools/scythe` |
-| `IbxFistItem` | Fist weapon | Sword | `bettercombat:fist`: one-handed, punch, range -0.75 | `#c:tools/fist` |
-| `IbxHammerItem` | Hammer | Sword, and disables shields | `bettercombat:hammer`: two-handed, slam | `#c:tools/hammer` |
-| `IbxAxeItem` | Axe | Axe | `bettercombat:axe`: one-handed, left and right slashes | `#c:tools/axe` |
-| `IbxDoubleAxeItem` | Double axe (a subclass of the axe) | Axe | `bettercombat:double_axe`: two-handed, slash, spin | `#c:tools/axe`, `#c:tools/double_axe` |
-| `IbxSpearItem` | Spear | Spear | `bettercombat:spear`: two-handed, stab, range +1 | `#c:tools/spear` |
+| `IbxSwordItem` | Sword | Sword | `bettercombat:sword`: one-handed, left and right slashes, a stab | `#c:tools/sword`, `#ibx_lib:enchantable/sword` |
+| `IbxDaggerItem` | Dagger | Sword | `bettercombat:dagger`: one-handed, range -0.5; an extra two-handed stab when dual-wielding two | `#c:tools/dagger`, `#ibx_lib:enchantable/dagger` |
+| `IbxCutlassItem` | Cutlass | Sword | `bettercombat:cutlass`: one-handed, left and right slashes, range -0.25 | `#c:tools/cutlass`, `#ibx_lib:enchantable/cutlass` |
+| `IbxClaymoreItem` | Claymore | Sword | `bettercombat:claymore`: two-handed, slash, stab, slam | `#c:tools/claymore`, `#ibx_lib:enchantable/claymore` |
+| `IbxScytheItem` | Scythe | Sword | `bettercombat:scythe`: two-handed, left and right sweeps, range +0.5 | `#c:tools/scythe`, `#ibx_lib:enchantable/scythe` |
+| `IbxFistItem` | Fist weapon | Sword | `bettercombat:fist`: one-handed, punch, range -0.75 | `#c:tools/fist`, `#ibx_lib:enchantable/fist` |
+| `IbxHammerItem` | Hammer | Sword, and disables shields | `bettercombat:hammer`: two-handed, slam | `#c:tools/hammer`, `#ibx_lib:enchantable/hammer` |
+| `IbxAxeItem` | Axe | Axe | `bettercombat:axe`: one-handed, left and right slashes | `#c:tools/axe`, `#ibx_lib:enchantable/axe` |
+| `IbxDoubleAxeItem` | Double axe (a subclass of the axe) | Axe | `bettercombat:double_axe`: two-handed, slash, spin | `#c:tools/axe`, `#c:tools/double_axe`, `#ibx_lib:enchantable/axe`, `#ibx_lib:enchantable/double_axe` |
+| `IbxSpearItem` | Spear | Spear | `bettercombat:spear`: two-handed, stab, range +1 | `#c:tools/spear`, `#ibx_lib:enchantable/spear` |
 
 The three sets of vanilla rules:
 
@@ -71,6 +71,23 @@ The hammer changes one thing on top of the sword rules: a hit on someone raising
 Every kind: the material gives durability, repair items and enchantability; attack damage and attack speed go on the main hand with vanilla's base ids, shown as the dark green merged line in the tooltip; automatically in `#c:tools`, `#c:tools/melee_weapon` and the kind tag above.
 
 > Items are not added to vanilla's `#minecraft:swords`, `#minecraft:axes` or `#minecraft:spears` automatically.
+>
+> All ten melee kinds also join this mod's enchantable tags automatically, so they can take the enchantments of a vanilla sword, axe or spear (hammers and fist weapons without Sweeping Edge). This mod's data adds each of these tags to the matching vanilla `#minecraft:enchantable/*` tags:
+>
+> | Tag | Class added automatically | Vanilla tags it is added to | Enchantments |
+> | --- | --- | --- | --- |
+> | `#ibx_lib:enchantable/sword` | `IbxSwordItem` (the data also lists `#minecraft:swords`) | `sweeping`, `melee_weapon`, `durability` | Sweeping Edge, Sharpness, Smite, Bane of Arthropods, Knockback, Looting, Fire Aspect, Unbreaking, Mending, Curse of Vanishing |
+> | `#ibx_lib:enchantable/dagger` | `IbxDaggerItem` | `sweeping`, `melee_weapon`, `durability` | Same as the sword |
+> | `#ibx_lib:enchantable/cutlass` | `IbxCutlassItem` | `sweeping`, `melee_weapon`, `durability` | Same as the sword |
+> | `#ibx_lib:enchantable/claymore` | `IbxClaymoreItem` | `sweeping`, `melee_weapon`, `durability` | Same as the sword |
+> | `#ibx_lib:enchantable/scythe` | `IbxScytheItem` | `sweeping`, `melee_weapon`, `durability` | Same as the sword |
+> | `#ibx_lib:enchantable/hammer` | `IbxHammerItem` | `melee_weapon`, `durability` | Same as the sword, without Sweeping Edge |
+> | `#ibx_lib:enchantable/fist` | `IbxFistItem` | `melee_weapon`, `durability` | Same as the sword, without Sweeping Edge |
+> | `#ibx_lib:enchantable/axe` | `IbxAxeItem`, double axes included (the data also lists `#minecraft:axes`) | `sharp_weapon`, `mining`, `mining_loot`, `durability` | Sharpness, Smite, Bane of Arthropods, Efficiency, Fortune, Silk Touch, Unbreaking, Mending, Curse of Vanishing |
+> | `#ibx_lib:enchantable/double_axe` | `IbxDoubleAxeItem` | `sharp_weapon`, `mining`, `mining_loot`, `durability` | Same as the axe |
+> | `#ibx_lib:enchantable/spear` | `IbxSpearItem` (the data also lists `#minecraft:spears`) | `lunge`, `melee_weapon`, `durability` | Lunge, Sharpness, Smite, Bane of Arthropods, Knockback, Looting, Fire Aspect, Unbreaking, Mending, Curse of Vanishing |
+>
+> To give another item these enchantments, add it to the matching tag in your own data.
 
 ### Constructor parameters
 
@@ -202,7 +219,7 @@ Bows and crossbows extend the vanilla `BowItem` / `CrossbowItem`; what they shar
 - **Ranged damage and draw time on the main hand**: modifier ids `ibx_lib:base_ranged_damage` and `ibx_lib:base_draw_time`, shown as dark green merged lines.
 - **Main hand only**: the modifiers are main-hand only, and right-clicking with the off hand simply fails.
 - **Auto fire**: a stack with the `ibx_lib:auto_fire` component releases by itself at full draw (see [Auto fire](#auto-fire) below).
-- **Tags**: automatically in `#c:tools` and `#c:tools/ranged_weapon`; bows also in `#c:tools/bow`, crossbows also in `#c:tools/crossbow`.
+- **Tags**: automatically in `#c:tools` and `#c:tools/ranged_weapon`; bows also in `#c:tools/bow` and `#ibx_lib:enchantable/bow` (so they can take Power, Punch, Flame and Infinity), crossbows also in `#c:tools/crossbow` and `#ibx_lib:enchantable/crossbow` (so they can take Multishot, Piercing and Quick Charge). Their data lists the vanilla bow and crossbow respectively, and this mod's data adds these two tags to the vanilla `#minecraft:enchantable/bow` and `#minecraft:enchantable/crossbow` respectively, and both to `enchantable/durability`; to give another item these enchantments, add it to the matching tag in your own data.
 
 For the attribute definitions and the resolution steps on hit, see [Attributes](ATTRIBUTE_en.md).
 
@@ -460,7 +477,7 @@ This mod overrides three vanilla enchantment definitions under `data/minecraft/e
 | Quick Charge | `quick_charge.json` | One attribute effect added: main-hand `ibx_lib:draw_time` -0.25 seconds per level. The vanilla charge-time effect and loading sounds are kept, so crossbows outside this mod's system behave as before. Active slots changed from main hand + off hand to main hand only. |
 | Thorns | `thorns.json` | The vanilla effect (a chance to deal 1–5 damage back, plus 2 extra durability loss) is replaced by an attribute effect: `ibx_lib:thorns` +1 per level. Active slots changed from `any` to `armor`. For how thorns is resolved, see [Attributes](ATTRIBUTE_en.md). |
 
-> Whether an enchantment can be applied to your item still depends on the vanilla `#minecraft:enchantable/bow`, `#minecraft:enchantable/crossbow` etc. tags, which are not filled automatically.
+> Whether an enchantment can be applied to your item still depends on the vanilla `#minecraft:enchantable/*` tags. `#ibx_lib:enchantable/bow` and `#ibx_lib:enchantable/crossbow`, which `IbxBowItem` and `IbxCrossbowItem` join automatically, are already added to the vanilla `#minecraft:enchantable/bow` and `#minecraft:enchantable/crossbow` by this mod's data; see **Tags** above.
 
 ---
 
@@ -533,7 +550,7 @@ The Wither Spawn Egg and the Ender Dragon Spawn Egg are registered in vanilla bu
 - **Built-in spells**: given by spell id; none if omitted.
 - **Right-click casting**: automatically in `#ibx_lib:can_cast_spell`, so right-clicking with it in hand casts the selected spell.
 - **Cast animations**: a player animation per cast type (needs Player Animation Library; without it the arms simply don't move).
-- **Tags**: automatically in `#c:tools` and `#c:tools/magic_weapon`; tomes also in `#c:tools/tome`, staves also in `#c:tools/staff`.
+- **Tags**: automatically in `#c:tools` and `#c:tools/magic_weapon`; tomes also in `#c:tools/tome` and `#ibx_lib:enchantable/tome`, staves also in `#c:tools/staff` and `#ibx_lib:enchantable/staff`. This mod's data adds these two `#ibx_lib:enchantable/*` tags to the vanilla `#minecraft:enchantable/durability`, so they can take Unbreaking, Mending and Curse of Vanishing.
 
 ### Constructor parameters
 
@@ -674,7 +691,7 @@ Blocking goes entirely through the vanilla `blocks_attacks` component, baked fro
 
 - Everything else matches the vanilla shield: damage in `#minecraft:bypasses_shield` is not blocked, and the durability loss on block, block sound and break sound are the same.
 - It extends the vanilla `ShieldItem`, so the first-person raised display matches the vanilla shield.
-- Tags: automatically in `#c:tools` and `#c:tools/shield`, plus `#c:tools/one_handed_shield` or `#c:tools/heavy_shield` by subclass.
+- Tags: automatically in `#c:tools`, `#c:tools/shield` and `#ibx_lib:enchantable/shield`, plus `#c:tools/one_handed_shield` or `#c:tools/heavy_shield` by subclass. The data of `#ibx_lib:enchantable/shield` lists the vanilla shield, and this mod's data adds the tag to the vanilla `#minecraft:enchantable/durability`, so shields can take Unbreaking, Mending and Curse of Vanishing (the vanilla shield has no enchantments of its own).
 
 ### One-handed shield
 
@@ -1121,19 +1138,20 @@ Items registered with this mod's base classes and interfaces (subclasses include
 | `IbxMeleeWeaponItem` | `#c:tools`, `#c:tools/melee_weapon` |
 | Melee kind classes | Those of `IbxMeleeWeaponItem`, plus their own kind tag (see [2](#2-melee-weapons)); `IbxDoubleAxeItem` also has the axe's |
 | `IbxRangedWeaponItem` (interface) | `#c:tools`, `#c:tools/ranged_weapon` |
-| `IbxBowItem` | Those of `IbxRangedWeaponItem`, plus `#c:tools/bow` |
-| `IbxCrossbowItem` | Those of `IbxRangedWeaponItem`, plus `#c:tools/crossbow` |
-| `IbxAbstractShieldItem` | `#c:tools`, `#c:tools/shield` |
+| `IbxBowItem` | Those of `IbxRangedWeaponItem`, plus `#c:tools/bow` and `#ibx_lib:enchantable/bow` |
+| `IbxCrossbowItem` | Those of `IbxRangedWeaponItem`, plus `#c:tools/crossbow` and `#ibx_lib:enchantable/crossbow` |
+| `IbxAbstractShieldItem` | `#c:tools`, `#c:tools/shield`, `#ibx_lib:enchantable/shield` |
 | `IbxShieldItem` | Those of `IbxAbstractShieldItem`, plus `#c:tools/one_handed_shield` |
 | `IbxHeavyShieldItem` | Those of `IbxAbstractShieldItem`, plus `#c:tools/heavy_shield` |
 | `IbxMagicWeaponItem` | `#ibx_lib:can_cast_spell`, `#c:tools`, `#c:tools/magic_weapon` |
-| `IbxTomeItem` | Those of `IbxMagicWeaponItem`, plus `#c:tools/tome` |
-| `IbxStaffItem` | Those of `IbxMagicWeaponItem`, plus `#c:tools/staff` |
+| `IbxTomeItem` | Those of `IbxMagicWeaponItem`, plus `#c:tools/tome`, `#ibx_lib:enchantable/tome` |
+| `IbxStaffItem` | Those of `IbxMagicWeaponItem`, plus `#c:tools/staff`, `#ibx_lib:enchantable/staff` |
 
 - They are real tag members: synced to the client and recognised by commands, JEI and other mods.
 - The items are inserted at the front of each tag, so a data pack can take one out with `"remove"`; `"replace": true` does not remove them.
-- The ten melee kind tags, plus `#c:tools/magic_weapon`, `#c:tools/tome`, `#c:tools/staff`, `#c:tools/one_handed_shield` and `#c:tools/heavy_shield`, are common tags created by this mod. They have no data files and are filled entirely automatically.
-- The tag keys are in `ibx.lib.registry.TagRegistry`: `CAN_CAST_SPELL`, `TOOLS_MAGIC_WEAPON`, `TOOLS_TOME`, `TOOLS_STAFF`, `TOOLS_ONE_HANDED_SHIELD`, `TOOLS_HEAVY_SHIELD`, and for melee `TOOLS_SWORD`, `TOOLS_DAGGER`, `TOOLS_CUTLASS`, `TOOLS_CLAYMORE`, `TOOLS_SCYTHE`, `TOOLS_FIST`, `TOOLS_HAMMER`, `TOOLS_AXE`, `TOOLS_DOUBLE_AXE`, `TOOLS_SPEAR`.
+- The ten melee kind tags, plus `#c:tools/magic_weapon`, `#c:tools/tome`, `#c:tools/staff`, `#c:tools/one_handed_shield` and `#c:tools/heavy_shield`, are common tags created by this mod and filled automatically. `#c:tools/sword`, `#c:tools/axe` and `#c:tools/spear` have data files listing the vanilla `#minecraft:swords`, `#minecraft:axes` and `#minecraft:spears`, so vanilla swords, axes and spears are in them too; the rest have no data files. The fifteen `#ibx_lib:enchantable/*` tags have data files (the bow, crossbow, sword, axe, spear and shield ones list the matching vanilla items, the rest are empty), each referenced by the vanilla enchantable tags; see [2](#2-melee-weapons), [3](#3-ranged-weapons), [6](#6-shields) and [5](#5-magic-implements).
+- Enchantable tags follow the kind only: an item that extends a base class such as `IbxMeleeWeaponItem` or `IbxMagicWeaponItem` directly and belongs to no kind does not join any `#ibx_lib:enchantable/*` tag. To make it enchantable, add it to the matching tag in your own data (or straight to the vanilla `#minecraft:enchantable/durability` and so on).
+- The tag keys are in `ibx.lib.registry.TagRegistry`: `CAN_CAST_SPELL`, `TOOLS_MAGIC_WEAPON`, `TOOLS_TOME`, `TOOLS_STAFF`, `TOOLS_ONE_HANDED_SHIELD`, `TOOLS_HEAVY_SHIELD`, and for melee `TOOLS_SWORD`, `TOOLS_DAGGER`, `TOOLS_CUTLASS`, `TOOLS_CLAYMORE`, `TOOLS_SCYTHE`, `TOOLS_FIST`, `TOOLS_HAMMER`, `TOOLS_AXE`, `TOOLS_DOUBLE_AXE`, `TOOLS_SPEAR`, `ENCHANTABLE_BOW`, `ENCHANTABLE_CROSSBOW`, `ENCHANTABLE_SHIELD`, `ENCHANTABLE_SWORD`, `ENCHANTABLE_DAGGER`, `ENCHANTABLE_CUTLASS`, `ENCHANTABLE_CLAYMORE`, `ENCHANTABLE_SCYTHE`, `ENCHANTABLE_HAMMER`, `ENCHANTABLE_FIST`, `ENCHANTABLE_TOME`, `ENCHANTABLE_STAFF`, `ENCHANTABLE_AXE`, `ENCHANTABLE_DOUBLE_AXE`, `ENCHANTABLE_SPEAR`.
 
 **`#ibx_lib:can_cast_spell`** (items that can cast): right-clicking with one in hand casts the selected spell, and its use duration is fixed at 72000 ticks (like a bow, so it can be held). For an item that is not an Ibx implement to cast, the mod that owns it adds it in `data/ibx_lib/tags/item/can_cast_spell.json`. Don't put items that already have a use duration, such as food and potions, in this tag, or they can never be finished.
 

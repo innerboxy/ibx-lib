@@ -1,0 +1,9 @@
+{
+  "values": [
+    "#ibx_lib:enchantable/sword",
+    "#ibx_lib:enchantable/dagger",
+    "#ibx_lib:enchantable/cutlass",
+    "#ibx_lib:enchantable/claymore",
+    "#ibx_lib:enchantable/scythe"
+  ]
+}

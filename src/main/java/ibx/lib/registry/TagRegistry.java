@@ -9,7 +9,7 @@ import net.minecraft.world.item.Item;
 
 /**
  * 本模组自建标签的 key。内容在 {@code data/ibx_lib/tags/}，其他模组用 {@code "replace": false} 往里加；
- * 按物品类自动填的（见 {@link AutoItemTags}）没有数据文件。
+ * 按物品类自动填的（见 {@link AutoItemTags}）大多没有数据文件。
  */
 public final class TagRegistry {
     private TagRegistry() {}
@@ -31,6 +31,110 @@ public final class TagRegistry {
     public static final TagKey<Item> CAN_CAST_SPELL = TagKey.create(Registries.ITEM,
             Identifier.fromNamespaceAndPath(IbxLib.MODID, "can_cast_spell"));
 
+    /**
+     * 能附原版弓的附魔的物品：本模组的 data 把它加进了原版的 {@code #minecraft:enchantable/bow}、{@code enchantable/durability}，
+     * 所以能附力量、冲击、火矢、无限、耐久、经验修补、消失诅咒。
+     * data 里放了原版的弓；所有 {@link ibx.lib.item.IbxBowItem} 自动在里面（{@link AutoItemTags}），别的物品由所在模组的 data 往里加。
+     */
+    public static final TagKey<Item> ENCHANTABLE_BOW = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/bow"));
+
+    /**
+     * 能附原版弩的附魔的物品：本模组的 data 把它加进了原版的 {@code #minecraft:enchantable/crossbow}、{@code enchantable/durability}，
+     * 所以能附多重射击、穿透、快速装填、耐久、经验修补、消失诅咒。
+     * data 里放了原版的弩；所有 {@link ibx.lib.item.IbxCrossbowItem} 自动在里面（{@link AutoItemTags}），别的物品由所在模组的 data 往里加。
+     */
+    public static final TagKey<Item> ENCHANTABLE_CROSSBOW = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/crossbow"));
+
+    /**
+     * 能附原版盾牌的附魔的物品：本模组的 data 把它加进了原版的 {@code #minecraft:enchantable/durability}，
+     * 所以能附耐久、经验修补、消失诅咒（原版盾牌没有专属附魔）。
+     * data 里放了原版的盾牌；所有 {@link ibx.lib.item.general.IbxAbstractShieldItem} 自动在里面（{@link AutoItemTags}），别的物品由所在模组的 data 往里加。
+     */
+    public static final TagKey<Item> ENCHANTABLE_SHIELD = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/shield"));
+
+    /**
+     * 能附原版斧的附魔的物品：本模组的 data 把它加进了原版的 {@code #minecraft:enchantable/sharp_weapon}、
+     * {@code enchantable/mining}、{@code enchantable/mining_loot}、{@code enchantable/durability}，所以能附锋利、亡灵杀手、
+     * 节肢杀手、效率、时运、精准采集、耐久、经验修补、消失诅咒，又不用进 {@code #minecraft:axes}。
+     * data 里放了 {@code #minecraft:axes}；所有 {@link ibx.lib.item.IbxAxeItem}（含双刃斧）自动在里面（{@link AutoItemTags}），
+     * 别的物品由所在模组的 data 往里加。
+     */
+    public static final TagKey<Item> ENCHANTABLE_AXE = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/axe"));
+
+    /** 能附原版斧的附魔的双刃斧（{@link ibx.lib.item.IbxDoubleAxeItem}），data 里各自加进原版的四个标签，不经过 {@link #ENCHANTABLE_AXE}。 */
+    public static final TagKey<Item> ENCHANTABLE_DOUBLE_AXE = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/double_axe"));
+
+    /**
+     * 能附原版矛的附魔的物品：本模组的 data 把它加进了原版的 {@code #minecraft:enchantable/lunge}、
+     * {@code enchantable/melee_weapon}、{@code enchantable/durability}，所以能附突进、锋利、亡灵杀手、节肢杀手、
+     * 击退、抢夺、火焰附加、耐久、经验修补、消失诅咒，又不用进 {@code #minecraft:spears}。
+     * data 里放了 {@code #minecraft:spears}；所有 {@link ibx.lib.item.IbxSpearItem} 自动在里面（{@link AutoItemTags}），别的物品由所在模组的 data 往里加。
+     */
+    public static final TagKey<Item> ENCHANTABLE_SPEAR = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/spear"));
+
+    /**
+     * 能附原版剑的附魔的物品：本模组的 data 把它加进了原版的 {@code #minecraft:enchantable/sweeping}、
+     * {@code enchantable/melee_weapon}、{@code enchantable/durability}，所以能附横扫之刃、锋利、亡灵杀手、节肢杀手、
+     * 击退、抢夺、火焰附加、耐久、经验修补、消失诅咒，又不用进 {@code #minecraft:swords}。
+     * data 里放了 {@code #minecraft:swords}；所有 {@link ibx.lib.item.IbxSwordItem} 自动在里面（{@link AutoItemTags}），别的物品由所在模组的 data 往里加。
+     */
+    public static final TagKey<Item> ENCHANTABLE_SWORD = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/sword"));
+
+    /*
+     * 匕首、砍刀、大剑、镰刀能附的附魔同剑：本模组的 data 把下面四个标签各自加进了原版的 sweeping、melee_weapon、durability，
+     * 不经过 {@code #ibx_lib:enchantable/sword}。对应的类自动在里面（AutoItemTags），别的物品由所在模组的 data 往里加。
+     */
+
+    /** 能附原版剑的附魔的匕首（{@link ibx.lib.item.IbxDaggerItem}）。 */
+    public static final TagKey<Item> ENCHANTABLE_DAGGER = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/dagger"));
+
+    /** 能附原版剑的附魔的砍刀（{@link ibx.lib.item.IbxCutlassItem}）。 */
+    public static final TagKey<Item> ENCHANTABLE_CUTLASS = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/cutlass"));
+
+    /** 能附原版剑的附魔的大剑（{@link ibx.lib.item.IbxClaymoreItem}）。 */
+    public static final TagKey<Item> ENCHANTABLE_CLAYMORE = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/claymore"));
+
+    /** 能附原版剑的附魔的镰刀（{@link ibx.lib.item.IbxScytheItem}）。 */
+    public static final TagKey<Item> ENCHANTABLE_SCYTHE = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/scythe"));
+
+    /*
+     * 战锤、拳套能附的附魔同剑、但没有横扫之刃：本模组的 data 把下面两个标签各自加进了原版的 melee_weapon、durability（不进 sweeping），
+     * 所以能附锋利、亡灵杀手、节肢杀手、击退、抢夺、火焰附加、耐久、经验修补、消失诅咒。
+     * 对应的类自动在里面（AutoItemTags），别的物品由所在模组的 data 往里加。
+     */
+
+    /** 战锤（{@link ibx.lib.item.IbxHammerItem}）。 */
+    public static final TagKey<Item> ENCHANTABLE_HAMMER = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/hammer"));
+
+    /** 拳套（{@link ibx.lib.item.IbxFistItem}）。 */
+    public static final TagKey<Item> ENCHANTABLE_FIST = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/fist"));
+
+    /*
+     * 法典、法杖没有原版对应物；本模组的 data 只把下面两个标签加进了原版的 durability，所以能附耐久、经验修补、消失诅咒；
+     * 对应的类自动在里面（AutoItemTags），别的物品由所在模组的 data 往里加。
+     */
+
+    /** 法典（{@link ibx.lib.item.IbxTomeItem}）。 */
+    public static final TagKey<Item> ENCHANTABLE_TOME = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/tome"));
+
+    /** 法杖（{@link ibx.lib.item.IbxStaffItem}）。 */
+    public static final TagKey<Item> ENCHANTABLE_STAFF = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/staff"));
+
     /*
      * 法器的通用标签。NeoForge 的 c 标签里没有法器类（只有弓、弩、三叉戟这些），这几个是本模组自建的，
      * 结构仿 {@code c:tools/ranged_weapon}、{@code c:tools/bow}。都由 AutoItemTags 按物品类自动填，没有数据文件。
@@ -47,7 +151,8 @@ public final class TagRegistry {
 
     /*
      * 近战武器按种类分的通用标签。NeoForge 只有 c:tools/melee_weapon，这几个是本模组自建的，挂在它下面一层。
-     * 都由 AutoItemTags 按物品类自动填，没有数据文件。和原版的 minecraft:swords、minecraft:axes、minecraft:spears 无关（那几个不自动进）。
+     * 都由 AutoItemTags 按物品类自动填。剑、斧、矛三个有数据文件，分别放了原版的 minecraft:swords、minecraft:axes、minecraft:spears，
+     * 所以原版的剑、斧、矛也在里面；其余没有数据文件。本模组的物品不自动进原版那三个标签。
      */
 
     /** 剑（{@link ibx.lib.item.IbxSwordItem}）。 */

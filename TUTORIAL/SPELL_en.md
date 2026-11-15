@@ -556,7 +556,7 @@ Damage type tags (keys in `TagRegistry`):
 | Tag | Description |
 | --- | --- |
 | `#ibx_lib:is_spell` | Spell damage. Every "is this spell damage" check looks at this tag only. Vanilla `bypasses_armor`, `no_knockback` and `avoids_guardian_thorns` all include it, so types in it automatically ignore armor, get no vanilla knockback and don't trigger guardian thorns. |
-| `#ibx_lib:cast_ignore` | Damage that doesn't interrupt casting. Ships with `neoforge:poison`, `minecraft:wither`, `on_fire`, `freeze`, `starve`, `drown`, `fall`. |
+| `#ibx_lib:cast_ignore` | Damage that doesn't interrupt casting. Ships with `#neoforge:is_poison` (vanilla poison and this mod's modified poison `ibx_lib:poison`), `minecraft:wither`, `on_fire`, `freeze`, `starve`, `drown`, `fall`. |
 
 Adding your own spell damage type (frost, say):
 

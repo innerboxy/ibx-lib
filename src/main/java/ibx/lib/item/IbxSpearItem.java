@@ -16,7 +16,8 @@ import net.minecraft.world.item.ToolMaterial;
  *       攻速由「刺一下多久」算出来（都是主手、基础 id，tooltip 是深绿合并行）。木头材料用木矛的音效。</li>
  *   <li>左键动作默认用 Better Combat 的 {@code bettercombat:spear}（双手、直刺）。它给原版的矛配的也是这份（按物品 id 里有没有
  *       {@code spear} 兜底），这里固定挂上，不看物品叫什么；装了它时左键由它接管，右键的冲刺突刺照旧。</li>
- *   <li>自动进 {@code #c:tools/spear}。原版的 {@code #minecraft:spears}（冲刺附魔认它）不自动进。</li>
+ *   <li>自动进 {@code #c:tools/spear} 和 {@code #ibx_lib:enchantable/spear}（能附原版矛的全部附魔，含突进）。
+ *       原版的 {@code #minecraft:spears} 不自动进。</li>
  * </ul>
  * 其余见 {@link IbxMeleeWeaponItem}。
  */

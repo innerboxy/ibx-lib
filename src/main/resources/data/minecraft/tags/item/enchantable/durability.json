@@ -1,0 +1,19 @@
+{
+  "values": [
+    "#ibx_lib:enchantable/spear",
+    "#ibx_lib:enchantable/sword",
+    "#ibx_lib:enchantable/dagger",
+    "#ibx_lib:enchantable/cutlass",
+    "#ibx_lib:enchantable/claymore",
+    "#ibx_lib:enchantable/bow",
+    "#ibx_lib:enchantable/crossbow",
+    "#ibx_lib:enchantable/shield",
+    "#ibx_lib:enchantable/axe",
+    "#ibx_lib:enchantable/double_axe",
+    "#ibx_lib:enchantable/scythe",
+    "#ibx_lib:enchantable/hammer",
+    "#ibx_lib:enchantable/fist",
+    "#ibx_lib:enchantable/tome",
+    "#ibx_lib:enchantable/staff"
+  ]
+}

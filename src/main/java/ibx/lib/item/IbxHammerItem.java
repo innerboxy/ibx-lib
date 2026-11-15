@@ -16,7 +16,7 @@ import net.minecraft.world.item.component.Weapon;
  *       其余同剑：材料给耐久、修复材料、附魔能力；砍蜘蛛网快、每次攻击掉 1 点耐久；
  *       主手挂攻击伤害、攻速（基础 id，tooltip 是深绿合并行）。</li>
  *   <li>左键动作默认用 Better Combat 的 {@code bettercombat:hammer}。</li>
- *   <li>自动进 {@code #c:tools/hammer}。</li>
+ *   <li>自动进 {@code #c:tools/hammer} 和 {@code #ibx_lib:enchantable/hammer}（能附原版剑的附魔，横扫之刃除外）。</li>
  * </ul>
  * 其余见 {@link IbxMeleeWeaponItem}。
  */

@@ -9,7 +9,8 @@ import net.minecraft.world.item.ToolMaterial;
 /**
  * Ibx 砍刀：单刃的单手砍刀、弯刀。规则同原版剑（{@code Properties#sword}）：材料给耐久、修复材料、附魔能力；砍蜘蛛网快、每次攻击掉 1 点耐久、打不掉盾；
  * 主手挂攻击伤害、攻速（基础 id，tooltip 是深绿合并行）。左键动作默认用 Better Combat 的 {@code bettercombat:cutlass}。
- * 自动进 {@code #c:tools/cutlass}。其余见 {@link IbxMeleeWeaponItem}。
+ * 自动进 {@code #c:tools/cutlass} 和 {@code #ibx_lib:enchantable/cutlass}（能附原版剑的全部附魔，含横扫之刃）；
+ * 原版的 {@code #minecraft:swords} 不自动进。其余见 {@link IbxMeleeWeaponItem}。
  */
 public class IbxCutlassItem extends IbxMeleeWeaponItem {
     /** 左键动作的默认预设。 */

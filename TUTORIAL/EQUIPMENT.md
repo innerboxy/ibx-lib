@@ -49,16 +49,16 @@
 
 | 类 | 种类 | 原版规则 | 左键动作(Better Combat 预设) | 种类标签 |
 | --- | --- | --- | --- | --- |
-| `IbxSwordItem` | 剑 | 剑 | `bettercombat:sword`:单手,左右横斩、直刺 | `#c:tools/sword` |
-| `IbxDaggerItem` | 匕首 | 剑 | `bettercombat:dagger`:单手,距离 -0.5;双持两把时多一段双手刺 | `#c:tools/dagger` |
-| `IbxCutlassItem` | 砍刀 | 剑 | `bettercombat:cutlass`:单手,左右横斩,距离 -0.25 | `#c:tools/cutlass` |
-| `IbxClaymoreItem` | 大剑 | 剑 | `bettercombat:claymore`:双手,横斩、直刺、下砸 | `#c:tools/claymore` |
-| `IbxScytheItem` | 镰刀 | 剑 | `bettercombat:scythe`:双手,左右横扫,距离 +0.5 | `#c:tools/scythe` |
-| `IbxFistItem` | 拳套 | 剑 | `bettercombat:fist`:单手,出拳,距离 -0.75 | `#c:tools/fist` |
-| `IbxHammerItem` | 战锤 | 剑,另外能打掉盾 | `bettercombat:hammer`:双手,下砸 | `#c:tools/hammer` |
-| `IbxAxeItem` | 斧 | 斧 | `bettercombat:axe`:单手,左右横斩 | `#c:tools/axe` |
-| `IbxDoubleAxeItem` | 双刃斧(斧的子类) | 斧 | `bettercombat:double_axe`:双手,横斩、转身斩 | `#c:tools/axe`、`#c:tools/double_axe` |
-| `IbxSpearItem` | 矛 | 矛 | `bettercombat:spear`:双手,直刺,距离 +1 | `#c:tools/spear` |
+| `IbxSwordItem` | 剑 | 剑 | `bettercombat:sword`:单手,左右横斩、直刺 | `#c:tools/sword`、`#ibx_lib:enchantable/sword` |
+| `IbxDaggerItem` | 匕首 | 剑 | `bettercombat:dagger`:单手,距离 -0.5;双持两把时多一段双手刺 | `#c:tools/dagger`、`#ibx_lib:enchantable/dagger` |
+| `IbxCutlassItem` | 砍刀 | 剑 | `bettercombat:cutlass`:单手,左右横斩,距离 -0.25 | `#c:tools/cutlass`、`#ibx_lib:enchantable/cutlass` |
+| `IbxClaymoreItem` | 大剑 | 剑 | `bettercombat:claymore`:双手,横斩、直刺、下砸 | `#c:tools/claymore`、`#ibx_lib:enchantable/claymore` |
+| `IbxScytheItem` | 镰刀 | 剑 | `bettercombat:scythe`:双手,左右横扫,距离 +0.5 | `#c:tools/scythe`、`#ibx_lib:enchantable/scythe` |
+| `IbxFistItem` | 拳套 | 剑 | `bettercombat:fist`:单手,出拳,距离 -0.75 | `#c:tools/fist`、`#ibx_lib:enchantable/fist` |
+| `IbxHammerItem` | 战锤 | 剑,另外能打掉盾 | `bettercombat:hammer`:双手,下砸 | `#c:tools/hammer`、`#ibx_lib:enchantable/hammer` |
+| `IbxAxeItem` | 斧 | 斧 | `bettercombat:axe`:单手,左右横斩 | `#c:tools/axe`、`#ibx_lib:enchantable/axe` |
+| `IbxDoubleAxeItem` | 双刃斧(斧的子类) | 斧 | `bettercombat:double_axe`:双手,横斩、转身斩 | `#c:tools/axe`、`#c:tools/double_axe`、`#ibx_lib:enchantable/axe`、`#ibx_lib:enchantable/double_axe` |
+| `IbxSpearItem` | 矛 | 矛 | `bettercombat:spear`:双手,直刺,距离 +1 | `#c:tools/spear`、`#ibx_lib:enchantable/spear` |
 
 三套原版规则:
 
@@ -71,6 +71,23 @@
 所有种类都:材料给耐久、修复材料、附魔能力;主手挂攻击伤害、攻速,用原版的基础 id,tooltip 是深绿合并行;自动进 `#c:tools`、`#c:tools/melee_weapon` 和上表的种类标签。
 
 > 不会自动进原版的 `#minecraft:swords`、`#minecraft:axes`、`#minecraft:spears`。
+>
+> 近战的十个种类另外自动进本模组的附魔标签,能附原版剑、斧、矛的附魔(战锤、拳套没有横扫之刃)。本模组的 data 把这些标签各自加进了原版对应的 `#minecraft:enchantable/*`:
+>
+> | 标签 | 自动进的类 | 加进的原版标签 | 能附的附魔 |
+> | --- | --- | --- | --- |
+> | `#ibx_lib:enchantable/sword` | `IbxSwordItem`(data 里还有 `#minecraft:swords`) | `sweeping`、`melee_weapon`、`durability` | 横扫之刃、锋利、亡灵杀手、节肢杀手、击退、抢夺、火焰附加、耐久、经验修补、消失诅咒 |
+> | `#ibx_lib:enchantable/dagger` | `IbxDaggerItem` | `sweeping`、`melee_weapon`、`durability` | 同剑 |
+> | `#ibx_lib:enchantable/cutlass` | `IbxCutlassItem` | `sweeping`、`melee_weapon`、`durability` | 同剑 |
+> | `#ibx_lib:enchantable/claymore` | `IbxClaymoreItem` | `sweeping`、`melee_weapon`、`durability` | 同剑 |
+> | `#ibx_lib:enchantable/scythe` | `IbxScytheItem` | `sweeping`、`melee_weapon`、`durability` | 同剑 |
+> | `#ibx_lib:enchantable/hammer` | `IbxHammerItem` | `melee_weapon`、`durability` | 同剑,但没有横扫之刃 |
+> | `#ibx_lib:enchantable/fist` | `IbxFistItem` | `melee_weapon`、`durability` | 同剑,但没有横扫之刃 |
+> | `#ibx_lib:enchantable/axe` | `IbxAxeItem`,含双刃斧(data 里还有 `#minecraft:axes`) | `sharp_weapon`、`mining`、`mining_loot`、`durability` | 锋利、亡灵杀手、节肢杀手、效率、时运、精准采集、耐久、经验修补、消失诅咒 |
+> | `#ibx_lib:enchantable/double_axe` | `IbxDoubleAxeItem` | `sharp_weapon`、`mining`、`mining_loot`、`durability` | 同斧 |
+> | `#ibx_lib:enchantable/spear` | `IbxSpearItem`(data 里还有 `#minecraft:spears`) | `lunge`、`melee_weapon`、`durability` | 突进、锋利、亡灵杀手、节肢杀手、击退、抢夺、火焰附加、耐久、经验修补、消失诅咒 |
+>
+> 别的物品想附这些,在自己的 data 里加进对应的标签就行。
 
 ### 构造参数
 
@@ -202,7 +219,7 @@ public class RapierItem extends IbxMeleeWeaponItem {
 - **主手挂远程伤害、拉弦时间**:修饰符 id 为 `ibx_lib:base_ranged_damage`、`ibx_lib:base_draw_time`,tooltip 是深绿合并行。
 - **只能主手使用**:修饰符只挂主手,副手右键直接失败。
 - **自动射击**:物品栈带 `ibx_lib:auto_fire` 组件时拉满自动放(见下面的 [自动射击](#自动射击))。
-- **标签**:自动进 `#c:tools`、`#c:tools/ranged_weapon`,弓再进 `#c:tools/bow`,弩再进 `#c:tools/crossbow`。
+- **标签**:自动进 `#c:tools`、`#c:tools/ranged_weapon`,弓再进 `#c:tools/bow` 和 `#ibx_lib:enchantable/bow`(能附力量、冲击、火矢、无限),弩再进 `#c:tools/crossbow` 和 `#ibx_lib:enchantable/crossbow`(能附多重射击、穿透、快速装填)。两个标签的 data 里分别放了原版的弓、弩;本模组的 data 再把它们分别加进了原版的 `#minecraft:enchantable/bow`、`#minecraft:enchantable/crossbow`,也都加进了 `enchantable/durability`;别的物品想附这些,在自己的 data 里加进对应的标签就行。
 
 属性的定义和命中后的结算步骤见 [属性](ATTRIBUTE.md)。
 
@@ -460,7 +477,7 @@ public static final DeferredItem<IbxCrossbowItem> ARBALEST = ITEMS.registerItem(
 | 快速装填 | `quick_charge.json` | 多了一条属性效果:主手 `ibx_lib:draw_time` 每级 -0.25 秒。原版的装填时间效果和装填音效留着,没走本模组系统的弩照旧。生效槽位从主手 + 副手改成只有主手。 |
 | 荆棘 | `thorns.json` | 原版的效果(按概率反伤 1~5 点,并多掉 2 点耐久)换成属性效果:每级 `ibx_lib:thorns` +1。生效槽位从 `any` 改成 `armor`。反甲的结算见 [属性](ATTRIBUTE.md)。 |
 
-> 附魔能不能附到你的物品上还是看原版的 `#minecraft:enchantable/bow`、`#minecraft:enchantable/crossbow` 等标签,这些标签不会自动加。
+> 附魔能不能附到你的物品上还是看原版的 `#minecraft:enchantable/*` 标签。`IbxBowItem`、`IbxCrossbowItem` 自动进的 `#ibx_lib:enchantable/bow`、`#ibx_lib:enchantable/crossbow` 已经由本模组的 data 加进原版的 `#minecraft:enchantable/bow`、`#minecraft:enchantable/crossbow`,见上面的「标签」。
 
 ---
 
@@ -533,7 +550,7 @@ public static final DeferredItem<IbxCrossbowItem> ARBALEST = ITEMS.registerItem(
 - **自带法术**:按法术 id 给,不填为空。
 - **右键施法**:自动进 `#ibx_lib:can_cast_spell`,手持右键就是放当前选中的法术。
 - **施法动作**:按施法类型放一段玩家动作(要装 Player Animation Library,没装只是手臂不动)。
-- **标签**:自动进 `#c:tools`、`#c:tools/magic_weapon`,法典再进 `#c:tools/tome`,法杖再进 `#c:tools/staff`。
+- **标签**:自动进 `#c:tools`、`#c:tools/magic_weapon`,法典再进 `#c:tools/tome`、`#ibx_lib:enchantable/tome`,法杖再进 `#c:tools/staff`、`#ibx_lib:enchantable/staff`。本模组的 data 把这两个 `#ibx_lib:enchantable/*` 标签加进了原版的 `#minecraft:enchantable/durability`,所以能附耐久、经验修补、消失诅咒。
 
 ### 构造参数
 
@@ -674,7 +691,7 @@ public static final DeferredItem<IbxStaffItem> OAK_STAFF = ITEMS.registerItem("o
 
 - 其余同原版盾:`#minecraft:bypasses_shield` 的伤害挡不住,格挡时掉耐久的算法、格挡音、破碎音都一样。
 - 继承原版的 `ShieldItem`,第一人称举盾的显示和原版盾一致。
-- 标签:自动进 `#c:tools`、`#c:tools/shield`,再按子类进 `#c:tools/one_handed_shield` 或 `#c:tools/heavy_shield`。
+- 标签:自动进 `#c:tools`、`#c:tools/shield`、`#ibx_lib:enchantable/shield`,再按子类进 `#c:tools/one_handed_shield` 或 `#c:tools/heavy_shield`。`#ibx_lib:enchantable/shield` 的 data 里放了原版的盾牌,本模组的 data 再把它加进原版的 `#minecraft:enchantable/durability`,所以能附耐久、经验修补、消失诅咒(原版盾牌没有专属附魔)。
 
 ### 单手盾
 
@@ -1121,19 +1138,20 @@ public class VampireFangItem extends IbxCurioItem {
 | `IbxMeleeWeaponItem` | `#c:tools`、`#c:tools/melee_weapon` |
 | 近战的种类类 | `IbxMeleeWeaponItem` 的,加各自的种类标签(见 [2](#2-近战武器));`IbxDoubleAxeItem` 同时有斧的 |
 | `IbxRangedWeaponItem`(接口) | `#c:tools`、`#c:tools/ranged_weapon` |
-| `IbxBowItem` | `IbxRangedWeaponItem` 的,加 `#c:tools/bow` |
-| `IbxCrossbowItem` | `IbxRangedWeaponItem` 的,加 `#c:tools/crossbow` |
-| `IbxAbstractShieldItem` | `#c:tools`、`#c:tools/shield` |
+| `IbxBowItem` | `IbxRangedWeaponItem` 的,加 `#c:tools/bow`、`#ibx_lib:enchantable/bow` |
+| `IbxCrossbowItem` | `IbxRangedWeaponItem` 的,加 `#c:tools/crossbow`、`#ibx_lib:enchantable/crossbow` |
+| `IbxAbstractShieldItem` | `#c:tools`、`#c:tools/shield`、`#ibx_lib:enchantable/shield` |
 | `IbxShieldItem` | `IbxAbstractShieldItem` 的,加 `#c:tools/one_handed_shield` |
 | `IbxHeavyShieldItem` | `IbxAbstractShieldItem` 的,加 `#c:tools/heavy_shield` |
 | `IbxMagicWeaponItem` | `#ibx_lib:can_cast_spell`、`#c:tools`、`#c:tools/magic_weapon` |
-| `IbxTomeItem` | `IbxMagicWeaponItem` 的,加 `#c:tools/tome` |
-| `IbxStaffItem` | `IbxMagicWeaponItem` 的,加 `#c:tools/staff` |
+| `IbxTomeItem` | `IbxMagicWeaponItem` 的,加 `#c:tools/tome`、`#ibx_lib:enchantable/tome` |
+| `IbxStaffItem` | `IbxMagicWeaponItem` 的,加 `#c:tools/staff`、`#ibx_lib:enchantable/staff` |
 
 - 是真的标签成员:同步到客户端,指令、JEI、别的模组都认得。
 - 物品插在各标签的最前面,数据包可以用 `"remove"` 把某件物品去掉;`"replace": true` 去不掉。
-- 近战的十个种类标签,以及 `#c:tools/magic_weapon`、`#c:tools/tome`、`#c:tools/staff`、`#c:tools/one_handed_shield`、`#c:tools/heavy_shield` 是本模组自建的通用标签,没有数据文件,全靠自动填。
-- 标签的 key 在 `ibx.lib.registry.TagRegistry`:`CAN_CAST_SPELL`、`TOOLS_MAGIC_WEAPON`、`TOOLS_TOME`、`TOOLS_STAFF`、`TOOLS_ONE_HANDED_SHIELD`、`TOOLS_HEAVY_SHIELD`,近战的 `TOOLS_SWORD`、`TOOLS_DAGGER`、`TOOLS_CUTLASS`、`TOOLS_CLAYMORE`、`TOOLS_SCYTHE`、`TOOLS_FIST`、`TOOLS_HAMMER`、`TOOLS_AXE`、`TOOLS_DOUBLE_AXE`、`TOOLS_SPEAR`。
+- 近战的十个种类标签,以及 `#c:tools/magic_weapon`、`#c:tools/tome`、`#c:tools/staff`、`#c:tools/one_handed_shield`、`#c:tools/heavy_shield` 是本模组自建的通用标签,靠自动填。其中 `#c:tools/sword`、`#c:tools/axe`、`#c:tools/spear` 有数据文件,分别放了原版的 `#minecraft:swords`、`#minecraft:axes`、`#minecraft:spears`,所以原版的剑、斧、矛也在里面;其余没有数据文件。`#ibx_lib:enchantable/*` 这十五个标签有数据文件(弓、弩、剑、斧、矛、盾的放了对应的原版物品,其余是空的),原版的附魔标签各自引用它们,见 [2](#2-近战武器)、[3](#3-远程武器)、[6](#6-盾牌)、[5](#5-法器)。
+- 附魔标签只跟种类走:直接继承 `IbxMeleeWeaponItem`、`IbxMagicWeaponItem` 这类基类、不属于任何种类的物品不进 `#ibx_lib:enchantable/*`,要附魔就在自己的 data 里加进对应的标签(或者直接加进原版的 `#minecraft:enchantable/durability` 等)。
+- 标签的 key 在 `ibx.lib.registry.TagRegistry`:`CAN_CAST_SPELL`、`TOOLS_MAGIC_WEAPON`、`TOOLS_TOME`、`TOOLS_STAFF`、`TOOLS_ONE_HANDED_SHIELD`、`TOOLS_HEAVY_SHIELD`,近战的 `TOOLS_SWORD`、`TOOLS_DAGGER`、`TOOLS_CUTLASS`、`TOOLS_CLAYMORE`、`TOOLS_SCYTHE`、`TOOLS_FIST`、`TOOLS_HAMMER`、`TOOLS_AXE`、`TOOLS_DOUBLE_AXE`、`TOOLS_SPEAR`、`ENCHANTABLE_BOW`、`ENCHANTABLE_CROSSBOW`、`ENCHANTABLE_SHIELD`、`ENCHANTABLE_SWORD`、`ENCHANTABLE_DAGGER`、`ENCHANTABLE_CUTLASS`、`ENCHANTABLE_CLAYMORE`、`ENCHANTABLE_SCYTHE`、`ENCHANTABLE_HAMMER`、`ENCHANTABLE_FIST`、`ENCHANTABLE_TOME`、`ENCHANTABLE_STAFF`、`ENCHANTABLE_AXE`、`ENCHANTABLE_DOUBLE_AXE`、`ENCHANTABLE_SPEAR`。
 
 **`#ibx_lib:can_cast_spell`**(能施法的物品):手持右键放当前选中的法术,使用时长统一为 72000 tick(同弓,能一直按着)。不是 Ibx 法器的物品要施法,由物品所在模组在 `data/ibx_lib/tags/item/can_cast_spell.json` 里加进去。食物、药水这类本来有使用时长的物品不要进这个标签,否则吃不完、喝不完。
 

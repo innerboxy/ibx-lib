@@ -10,7 +10,8 @@ import net.minecraft.world.item.ToolMaterial;
  *
  * <p>是斧的一种，规则全同 {@link IbxAxeItem}：原版斧的物品设置（每次攻击掉 2 点耐久、把盾打掉 5 秒、斧类方块挖得快）、
  * 右键剥树皮、刮铜锈、刮蜡。只换左键动作：默认用 Better Combat 的 {@code bettercombat:double_axe}。
- * 自动进 {@code #c:tools/double_axe}，连同斧的 {@code #c:tools/axe}。</p>
+ * 自动进 {@code #c:tools/double_axe} 和 {@code #ibx_lib:enchantable/double_axe}，连同斧的 {@code #c:tools/axe}、
+ * {@code #ibx_lib:enchantable/axe}。</p>
  */
 public class IbxDoubleAxeItem extends IbxAxeItem {
     /** 左键动作的默认预设。 */

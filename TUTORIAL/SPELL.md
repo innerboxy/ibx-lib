@@ -556,7 +556,7 @@ if (this.hits.tryHit(target)) {                       // 现在能打就记下�
 | 标签 | 说明 |
 | --- | --- |
 | `#ibx_lib:is_spell` | 法术伤害。所有「是不是法术伤害」的判断只看它。原版的 `bypasses_armor`、`no_knockback`、`avoids_guardian_thorns` 都包含本标签,所以进了它的类型自动不吃护甲、不被原版击退、不触发守卫者荆棘。 |
-| `#ibx_lib:cast_ignore` | 不打断吟唱的伤害。自带 `neoforge:poison`、`minecraft:wither`、`on_fire`、`freeze`、`starve`、`drown`、`fall`。 |
+| `#ibx_lib:cast_ignore` | 不打断吟唱的伤害。自带 `#neoforge:is_poison`(原版中毒和本模组改过的中毒 `ibx_lib:poison`)、`minecraft:wither`、`on_fire`、`freeze`、`starve`、`drown`、`fall`。 |
 
 加自己的法术伤害类型(比如冰霜):
 

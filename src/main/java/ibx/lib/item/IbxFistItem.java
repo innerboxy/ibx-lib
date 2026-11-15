@@ -9,7 +9,8 @@ import net.minecraft.world.item.ToolMaterial;
 /**
  * Ibx 拳套：戴在手上出拳的单手武器，攻击距离比剑短。规则同原版剑（{@code Properties#sword}）：材料给耐久、修复材料、附魔能力；砍蜘蛛网快、每次攻击掉 1 点耐久、打不掉盾；
  * 主手挂攻击伤害、攻速（基础 id，tooltip 是深绿合并行）。左键动作默认用 Better Combat 的 {@code bettercombat:fist}。
- * 自动进 {@code #c:tools/fist}。其余见 {@link IbxMeleeWeaponItem}。
+ * 自动进 {@code #c:tools/fist} 和 {@code #ibx_lib:enchantable/fist}（能附原版剑的附魔，横扫之刃除外）；
+ * 原版的 {@code #minecraft:swords} 不自动进。其余见 {@link IbxMeleeWeaponItem}。
  */
 public class IbxFistItem extends IbxMeleeWeaponItem {
     /** 左键动作的默认预设。 */

@@ -36,7 +36,8 @@ import org.jspecify.annotations.Nullable;
  *   <li>右键方块同原版斧（{@code AxeItem#useOn}，那个类继承不了，照它写的）：依次试剥树皮、刮铜锈、刮蜡，成了掉 1 点耐久；
  *       副手拿着能格挡的东西又没蹲下时不触发，让右键去举盾。别的模组按 {@link ItemAbilities#DEFAULT_AXE_ACTIONS} 认它是斧。</li>
  *   <li>左键动作默认用 Better Combat 的 {@code bettercombat:axe}。</li>
- *   <li>自动进 {@code #c:tools/axe}。原版的 {@code #minecraft:axes}（效率、锋利这些附魔认它）不自动进。</li>
+ *   <li>自动进 {@code #c:tools/axe} 和 {@code #ibx_lib:enchantable/axe}（能附原版斧的全部附魔，含效率、锋利）。
+ *       原版的 {@code #minecraft:axes} 不自动进。</li>
  * </ul>
  * 其余见 {@link IbxMeleeWeaponItem}。
  */
