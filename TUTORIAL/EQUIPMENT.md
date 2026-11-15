@@ -115,7 +115,7 @@ public static final DeferredItem<IbxSpearItem> IRON_PIKE = ITEMS.registerItem("i
 
 ### 手持模型与左键动作
 
-手持显示按武器种类在资源里给,不在物品类里。本模组带五个通用手持模型,都以 `minecraft:item/handheld` 为父模型,改了第一、第三人称左右手的显示,贴图填 `layer0`:
+手持显示按武器种类在资源里给,不在物品类里。本模组带通用手持模型,都以 `minecraft:item/handheld` 为父模型,改了第一、第三人称左右手的显示,贴图填 `layer0`:
 
 | 模型 | 用于 |
 | --- | --- |
@@ -123,6 +123,7 @@ public static final DeferredItem<IbxSpearItem> IRON_PIKE = ITEMS.registerItem("i
 | `ibx_lib:item/cutlass_in_hand` | 砍刀类 |
 | `ibx_lib:item/claymore_in_hand` | 大剑类。拿在手里放大到 1.7 倍、双手握的角度;掉在地上的显示也改了(略小、抬高)。 |
 | `ibx_lib:item/hammer_in_hand` | 锤类。角度同原版手持,放大到 1.275 倍(第一人称 1.02 倍)。 |
+| `ibx_lib:item/double_axe_in_hand` | 双刃斧类。第三人称斜着往上抬、放大到 1.25 倍(厚度不变),第一人称缩到 0.85 倍;掉在地上的显示也改了(抬高、0.94 倍)。 |
 | `ibx_lib:item/scythe_in_hand` | 镰刀等长柄武器。竖着握柄,第三人称放大到 2.125 倍;掉在地上的显示也改了。按 32×32 的长贴图配的,物品栏的图标见下面。 |
 
 `assets/examplemod/models/item/iron_dirk.json`:

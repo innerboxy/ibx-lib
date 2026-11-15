@@ -115,7 +115,7 @@ public static final DeferredItem<IbxSpearItem> IRON_PIKE = ITEMS.registerItem("i
 
 ### Hand models and left-click moves
 
-The in-hand display depends on the kind of weapon and is given in resources, not in the item class. This mod ships five generic hand models. All have `minecraft:item/handheld` as parent and change the first- and third-person display for both hands; the texture goes in `layer0`:
+The in-hand display depends on the kind of weapon and is given in resources, not in the item class. This mod ships some generic hand models. All have `minecraft:item/handheld` as parent and change the first- and third-person display for both hands; the texture goes in `layer0`:
 
 | Model | For |
 | --- | --- |
@@ -123,6 +123,7 @@ The in-hand display depends on the kind of weapon and is given in resources, not
 | `ibx_lib:item/cutlass_in_hand` | Cutlasses |
 | `ibx_lib:item/claymore_in_hand` | Claymores. Scaled up to 1.7x in hand at a two-handed angle; the dropped-item display is changed too (slightly smaller, raised). |
 | `ibx_lib:item/hammer_in_hand` | Hammers. Same angle as the vanilla handheld, scaled up to 1.275x (1.02x in first person). |
+| `ibx_lib:item/double_axe_in_hand` | Double axes. Tilted up in third person and scaled up to 1.25x (thickness unchanged), scaled down to 0.85x in first person; the dropped-item display is changed too (raised, 0.94x). |
 | `ibx_lib:item/scythe_in_hand` | Scythes and other long-hafted weapons. Held upright by the haft, scaled up to 2.125x in third person; the dropped-item display is changed too. Made for a long 32×32 texture; for the inventory icon see below. |
 
 `assets/examplemod/models/item/iron_dirk.json`:
