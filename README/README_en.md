@@ -6,7 +6,7 @@
 
 ## Overview
 
-This mod is a library: it holds the frameworks and no content of its own. Spells, summons, target selection, equipment base classes, attributes, visual effects and creative sub-tabs live here, and other mods register their own spells, weapons and mobs on top of it.
+This mod is a library: it holds the frameworks and no content of its own. Spells, summons, target selection, equipment base classes, attributes, visual effects, mob effects and creative sub-tabs live here, and other mods register their own spells, weapons and mobs on top of it.
 
 ### Spells
 
@@ -44,6 +44,12 @@ Three purely visual effects with no resolution of their own: ground warnings (a 
 
 See [Visual effects](../TUTORIAL/EFFECT_en.md).
 
+### Mob effects
+
+Extended versions of vanilla `addEffect` with two extra parameters, "stack" and "cap": stacking adds on top of the target's current level and keeps the longer duration; the cap is an amplifier, and leaving it out means no cap. Added to `LivingEntity` with a mixin and written as `entity.addEffect(effect, source, true, 4)`; vanilla `addEffect` is unchanged.
+
+See [Mob effects](../TUTORIAL/MOB_EFFECT_en.md).
+
 ### Creative sub-tabs
 
 Splits the items of one creative tab into groups: a column of icons appears left of the creative inventory, clicking a group shows only its items, and clicking it again goes back to the whole tab. Swap the tab's `displayItems` for `CreativeSubTabs` and `add` one group at a time; the search tab and JEI still get every item.
@@ -62,6 +68,7 @@ See [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md).
 | [Equipment base classes](../TUTORIAL/EQUIPMENT_en.md) | Base classes for melee, bows and crossbows, implements, shields, 3D armor and curios; `RangedWeaponApi`, `ShieldApi`; automatic item tags |
 | [Attributes](../TUTORIAL/ATTRIBUTE_en.md) | Attribute list, damage and healing order, `CriticalStrikeApi`, attribute types, the attribute panel |
 | [Visual effects](../TUTORIAL/EFFECT_en.md) | `GroundWarnings`, `BlockWave`, `CustomFire` |
+| [Mob effects](../TUTORIAL/MOB_EFFECT_en.md) | Stackable, capped `addEffect`, `IbxEffectTarget`, interface injection setup |
 | [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md) | `CreativeSubTabs`, grouping rules |
 | [Configuration](../TUTORIAL/CONFIG_en.md) | Server config, startup config, client config |
 | [Commands](../TUTORIAL/COMMAND_en.md) | `/ibx mana`, `spell`, `summon` |
@@ -77,7 +84,7 @@ See [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md).
 | [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | Optional | Used only by 3D-model spell projectiles `GeoSpellProjectile`, the 3D armor class `IbxGeoArmorItem` and their renderers; mods that use these must require it themselves |
 | [Player Animation Library](https://modrinth.com/mod/player-animation-library) `1.2.6+` | Optional (client) | Adds player animations for casting, guarding and shield bashing; without it the arms just don't move. While it plays a first-person animation, 3D armor is hidden the way it hides vanilla armor |
 | [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | Optional | Curio base class (wear only one, permanent effects, etc.), curio trigger hooks, the elytra slot, casting items in curio slots, the attribute panel button on the curios screen |
-| [Jade](https://modrinth.com/mod/jade) | Optional (client) | Shows spell resistance after armor in the tooltip; turns Jade's "Show Bosses" off once the first time you join a world so it doesn't duplicate boss bars |
+| [Jade](https://modrinth.com/mod/jade) | Optional | Shows spell resistance after armor in the tooltip; also shows mob effects that have no particles but show an icon (vanilla Jade only shows effects with particles; needs Jade on the server too); turns Jade's "Show Bosses" off once the first time you join a world so it doesn't duplicate boss bars |
 | [MmmMmmMmmMmm](https://modrinth.com/mod/mmmmmmmmmmmm) (Target Dummy) | Optional | Ranged and spell crits show as crit numbers, and spell damage numbers get their own blue color |
 | [JEI](https://modrinth.com/mod/jei) | Optional (client) | Keeps JEI's bookmark panel clear of the attribute panel, curio slots and creative sub-tabs |
 | [InventoryHUD+](https://modrinth.com/mod/inventoryhudplus) | Optional (client) | The current-spell frame moves out of the way of its armor HUD drawn beside the hotbar |

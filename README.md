@@ -6,7 +6,7 @@
 
 ## 简介
 
-本模组是一个前置库:只放框架,不放具体内容。法术、召唤物、目标选择、装备基类、属性、特效和创造栏子栏都在这里,其他模组在它上面注册自己的法术、武器和生物。
+本模组是一个前置库:只放框架,不放具体内容。法术、召唤物、目标选择、装备基类、属性、特效、药水效果和创造栏子栏都在这里,其他模组在它上面注册自己的法术、武器和生物。
 
 ### 法术
 
@@ -44,6 +44,12 @@
 
 详见 [特效](TUTORIAL/EFFECT.md)。
 
+### 药水效果
+
+原版 `addEffect` 的扩展版本:末尾多「是否叠加」「上限」两个参数,叠加时在目标现有的等级上往上加、时长取较长的,上限用放大等级、不填就是不封顶。用 mixin 加在 `LivingEntity` 上,写法 `entity.addEffect(效果, 来源, true, 4)`;原版的 `addEffect` 行为不变。
+
+详见 [药水效果](TUTORIAL/MOB_EFFECT.md)。
+
 ### 创造栏子栏
 
 把一个创造栏的物品分成几组:创造模式背包左边多一列图标,点一组只显示这一组的物品,再点一次回到整个创造栏。注册创造栏时把 `displayItems` 换成 `CreativeSubTabs`,一组一个 `add`;搜索栏和 JEI 拿到的还是全部物品。
@@ -62,6 +68,7 @@
 | [装备基类](TUTORIAL/EQUIPMENT.md) | 近战、弓弩、法器、盾牌、3D 盔甲、饰品的基类,`RangedWeaponApi`、`ShieldApi`,自动物品标签 |
 | [属性](TUTORIAL/ATTRIBUTE.md) | 属性一览、伤害与治疗的结算顺序、`CriticalStrikeApi`、属性类型、属性面板 |
 | [特效](TUTORIAL/EFFECT.md) | `GroundWarnings`、`BlockWave`、`CustomFire` |
+| [药水效果](TUTORIAL/MOB_EFFECT.md) | 可叠加、可设上限的 `addEffect`,`IbxEffectTarget`,接口注入配置 |
 | [创造栏子栏](TUTORIAL/CREATIVE_TAB.md) | `CreativeSubTabs`、分组规则 |
 | [配置](TUTORIAL/CONFIG.md) | 服务端配置、启动配置、客户端配置 |
 | [指令](TUTORIAL/COMMAND.md) | `/ibx mana`、`spell`、`summon` |
@@ -77,7 +84,7 @@
 | [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | 可选 | 只有 3D 模型的法术弹射物 `GeoSpellProjectile`、3D 盔甲 `IbxGeoArmorItem` 和它们的渲染器用到;用到这些的模组自己要把它设成必需 |
 | [Player Animation Library](https://modrinth.com/mod/player-animation-library) `1.2.6+` | 可选(客户端) | 装了才有施法、格挡和盾击时的玩家动作,没装只是手臂不动;它播第一人称动作时,3D 盔甲照它对原版盔甲的规矩藏起来 |
 | [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | 可选 | 饰品基类(只戴一个、常驻效果等)、饰品的触发钩子、鞘翅槽、饰品栏里的施法物品、饰品栏界面上的属性面板按钮 |
-| [Jade](https://modrinth.com/mod/jade) | 可选(客户端) | 提示框里在护甲后面显示法术抗性;第一次进世界时关掉一次 Jade 的「显示Boss」,免得和 Boss 血条重复 |
+| [Jade](https://modrinth.com/mod/jade) | 可选 | 提示框里在护甲后面显示法术抗性;生物身上不冒粒子、但显示图标的药水效果也显示出来(原版 Jade 只显示冒粒子的,要服务端也装 Jade);第一次进世界时关掉一次 Jade 的「显示Boss」,免得和 Boss 血条重复 |
 | [MmmMmmMmmMmm](https://modrinth.com/mod/mmmmmmmmmmmm)(试验假人) | 可选 | 远程、法术暴击显示成暴击数字,法术伤害的数字用专属的蓝色 |
 | [JEI](https://modrinth.com/mod/jei) | 可选(客户端) | 属性面板、饰品槽、创造栏子栏显示时让 JEI 的书签栏让开 |
 | [InventoryHUD+](https://modrinth.com/mod/inventoryhudplus) | 可选(客户端) | 当前法术框避开它贴着快捷栏画的盔甲栏 HUD |

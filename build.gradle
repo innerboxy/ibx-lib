@@ -7,6 +7,14 @@ plugins {
 
 apply from: rootProject.file('gradle/mod-common.gradle')
 
+neoForge {
+    // 接口注入：原版 LivingEntity 带上 IbxEffectTarget（可叠加、可设上限的 addEffect），mixin 在 LivingEntityEffectMixin；publish 给依赖 lib 的模组
+    interfaceInjectionData {
+        from(file('interfaces.json'))
+        publish(file('interfaces.json'))
+    }
+}
+
 dependencies {
     // GeckoLib（可选）：只有 3D 法术弹射物（GeoSpellProjectile 和它的渲染器）、Geo 盔甲（IbxGeoArmorItem 和它的渲染器）用到；用它们的模组自己强制要。开发环境照常带上
     implementation "com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"

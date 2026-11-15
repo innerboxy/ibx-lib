@@ -3,11 +3,12 @@ package ibx.lib.compat;
 import net.neoforged.fml.ModList;
 
 /**
- * Jade 联动（modId {@code jade}，只在客户端）。本模组对它是<b>非强制依赖</b>。
+ * Jade 联动（modId {@code jade}，效果过滤在服务端，其余在客户端）。本模组对它是<b>非强制依赖</b>。
  *
  * <ul>
  *   <li>首次进世界关掉它的「显示Boss」：{@link ibx.lib.compat.jade.JadeBossHiding}，装了才由客户端入口注册；</li>
- *   <li>提示框里的魔法抗性：{@link ibx.lib.compat.jade.IbxJadePlugin}，Jade 按注解自己找到它。</li>
+ *   <li>提示框里的魔法抗性：{@link ibx.lib.compat.jade.IbxJadePlugin}，Jade 按注解自己找到它；</li>
+ *   <li>不冒粒子、但显示图标的药水效果也显示：{@code ibx.lib.mixin.jade.StatusEffectsProviderMixin}（服务端，装了 Jade 才加载）。</li>
  * </ul>
  */
 public final class JadeCompat {
