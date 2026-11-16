@@ -13,6 +13,7 @@ import ibx.lib.config.StartupConfig;
 import ibx.lib.event.DamageHandler;
 import ibx.lib.event.HealHandler;
 import ibx.lib.event.ManaHandler;
+import ibx.lib.event.MountHandler;
 import ibx.lib.item.vanilla.VanillaArmors;
 import ibx.lib.item.vanilla.VanillaRangedWeapons;
 import ibx.lib.item.vanilla.VanillaSpawnEggs;
@@ -58,10 +59,11 @@ public class IbxLib {
         modEventBus.addListener(VanillaStackSizes::onModifyDefaultComponents);
         modEventBus.addListener(VanillaSpawnEggs::onBuildCreativeModeTabContents);
 
-        // GAME 总线：统一的伤害、治疗、法力与施法结算，召唤物框架，以及法力、法术、召唤物指令。
+        // GAME 总线：统一的伤害、治疗、法力与施法结算，坐骑属性同步，召唤物框架，以及法力、法术、召唤物指令。
         DamageHandler.register();
         HealHandler.register();
         ManaHandler.register();
+        MountHandler.register();
         SpellCasting.register();
         PlayerSpells.register();
         SpellItemUse.register();

@@ -8,7 +8,7 @@
 
 ## 1. 简介
 
-本模组注册了 18 个属性(`ibx.lib.registry.AttributeRegistry`),远程、暴击、法术、法力、召唤物的数值都从它们读。
+本模组注册了一些属性(`ibx.lib.registry.AttributeRegistry`),远程、暴击、法术、法力、召唤物、坐骑的数值都从它们读。
 
 - **全部生物都有**:玩家、原版生物、其他模组的生物都自动挂上这些属性,装备和药水效果对它们的加减对谁都生效。
 - **全部同步到客户端**:tooltip、HUD、属性面板和客户端预测都能直接读。
@@ -42,9 +42,12 @@
 | `ibx_lib:spell_penetration` | `SPELL_PENETRATION` | 法术穿透 | 0 | 0~1 | 实际减免 = 法术抗性减免 × (1 − 本值)。施法时读进伤害快照,之后换装备不影响已经放出去的法术。 |
 | `ibx_lib:can_spell_crit` | `CAN_SPELL_CRIT` | 法术可暴击 | 0 | 0~1 | 开关:总值大于等于 1 时法术(含治疗)按暴击率 / 暴击伤害暴击,每个目标各掷一次。装备挂 `add_value` +1 打开。 |
 | `ibx_lib:max_summons` | `MAX_SUMMONS` | 召唤物上限 | 1 | 0~1024 | 同时在场的召唤物最多占几个名额(见 [召唤物](SUMMON.md))。 |
+| `ibx_lib:mount_speed` | `MOUNT_SPEED` | 坐骑移速 | 0 | -1~1024 | 挂在骑手身上:骑手操控的坐骑移动速度按基础值加成的比例(+0.15 → +15%)。-1 为坐骑走不动。 |
+| `ibx_lib:mount_jump_strength` | `MOUNT_JUMP_STRENGTH` | 坐骑跳跃力 | 0 | -1~1024 | 挂在骑手身上:骑手操控的坐骑跳跃力按基础值加成的比例。马类蓄力跳得更高,骆驼冲刺往上蹿得更高。 |
 
 - 法力的读写见 [法术系统](SPELL.md),这里只列属性。
 - 本模组还把原版的 `attack_damage`、`attack_knockback`、`knockback_resistance` 标成了同步:原版不同步这三个,客户端只能读到基础值,属性面板拿剑、穿甲也不变。
+- 坐骑的两个属性在服务端每 tick 结算(`ibx.lib.event.MountHandler`):坐骑有操控它的骑手(`getControllingPassenger`,马要装鞍、猪要拿胡萝卜钓竿这些按原版规矩)时,把骑手的值换成坐骑原版 `movement_speed` / `jump_strength` 上的一个 `add_multiplied_base` 临时修饰符(id 同属性 id),没人操控或值为 0 时摘掉。下马、换装备都在下一 tick 跟上;同一头坐骑上的其他乘客不算。原版骑着走的坐骑(马类、骆驼、猪、炽足兽、鹦鹉螺)都按 `movement_speed` 算速度,快乐恶魂飞行看 `flying_speed`,不受坐骑移速影响。
 
 ---
 
@@ -165,7 +168,7 @@ public static final DeferredItem<Item> EMBER_TALISMAN = ITEMS.registerItem("embe
 
 | 属性 | 建议 | 原因 |
 | --- | --- | --- |
-| 暴击率、暴击伤害、护甲穿透、法术穿透 | `ADD_VALUE` | 值本身就是比例,tooltip 显示成百分数。 |
+| 暴击率、暴击伤害、护甲穿透、法术穿透、坐骑移速、坐骑跳跃力 | `ADD_VALUE` | 值本身就是比例,tooltip 显示成百分数。 |
 | 拉弦速率、施法速率 | `ADD_MULTIPLIED_BASE` | 基础值是 1,tooltip 显示成百分比;结算用除法,多个加成不会叠成瞬发。 |
 | 法力消耗倍率、法术冷却倍率 | `ADD_MULTIPLIED_TOTAL` | 连乘,永远叠不到 0;`ADD_MULTIPLIED_BASE` 的两个 -50% 相加就成了免费。 |
 | 法术可暴击 | `ADD_VALUE` +1 | 开关,总值大于等于 1 即开启。 |

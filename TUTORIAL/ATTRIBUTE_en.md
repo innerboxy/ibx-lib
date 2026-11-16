@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The mod registers 18 attributes (`ibx.lib.registry.AttributeRegistry`). Ranged combat, critical strikes, spells, mana and summons all read their numbers from them.
+The mod registers some attributes (`ibx.lib.registry.AttributeRegistry`). Ranged combat, critical strikes, spells, mana, summons and mounts all read their numbers from them.
 
 - **Every living entity has them**: players, vanilla mobs and other mods' mobs get these attributes automatically, so modifiers from gear and mob effects work on anyone.
 - **All synced to the client**: tooltips, the HUD, the attribute panel and client-side prediction can read them directly.
@@ -42,9 +42,12 @@ Reference an attribute with `AttributeRegistry.XXX` (a `DeferredHolder<Attribute
 | `ibx_lib:spell_penetration` | `SPELL_PENETRATION` | Spell Penetration | 0 | 0–1 | Actual reduction = spell resistance reduction × (1 − this value). Read into the damage snapshot at cast time, so changing gear afterwards doesn't affect spells already cast. |
 | `ibx_lib:can_spell_crit` | `CAN_SPELL_CRIT` | Spells Can Crit | 0 | 0–1 | A switch: when the total is 1 or more, spells (healing included) crit using critical chance / critical damage, rolled once per target. Gear turns it on with an `add_value` +1 modifier. |
 | `ibx_lib:max_summons` | `MAX_SUMMONS` | Max Summons | 1 | 0–1024 | How many slots your summons may occupy at once (see [Summons](SUMMON_en.md)). |
+| `ibx_lib:mount_speed` | `MOUNT_SPEED` | Mount Speed | 0 | -1–1024 | Goes on the rider: a ratio added to the base movement speed of the mount the rider controls (+0.15 → +15%). -1 means the mount can't move. |
+| `ibx_lib:mount_jump_strength` | `MOUNT_JUMP_STRENGTH` | Mount Jump Strength | 0 | -1–1024 | Goes on the rider: a ratio added to the base jump strength of the mount the rider controls. Horses jump higher when charged; camels rise higher when dashing. |
 
 - Reading and writing mana is covered in [Spell system](SPELL_en.md); only the attributes are listed here.
 - The mod also marks vanilla `attack_damage`, `attack_knockback` and `knockback_resistance` as synced: vanilla doesn't sync these three, so the client could only read base values and the attribute panel wouldn't change when you hold a sword or wear armor.
+- The two mount attributes are settled every tick on the server (`ibx.lib.event.MountHandler`): while a mount has a rider controlling it (`getControllingPassenger`, following vanilla rules such as a saddled horse or a pig steered with a carrot on a stick), the rider's value becomes one transient `add_multiplied_base` modifier (id = the attribute id) on the mount's vanilla `movement_speed` / `jump_strength`; it is removed when nobody controls the mount or the value is 0. Dismounting and gear changes catch up on the next tick; other passengers on the same mount don't count. Every vanilla mount you ride on the ground (horses, camels, pigs, striders, nautiluses) uses `movement_speed` for its speed; the happy ghast flies by `flying_speed` and isn't affected by Mount Speed.
 
 ---
 
@@ -165,7 +168,7 @@ Which operation to use for each attribute:
 
 | Attribute | Recommended | Why |
 | --- | --- | --- |
-| Critical chance, critical damage, armor penetration, spell penetration | `ADD_VALUE` | The value is itself a ratio; the tooltip shows it as a percentage. |
+| Critical chance, critical damage, armor penetration, spell penetration, mount speed, mount jump strength | `ADD_VALUE` | The value is itself a ratio; the tooltip shows it as a percentage. |
 | Draw speed, cast speed | `ADD_MULTIPLIED_BASE` | The base is 1 and the tooltip shows a percentage; they divide, so several bonuses never add up to instant. |
 | Mana cost multiplier, spell cooldown ratio | `ADD_MULTIPLIED_TOTAL` | They multiply together and never reach 0; with `ADD_MULTIPLIED_BASE`, two -50% modifiers add up to free. |
 | Spells can crit | `ADD_VALUE` +1 | A switch; on when the total is 1 or more. |

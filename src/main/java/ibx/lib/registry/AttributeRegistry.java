@@ -334,6 +334,36 @@ public final class AttributeRegistry {
                             1024.0D  // 最大值
                     ).setSyncable(true));
 
+    /**
+     * 坐骑移速：骑手操控的坐骑移动速度按基础值加成的比例，挂在骑手身上。默认 0，最小 -1（坐骑走不动），最大 1024。
+     * 装备用 {@code ADD_VALUE} 给比例，tooltip 显示成百分数（+0.15 → +15%），多件相加。
+     * 骑手操控坐骑时，坐骑的 {@code movement_speed} 上挂一个同比例的 {@code add_multiplied_base} 修饰符，下马就摘掉。
+     * 原版骑着走的坐骑（马类、骆驼、猪、炽足兽、鹦鹉螺）都按这个属性算速度；快乐恶魂飞行看 {@code flying_speed}，不受影响。
+     * 同步见 {@link ibx.lib.event.MountHandler}。
+     */
+    public static final DeferredHolder<Attribute, Attribute> MOUNT_SPEED =
+            ATTRIBUTES.register("mount_speed",
+                    () -> new PercentageAttribute(
+                            "attribute.name." + IbxLib.MODID + ".mount_speed",
+                            0.0D,    // 默认值
+                            -1.0D,   // 最小值
+                            1024.0D  // 最大值
+                    ).setSyncable(true));
+
+    /**
+     * 坐骑跳跃力：骑手操控的坐骑跳跃力按基础值加成的比例，挂在骑手身上。默认 0，最小 -1（坐骑跳不起来），最大 1024。
+     * 口径同 {@link #MOUNT_SPEED}，加到坐骑的 {@code jump_strength} 上：马类蓄力跳得更高，骆驼冲刺往上蹿得更高。
+     * 同步见 {@link ibx.lib.event.MountHandler}。
+     */
+    public static final DeferredHolder<Attribute, Attribute> MOUNT_JUMP_STRENGTH =
+            ATTRIBUTES.register("mount_jump_strength",
+                    () -> new PercentageAttribute(
+                            "attribute.name." + IbxLib.MODID + ".mount_jump_strength",
+                            0.0D,    // 默认值
+                            -1.0D,   // 最小值
+                            1024.0D  // 最大值
+                    ).setSyncable(true));
+
     public static void register(IEventBus modEventBus) {
         ATTRIBUTES.register(modEventBus);
         modEventBus.addListener(AttributeRegistry::attachToLivingEntities);

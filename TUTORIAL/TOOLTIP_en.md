@@ -49,7 +49,7 @@ public final class ExampleTooltips {
                         TooltipLines.effect(MobEffects.SLOWNESS, 1)));
             });
 
-            // Active: "Active · Right-click" + "Cooldown 8 seconds" + "Shoots 3 fireballs forward, each dealing 40% of your attack damage"
+            // Active: "Active · [Right-click]" + "Cooldown 8 seconds" + "Shoots 3 fireballs forward, each dealing 40% of your attack damage"
             registrar.add(ModItems.RUBY_STAFF, (stack, tooltip) -> {
                 tooltip.accept(TooltipLines.active(TooltipLines.RIGHT_CLICK));
                 tooltip.accept(TooltipLines.cooldown(160));
@@ -113,7 +113,7 @@ The methods of `ibx.lib.tooltip.TooltipLines` come in two kinds: **whole lines**
 | Method | Produces | Color | Kind |
 | --- | --- | --- | --- |
 | `passive()` | "Passive", the title line of a passive trait | Accent (amber, `ACCENT`) | Line |
-| `active(trigger)` | "Active · Right-click", the title line of an active ability | Accent | Line |
+| `active(trigger)` | "Active · [Right-click]", the title line of an active ability | Accent | Line |
 | `cooldown(ticks)` | "Cooldown 8 seconds", ticks converted to seconds | Muted (old wood, `MUTED`), the seconds in vanilla blue | Line |
 | `foldHint()` | "Hold [Shift] for details", added by `ItemTooltips` automatically | Disabled (`DISABLED`), the key in the key color | Line |
 | `body(key, args...)` | A line of body text | Body (cream, `BODY`) | Line |
@@ -124,14 +124,16 @@ The methods of `ibx.lib.tooltip.TooltipLines` come in two kinds: **whole lines**
 | `seconds(ticks)` | Ticks converted to seconds: `100` → `5`, `30` → `1.5`; the word "seconds" goes in the lang file | Vanilla blue | Fragment |
 | `effect(effect, amplifier)` | Effect name + level: "Slowness II" | Positive for beneficial, negative for harmful, body for neutral | Fragment |
 | `spell(spell)` | A spell name | Spell (`SPELL`) | Fragment |
+| `item(item)` / `item(stack)` / `item(id)` | An item name: pass the item, an item stack or the registry id (`Identifier` or string) | The item's rarity color, same as the tooltip's first line | Fragment |
 | `key(keybind)` | A key in square brackets: "[Shift]" | Key (`KEY`) | Fragment |
 | `keyName(name)` | A fixed key name in square brackets | Key | Fragment |
 
 - **Lang keys**: `body`, `muted` and `flavor` take the full lang key (`tooltip.examplemod.ruby_sword.passive`). Text in the lang string that isn't an argument takes the line's color; arguments keep their own colors.
 - **Numbers**: vanilla attribute blue (`ChatFormatting.BLUE`), the same color as vanilla's "+8 Armor".
 - **Effects**: `amplifier` is the amplifier (starting at 0), and the level is always written (level I too); up to level 10 it uses vanilla roman numerals (`enchantment.level.N`), above that arabic numbers.
+- **Items**: `item(Items.ROTTEN_FLESH)` uses the same color as the item name on the tooltip's first line (by rarity); with an item stack, enchanted stacks go up one rarity and renamed stacks show the new name (italic). To refer to another mod's item without depending on it, pass the id: `item("othermod:ruby")`; if that mod isn't installed and the id isn't found, the id itself is written (disabled color).
 - **Keys**: `key("key.sneak")` takes a key binding name (vanilla or registered by a mod) and shows the key the player has bound right now, following any rebinding; `keyName("Shift")` is for fixed keys that don't go through key bindings.
-- **Triggers**: `TooltipLines.RIGHT_CLICK` (Right-click) and `TooltipLines.LEFT_CLICK` (Left-click), with lang keys `tooltip.ibx_lib.trigger.<trigger>`.
+- **Triggers**: `TooltipLines.RIGHT_CLICK` ([Right-click]), `TooltipLines.LEFT_CLICK` ([Left-click]), `TooltipLines.SNEAK` (Press [Shift], fires once), `TooltipLines.HOLD_SNEAK` (Hold [Shift], active while held), `TooltipLines.SNEAK_LEFT_CLICK` ([Shift] + [Left-click]) and `TooltipLines.SNEAK_RIGHT_CLICK` ([Shift] + [Right-click]), with lang keys `tooltip.ibx_lib.trigger.<trigger>`, where every key is key-colored and bracketed: `%1$s` is "[Shift]", `%2$s` is "[Left-click]", `%3$s` is "[Right-click]" (key names in `tooltip.ibx_lib.key.*`). If none fits, build the trigger part yourself with `active(Component)`; key colors inside it are kept.
 
 ---
 

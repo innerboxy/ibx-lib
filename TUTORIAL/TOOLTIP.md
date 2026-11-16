@@ -49,7 +49,7 @@ public final class ExampleTooltips {
                         TooltipLines.effect(MobEffects.SLOWNESS, 1)));
             });
 
-            // 主动:「主动 · 右键使用」+「冷却8秒」+「朝前方放出3颗造成自身攻击伤害40%的火球」
+            // 主动:「主动 · [右键]使用」+「冷却8秒」+「朝前方放出3颗造成自身攻击伤害40%的火球」
             registrar.add(ModItems.RUBY_STAFF, (stack, tooltip) -> {
                 tooltip.accept(TooltipLines.active(TooltipLines.RIGHT_CLICK));
                 tooltip.accept(TooltipLines.cooldown(160));
@@ -113,7 +113,7 @@ registrar.add(ModItems.RUBY_STAFF, (stack, tooltip) -> {
 | 方法 | 产出 | 颜色 | 类型 |
 | --- | --- | --- | --- |
 | `passive()` | 「被动」,被动特性的标题行 | 强调色(琥珀,`ACCENT`) | 整行 |
-| `active(trigger)` | 「主动 · 右键使用」,主动技能的标题行 | 强调色 | 整行 |
+| `active(trigger)` | 「主动 · [右键]使用」,主动技能的标题行 | 强调色 | 整行 |
 | `cooldown(ticks)` | 「冷却8秒」,tick 换算成秒 | 次要色(旧木,`MUTED`),秒数原版蓝 | 整行 |
 | `foldHint()` | 「按住 [Shift] 查看详情」,`ItemTooltips` 自动加 | 禁用色(`DISABLED`),按键用按键色 | 整行 |
 | `body(key, args...)` | 一行正文 | 正文色(奶油,`BODY`) | 整行 |
@@ -124,14 +124,16 @@ registrar.add(ModItems.RUBY_STAFF, (stack, tooltip) -> {
 | `seconds(ticks)` | tick 换算成秒数:`100` → `5`,`30` → `1.5`;「秒」字写在语言文件里 | 原版蓝 | 片段 |
 | `effect(effect, amplifier)` | 效果名 + 等级:「缓慢 II」 | 增益正面色、减益负面色、中性正文色 | 片段 |
 | `spell(spell)` | 法术名 | 法术色(`SPELL`) | 片段 |
+| `item(item)` / `item(stack)` / `item(id)` | 物品名:传物品、物品栈或注册 id(`Identifier` 或字符串) | 物品的稀有度颜色,同说明框第一行 | 片段 |
 | `key(keybind)` | 按键,带方括号:「[Shift]」 | 按键色(`KEY`) | 片段 |
 | `keyName(name)` | 固定名字的按键,带方括号 | 按键色 | 片段 |
 
 - **语言键**:`body`、`muted`、`flavor` 传完整的语言键(`tooltip.examplemod.ruby_sword.passive`)。语言文字里不是参数的字都用这一行的颜色,参数保留自己的颜色。
 - **数字**:用原版属性行那种蓝(`ChatFormatting.BLUE`),和原版的「+8 护甲」一个颜色。
 - **效果**:`amplifier` 是放大等级(从 0 起),等级总是写出来(I 级也写);10 级以内用原版罗马数字(`enchantment.level.N`),再高写阿拉伯数字。
+- **物品**:`item(Items.ROTTEN_FLESH)` 和说明框第一行的物品名同色(按稀有度);传物品栈时附魔过的升一档、改过名的用改后的名字(斜体)。引用别的模组的物品又不想依赖它时传 id:`item("othermod:ruby")`,没装那个模组、id 查不到时写 id 本身(禁用色)。
 - **按键**:`key("key.sneak")` 填按键绑定的名字(原版的、模组自己注册的都行),显示玩家此刻实际绑定的键,改键后跟着变;`keyName("Shift")` 用于不走按键绑定的固定按键。
-- **触发方式**:`TooltipLines.RIGHT_CLICK`(右键使用)、`TooltipLines.LEFT_CLICK`(左键使用),语言键 `tooltip.ibx_lib.trigger.<trigger>`。
+- **触发方式**:`TooltipLines.RIGHT_CLICK`([右键]使用)、`TooltipLines.LEFT_CLICK`([左键]使用)、`TooltipLines.SNEAK`([Shift]使用,按一下就触发)、`TooltipLines.HOLD_SNEAK`(按住[Shift]使用,按着期间持续生效)、`TooltipLines.SNEAK_LEFT_CLICK`([Shift]+[左键]使用)、`TooltipLines.SNEAK_RIGHT_CLICK`([Shift]+[右键]使用),语言键 `tooltip.ibx_lib.trigger.<trigger>`,里面的按键都是按键色、带方括号:`%1$s` 是「[Shift]」,`%2$s` 是「[左键]」,`%3$s` 是「[右键]」(键名语言键 `tooltip.ibx_lib.key.*`)。都不合适时用 `active(Component)` 自己拼触发方式那一段,里面按键的颜色保留。
 
 ---
 
