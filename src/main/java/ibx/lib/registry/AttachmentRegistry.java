@@ -117,7 +117,7 @@ public final class AttachmentRegistry {
                             .build());
 
     /**
-     * 盾击状态：上一次盾击的时刻和冷却到点的时刻。读写请走 {@link ibx.lib.api.ShieldApi}。
+     * 盾击状态：上一次盾击的时刻（冷却是盾的原版物品冷却，不在这里）。读写请走 {@link ibx.lib.api.ShieldApi}。
      * 不存盘；同步给自己和周围玩家，客户端据此放盾击动作。
      */
     public static final Supplier<AttachmentType<ShieldBash>> SHIELD_BASH =

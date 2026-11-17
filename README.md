@@ -58,7 +58,7 @@
 
 ### 物品说明
 
-按物品登记说明框里的说明行,插在物品名正下方;长句自动换行、保持颜色,还可以分出一段按住 Shift 才显示的详情。`TooltipLines` 提供一套统一的写法和配色:被动、主动、冷却这些标题行,数值、百分比、秒数、效果名、按键这些带颜色的片段。在客户端入口里调 `ItemTooltips.register`。
+按物品登记说明框里的说明行,插在物品名正下方;长句自动换行、保持颜色,还可以分出一段按住 Shift 才显示的详情。`TooltipLines` 提供一套统一的写法和配色:被动、主动、冷却这些标题行,数值、百分比、秒数、效果名、法术名、物品名、方块名、生物名、群系名、维度名、按键这些带颜色的片段,属性、效果、法术、物品、方块的名字前面还带小图标。在客户端入口里调 `ItemTooltips.register`。
 
 详见 [物品说明](TUTORIAL/TOOLTIP.md)。
 
@@ -90,10 +90,10 @@
 | Minecraft `26.1.2` | **必需** | — |
 | [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | 可选 | 只有 3D 模型的法术弹射物 `GeoSpellProjectile`、3D 盔甲 `IbxGeoArmorItem` 和它们的渲染器用到;用到这些的模组自己要把它设成必需 |
 | [Player Animation Library](https://modrinth.com/mod/player-animation-library) `1.2.6+` | 可选(客户端) | 装了才有施法、格挡和盾击时的玩家动作,没装只是手臂不动;它播第一人称动作时,3D 盔甲照它对原版盔甲的规矩藏起来 |
-| [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | 可选 | 饰品基类(只戴一个、常驻效果等)、饰品的触发钩子、鞘翅槽、饰品栏里的施法物品、饰品栏界面上的属性面板按钮 |
+| [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | 可选 | 饰品基类(只戴一个、常驻效果等)、饰品的触发钩子、鞘翅槽、饰品栏里的施法物品、饰品栏界面上的属性面板按钮;物品说明里 Curios 的「栏位:」「佩戴饰品时:」标题改成原版灰色 |
 | [Jade](https://modrinth.com/mod/jade) | 可选 | 提示框里在护甲后面显示法术抗性;生物身上不冒粒子、但显示图标的药水效果也显示出来(原版 Jade 只显示冒粒子的,要服务端也装 Jade);第一次进世界时关掉一次 Jade 的「显示Boss」,免得和 Boss 血条重复 |
 | [MmmMmmMmmMmm](https://modrinth.com/mod/mmmmmmmmmmmm)(试验假人) | 可选 | 远程、法术暴击显示成暴击数字,法术伤害的数字用专属的蓝色 |
-| [JEI](https://modrinth.com/mod/jei) | 可选(客户端) | 属性面板、饰品槽、创造栏子栏显示时让 JEI 的书签栏让开 |
+| [JEI](https://modrinth.com/mod/jei) | 可选(客户端) | 属性面板、饰品槽、创造栏子栏显示时让 JEI 的书签栏让开;双手盾(`#c:tools/heavy_shield`)在 JEI 里多一页盾击说明,施法物品和法术容器多一页施法说明(右键施法、法术轮盘) |
 | [InventoryHUD+](https://modrinth.com/mod/inventoryhudplus) | 可选(客户端) | 当前法术框避开它贴着快捷栏画的盔甲栏 HUD |
 | [Better Combat](https://modrinth.com/mod/better-combat) `3.2.2+` | 可选 | 近战武器、法杖、双手盾的左键攻击动作;没装就是原版挥臂 |
 

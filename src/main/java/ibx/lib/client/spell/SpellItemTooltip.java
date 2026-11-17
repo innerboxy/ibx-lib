@@ -5,6 +5,7 @@ import ibx.lib.client.UiPalette;
 import ibx.lib.registry.DataComponentRegistry;
 import ibx.lib.spell.Spell;
 import ibx.lib.spell.SpellContainer;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -17,6 +18,7 @@ import java.util.List;
 
 /**
  * 法术容器的物品提示：名字下面列出这件物品提供的法术（{@link SpellContainer#spellsOf}，组件和自己实现接口的物品都算）。
+ * 标题「法术：」用原版的灰色（同原版「在主手时：」），法术名用法术色。
  * 物品用 {@code tooltip_display} 隐藏了 {@code ibx_lib:spells} 组件时不显示。
  */
 public final class SpellItemTooltip {
@@ -32,7 +34,7 @@ public final class SpellItemTooltip {
             return;
         }
         List<Component> lines = new ArrayList<>(spells.size() + 1);
-        lines.add(Component.translatable(HEADER).withColor(UiPalette.MUTED));
+        lines.add(Component.translatable(HEADER).withStyle(ChatFormatting.GRAY));
         for (Holder<Spell> spell : spells) {
             lines.add(Component.literal(" ").append(spell.value().getName()).withColor(UiPalette.SPELL));
         }

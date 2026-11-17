@@ -10,8 +10,8 @@ import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 属性面板每行前面的 9×9 图标，按属性 id 找同名贴图，不用登记：
@@ -21,20 +21,21 @@ import java.util.Map;
  *   <li>没有再找本模组的 {@code ibx_lib:hud/icon/<路径>}（原版属性的图标都在这里）；</li>
  *   <li>都没有画 {@code ibx_lib:hud/icon/unknown}。</li>
  * </ol>
- * 资源重载时重新找。
+ * 资源重载时重新找。物品说明里也用它（可能在别的线程里取），所以缓存用并发的表。
  */
 public final class AttributeIcons {
     private AttributeIcons() {}
 
     public static final int SIZE = 9;
     private static final Identifier UNKNOWN = Identifier.fromNamespaceAndPath(IbxLib.MODID, "hud/icon/unknown");
-    private static final Map<Identifier, Identifier> CACHE = new HashMap<>();
+    private static final Map<Identifier, Identifier> CACHE = new ConcurrentHashMap<>();
 
     public static void draw(GuiGraphicsExtractor g, Holder<Attribute> attribute, int x, int y) {
         g.blitSprite(RenderPipelines.GUI_TEXTURED, sprite(attribute), x, y, SIZE, SIZE);
     }
 
-    private static Identifier sprite(Holder<Attribute> attribute) {
+    /** 这个属性用 gui 图集里的哪张图标（自己的、本模组的或 unknown）。写进文字里的见 {@code client.tooltip.InlineIcons#attribute}。 */
+    public static Identifier sprite(Holder<Attribute> attribute) {
         return attribute.unwrapKey().map(key -> CACHE.computeIfAbsent(key.identifier(), id -> {
             Identifier own = Identifier.fromNamespaceAndPath(id.getNamespace(), "hud/icon/" + id.getPath());
             if (exists(own)) {

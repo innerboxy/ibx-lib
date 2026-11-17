@@ -10,6 +10,7 @@ import ibx.lib.client.spell.CastAnimations;
 import ibx.lib.client.spell.IsCastingProperty;
 import ibx.lib.client.spell.SpellCastInput;
 import ibx.lib.client.spell.SpellIcons;
+import ibx.lib.client.tooltip.InlineIcons;
 import ibx.lib.client.spell.SpellItemTooltip;
 import ibx.lib.client.spell.SpellPickerInput;
 import ibx.lib.client.spell.SpellWheel;
@@ -20,6 +21,7 @@ import ibx.lib.compat.CuriosCompat;
 import ibx.lib.compat.InventoryHudCompat;
 import ibx.lib.compat.JadeCompat;
 import ibx.lib.compat.PlayerAnimCompat;
+import ibx.lib.compat.curios.client.CuriosTooltipColors;
 import ibx.lib.compat.curios.client.ElytraCurioRendering;
 import ibx.lib.compat.inventoryhud.ArmorHudArea;
 import ibx.lib.compat.jade.JadeBossHiding;
@@ -57,6 +59,8 @@ public final class IbxLibClient {
         modEventBus.addListener(SpellWheel::onRegisterKeyMappings);
         modEventBus.addListener(SpellWheel::onRegisterGuiLayers);
         modEventBus.addListener(SpellIcons::onAddReloadListeners);
+        // 物品说明里文字中嵌的小图标（属性、效果、法术、物品）：换资源包后重新查哪些贴图在
+        modEventBus.addListener(InlineIcons::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(SpellWheel::onClientTick);
         NeoForge.EVENT_BUS.addListener(SpellWheel::onMouseButton);
         NeoForge.EVENT_BUS.addListener(SpellWheel::onMouseScroll);
@@ -87,6 +91,8 @@ public final class IbxLibClient {
         // 饰品栏鞘翅槽里的鞘翅画在背上（Curios 可选，装了才注册）
         if (CuriosCompat.isLoaded()) {
             ElytraCurioRendering.register(modEventBus);
+            // Curios 的「栏位：」「佩戴饰品时：」标题从金色改成原版灰（最后跑，属性行那时已经加好）
+            NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, CuriosTooltipColors::onItemTooltip);
         }
         // 选目标：读条时地上的提示（锁定的目标脚下的方形、范围的圆 / 扇形）；进服时和客户端配置重载时把选取时机设置告诉服务端
         TargetIndicatorRendering.register(modEventBus);

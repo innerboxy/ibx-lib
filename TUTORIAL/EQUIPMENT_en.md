@@ -723,20 +723,21 @@ public static final DeferredItem<IbxShieldItem> BUCKLER = ITEMS.registerItem("bu
 - **Two-handedness and attack moves** are left to Better Combat (see [Resource files](#resource-files-for-two-handed-shields) below): with it in the main hand, the off hand is treated as empty. Without Better Combat it is not two-handed, the off hand holds items as usual, and normal attacks are the vanilla swing.
 - **Shield bash**: left-click while the shield is raised in the main hand. While it is raised, left-click can only be a shield bash; normal attacks during that time are cancelled.
 - The shield bash is main hand only. In the off hand there is no bash: with Better Combat it is treated as an empty hand, without it it is a vanilla shield.
+- With JEI installed, items in `#c:tools/heavy_shield` (two-handed shields join it automatically) get an extra JEI info page explaining the shield bash (lang keys `jei.ibx_lib.info.heavy_shield.*`).
 
 ### Shield bash flow
 
 1. **Client input** (`ibx.lib.client.ShieldInput`): while a two-handed shield is in the main hand and right-click is held, left-click is no longer passed to vanilla or Better Combat. Pressing left-click while the shield is raised and the bash is off cooldown sends a `ShieldBashPayload` (`ibx_lib:shield_bash`, no data).
 2. **Server check** `ShieldApi.tryBash(player)`: only if the main hand holds a two-handed shield, the main hand is raising it and the cooldown is over does it call `shield.bash(player, stack)`.
 3. **`IbxHeavyShieldItem#bash`**, in order:
-   - `ShieldApi.markBash` records the bash and starts the cooldown (`bashCooldownTicks()`); the state is synced to the player and those nearby;
+   - `ShieldApi.markBash` records the bash; the state is synced to the player and those nearby;
    - swings the arm and plays a sound;
    - calls `onBash` while the shield is still raised, then passes the mobs hit to the curio trigger hooks (see [8](#trigger-hooks));
-   - disables the shield for `bashDisableTicks()` (item cooldown + stop using, without the break sound). If right-click is still held, the shield is raised again by itself once that ends.
+   - puts the shield on a vanilla item cooldown of `bashCooldownTicks()` and stops using it (like being disabled by an axe, without the break sound). If right-click is still held, the shield is raised again by itself once the cooldown ends.
 4. **`onBash` by default**: rolls one crit, hits every target from `bashTargets` with `bashHit`, and calls `onBashHit` for those actually hit.
 5. **The client** fires `ShieldBashEvent` when the synced bash state arrives; the bash animation is driven by it.
 
-The bash cooldown is its own timer, not the item cooldown (an item cooldown would stop the shield from being raised).
+The bash cooldown is the shield's vanilla item cooldown: it shows on the hotbar, and while it lasts the shield can't be raised, block or bash.
 
 ### Overridable shield bash methods
 
@@ -744,8 +745,7 @@ Numbers (override per shield to tune):
 
 | Method | Default | Description |
 | --- | --- | --- |
-| `protected int bashCooldownTicks()` | `BASH_COOLDOWN_TICKS` = 60 | Bash cooldown in ticks. |
-| `protected int bashDisableTicks()` | `BASH_DISABLE_TICKS` = 10 | Ticks the shield is disabled after a bash. |
+| `protected int bashCooldownTicks()` | `BASH_COOLDOWN_TICKS` = 20 | Item cooldown in ticks after a bash; the shield can't be raised meanwhile. |
 | `protected double bashRange()` | `BASH_RANGE` = 2.5 | Reach: blocks in front. |
 | `protected float bashHalfAngle()` | `BASH_HALF_ANGLE` = 45 | Reach: degrees to each side of straight ahead. |
 | `protected float bashKnockback()` | `BASH_KNOCKBACK` = 0.6 | Knockback on top of the hurt knockback; the knockback attribute and Knockback enchantment add more. |
@@ -797,12 +797,12 @@ public static final DeferredItem<TowerShieldItem> TOWER_SHIELD = ITEMS.registerI
 | Method | Description |
 | --- | --- |
 | `isRaisingHeavyShield(entity)` | Whether the main hand is raising a two-handed shield (the precondition for a bash). Readable on both sides. |
-| `isBashReady(entity)` | Whether the bash cooldown is over. Readable on both sides. |
+| `isBashReady(entity)` | Whether the bash cooldown is over (the shield in the main hand isn't on item cooldown). Readable on both sides. |
 | `getState(entity)` | The bash state `ShieldBash`; `null` if the entity has never bashed. |
 | `tryBash(player)` | Checks, then bashes. Server only. |
-| `markBash(entity, cooldownTicks)` | Records the time and cooldown of this bash and syncs it. Server only; `bash` already calls it. |
+| `markBash(entity)` | Records the time of this bash and syncs it. Server only; `bash` already calls it. |
 
-- `ibx.lib.api.ShieldBash`: a record of `lastBashTick` (game time of the last bash, -1 if none) and `cooldownUntil` (game time the cooldown ends). Not saved; synced to the player and those nearby. Read and write it through `ShieldApi`.
+- `ibx.lib.api.ShieldBash`: a record of `lastBashTick` (game time of the last bash, -1 if none); the cooldown isn't stored here, it's the item cooldown. Not saved; synced to the player and those nearby. Read and write it through `ShieldApi`.
 - `ibx.lib.api.event.ShieldBashEvent`: an entity performed a shield bash. Posted on `NeoForge.EVENT_BUS`, **client side only**, for the local player and nearby ones alike. `getEntity()`, `getState()`.
 
 ### Guard and bash animations

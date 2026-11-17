@@ -18,6 +18,7 @@
   ],
   "client": [
     "AbstractRecipeBookScreenAccessor",
+    "AtlasGlyphProviderMixin",
     "ControlsScreenMixin",
     "CreativeModeInventoryScreenAccessor",
     "FlameFeatureRendererMixin",

@@ -58,7 +58,7 @@ See [Creative sub-tabs](../TUTORIAL/CREATIVE_TAB_en.md).
 
 ### Item tooltips
 
-Registers tooltip lines per item, inserted right under the item name; long lines wrap automatically and keep their colors, and a part can be split off as details shown only while Shift is held. `TooltipLines` gives one shared way to write and color them: title lines for passive, active and cooldown, and colored fragments for numbers, percentages, seconds, effect names and keys. Call `ItemTooltips.register` from your client entry.
+Registers tooltip lines per item, inserted right under the item name; long lines wrap automatically and keep their colors, and a part can be split off as details shown only while Shift is held. `TooltipLines` gives one shared way to write and color them: title lines for passive, active and cooldown, and colored fragments for numbers, percentages, seconds, effect names, spell names, item names, block names, entity names, biome names, dimension names and keys, with small icons before attribute, effect, spell, item and block names. Call `ItemTooltips.register` from your client entry.
 
 See [Item tooltips](../TUTORIAL/TOOLTIP_en.md).
 
@@ -90,10 +90,10 @@ See [Item tooltips](../TUTORIAL/TOOLTIP_en.md).
 | Minecraft `26.1.2` | **Required** | — |
 | [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | Optional | Used only by 3D-model spell projectiles `GeoSpellProjectile`, the 3D armor class `IbxGeoArmorItem` and their renderers; mods that use these must require it themselves |
 | [Player Animation Library](https://modrinth.com/mod/player-animation-library) `1.2.6+` | Optional (client) | Adds player animations for casting, guarding and shield bashing; without it the arms just don't move. While it plays a first-person animation, 3D armor is hidden the way it hides vanilla armor |
-| [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | Optional | Curio base class (wear only one, permanent effects, etc.), curio trigger hooks, the elytra slot, casting items in curio slots, the attribute panel button on the curios screen |
+| [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | Optional | Curio base class (wear only one, permanent effects, etc.), curio trigger hooks, the elytra slot, casting items in curio slots, the attribute panel button on the curios screen; Curios' "Slot:" and "When worn as curio:" tooltip headers recolored to vanilla gray |
 | [Jade](https://modrinth.com/mod/jade) | Optional | Shows spell resistance after armor in the tooltip; also shows mob effects that have no particles but show an icon (vanilla Jade only shows effects with particles; needs Jade on the server too); turns Jade's "Show Bosses" off once the first time you join a world so it doesn't duplicate boss bars |
 | [MmmMmmMmmMmm](https://modrinth.com/mod/mmmmmmmmmmmm) (Target Dummy) | Optional | Ranged and spell crits show as crit numbers, and spell damage numbers get their own blue color |
-| [JEI](https://modrinth.com/mod/jei) | Optional (client) | Keeps JEI's bookmark panel clear of the attribute panel, curio slots and creative sub-tabs |
+| [JEI](https://modrinth.com/mod/jei) | Optional (client) | Keeps JEI's bookmark panel clear of the attribute panel, curio slots and creative sub-tabs; two-handed shields (`#c:tools/heavy_shield`) get an extra JEI info page about shield bash, and casting items and spell containers get one about casting (right-click casting, the spell wheel) |
 | [InventoryHUD+](https://modrinth.com/mod/inventoryhudplus) | Optional (client) | The current-spell frame moves out of the way of its armor HUD drawn beside the hotbar |
 | [Better Combat](https://modrinth.com/mod/better-combat) `3.2.2+` | Optional | Left-click attack moves for melee weapons, staves and two-handed shields; without it you get the vanilla swing |
 

@@ -40,10 +40,9 @@ import java.util.List;
  *   <li>主手普通攻击：烤 {@code attack_damage} / {@code attack_speed} 修饰符（基础 id，tooltip 同剑的深绿行），左键就是原版普通攻击。
  *       盾的其他被动属性注册时用 {@code Properties#attributes} 给，会和这两条合并，排在后面（见 {@link IbxAttributeModifiers}）。</li>
  *   <li>盾击：主手举盾中按左键。原版使用物品期间吞掉攻击点击，所以客户端吃掉攻击键发包（{@code client.ShieldInput}），
- *       服务端 {@link ShieldApi#tryBash} 校验后调 {@link #bash}：进独立冷却（{@link #bashCooldownTicks}，不能用物品冷却——
- *       那会让盾举不起来）、挥臂、放动作（{@link #bashAnimation}，默认 lib 的肩顶 {@code shield.bash}）、趁盾还举着结算
- *       {@link #onBash}（打中的生物再交给饰品的盾击钩子），最后盾失效 {@link #bashDisableTicks}（物品冷却 + 停止使用，同斧子打掉但不响破碎音；
- *       右键还按着的话失效一过客户端会自动重新举起）。</li>
+ *       服务端 {@link ShieldApi#tryBash} 校验后调 {@link #bash}：挥臂、放动作（{@link #bashAnimation}，默认 lib 的肩顶 {@code shield.bash}）、
+ *       趁盾还举着结算 {@link #onBash}（打中的生物再交给饰品的盾击钩子），最后进原版物品冷却 {@link #bashCooldownTicks} 并停止使用
+ *       （快捷栏上显示冷却；冷却期间盾举不起来、不能格挡，同被斧子打掉但不响破碎音；右键还按着的话冷却一过客户端会自动重新举起）。</li>
  *   <li>默认效果：掷一次暴击（lib 的暴击率 / 暴击伤害），前方 {@link #bashRange} 格、左右各 {@link #bashHalfAngle} 度扇形里看得见的
  *       每个目标挨一下盾的攻击伤害（走原版 {@code stabAttack}）+ 击退。数值都是可重写的取值方法；要换判定、单个目标的结算、
  *       打中后的附加效果（比如定身）分别重写 {@link #bashTargets} / {@link #bashHit} / {@link #onBashHit}，整个换掉重写 {@link #onBash}。</li>
@@ -55,10 +54,8 @@ import java.util.List;
  * </ul>
  */
 public class IbxHeavyShieldItem extends IbxAbstractShieldItem {
-    /** 盾击冷却 tick（独立计时），{@link #bashCooldownTicks} 的默认值。 */
-    public static final int BASH_COOLDOWN_TICKS = 60;
-    /** 盾击后盾失效 tick，{@link #bashDisableTicks} 的默认值。 */
-    public static final int BASH_DISABLE_TICKS = 10;
+    /** 盾击冷却 tick（原版物品冷却，期间盾举不起来），{@link #bashCooldownTicks} 的默认值。 */
+    public static final int BASH_COOLDOWN_TICKS = 20;
     /** 盾击打击范围：前方多少格，{@link #bashRange} 的默认值。 */
     public static final double BASH_RANGE = 2.5;
     /** 盾击打击范围：正前方左右各多少度，{@link #bashHalfAngle} 的默认值。 */
@@ -104,14 +101,9 @@ public class IbxHeavyShieldItem extends IbxAbstractShieldItem {
 
     // ---------------------------------------------------------------- 盾击数值（具体某面盾重写来调）
 
-    /** 盾击冷却 tick（独立计时）。 */
+    /** 盾击冷却 tick：盾击后进原版物品冷却这么久，期间盾举不起来、不能格挡。 */
     protected int bashCooldownTicks() {
         return BASH_COOLDOWN_TICKS;
-    }
-
-    /** 盾击后盾失效 tick。 */
-    protected int bashDisableTicks() {
-        return BASH_DISABLE_TICKS;
     }
 
     /** 盾击打击范围：前方多少格。 */
@@ -133,7 +125,7 @@ public class IbxHeavyShieldItem extends IbxAbstractShieldItem {
 
     /** 盾击框架。只在服务端调（{@link ShieldApi#tryBash} 校验过举盾中、不在冷却再调这里）。 */
     public void bash(ServerPlayer player, ItemStack stack) {
-        ShieldApi.markBash(player, this.bashCooldownTicks());
+        ShieldApi.markBash(player);
         player.swing(InteractionHand.MAIN_HAND, true);
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.PLAYER_ATTACK_KNOCKBACK, player.getSoundSource(), 1.0F, 1.0F);
@@ -142,8 +134,8 @@ public class IbxHeavyShieldItem extends IbxAbstractShieldItem {
         if (CuriosCompat.isLoaded()) {
             CurioTriggerHandler.onShieldBash(player, stack, hits);
         }
-        // 盾失效：同斧子打掉（物品冷却 + 停止使用），但不走 BlocksAttacks.disable，免得响破碎音
-        player.getCooldowns().addCooldown(stack, this.bashDisableTicks());
+        // 进冷却：同斧子打掉（物品冷却 + 停止使用），但不走 BlocksAttacks.disable，免得响破碎音
+        player.getCooldowns().addCooldown(stack, this.bashCooldownTicks());
         player.stopUsingItem();
         player.onAttack();
     }

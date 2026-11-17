@@ -723,20 +723,21 @@ public static final DeferredItem<IbxShieldItem> BUCKLER = ITEMS.registerItem("bu
 - **双手和攻击动作**交给 Better Combat(见下面的 [资源文件](#双手盾的资源文件)):主手拿着它时副手被当成空手。没装 Better Combat 时不限双手,副手照常拿东西,普通攻击是原版挥臂。
 - **盾击**:主手举盾时按左键。举着它时左键只能是盾击,这期间的普通攻击会被取消。
 - 盾击只认主手。放在副手时没有盾击:装了 Better Combat 被当成空手,没装就是一面原版盾。
+- 装了 JEI 时,`#c:tools/heavy_shield` 里的物品(双手盾自动进这个标签)在 JEI 里多一页信息,讲盾击怎么用(语言键 `jei.ibx_lib.info.heavy_shield.*`)。
 
 ### 盾击流程
 
 1. **客户端输入**(`ibx.lib.client.ShieldInput`):主手拿着双手盾并按着右键时,左键不再交给原版和 Better Combat。盾举着、盾击不在冷却时按下左键,发一个 `ShieldBashPayload`(`ibx_lib:shield_bash`,没有数据)。
 2. **服务端校验** `ShieldApi.tryBash(player)`:主手是双手盾、主手正举着、冷却已过,才调 `shield.bash(player, stack)`。
 3. **`IbxHeavyShieldItem#bash`** 依次:
-   - `ShieldApi.markBash` 记下这次盾击并进冷却(`bashCooldownTicks()`),状态同步给自己和周围玩家;
+   - `ShieldApi.markBash` 记下这次盾击,状态同步给自己和周围玩家;
    - 挥臂、播放音效;
    - 趁盾还举着调 `onBash` 结算,打中的生物再交给饰品的触发钩子(见 [8](#触发钩子));
-   - 盾失效 `bashDisableTicks()`(物品冷却 + 停止使用,不响破碎音)。右键还按着的话,失效一过会自动重新举起。
+   - 进原版物品冷却 `bashCooldownTicks()` 并停止使用(同被斧子打掉,但不响破碎音)。右键还按着的话,冷却一过会自动重新举起。
 4. **`onBash` 默认**:掷一次暴击,`bashTargets` 里的每个目标挨一下 `bashHit`,打中的再走 `onBashHit`。
 5. **客户端**收到同步过来的盾击状态时触发 `ShieldBashEvent`,盾击动作靠它放。
 
-盾击冷却是独立计时的,不是物品冷却(物品冷却会让盾举不起来)。
+盾击冷却就是盾的原版物品冷却:快捷栏上显示冷却,冷却期间盾举不起来、不能格挡,也不能再盾击。
 
 ### 盾击的可重写方法
 
@@ -744,8 +745,7 @@ public static final DeferredItem<IbxShieldItem> BUCKLER = ITEMS.registerItem("bu
 
 | 方法 | 默认 | 说明 |
 | --- | --- | --- |
-| `protected int bashCooldownTicks()` | `BASH_COOLDOWN_TICKS` = 60 | 盾击冷却 tick。 |
-| `protected int bashDisableTicks()` | `BASH_DISABLE_TICKS` = 10 | 盾击后盾失效 tick。 |
+| `protected int bashCooldownTicks()` | `BASH_COOLDOWN_TICKS` = 20 | 盾击后的物品冷却 tick,期间盾举不起来。 |
 | `protected double bashRange()` | `BASH_RANGE` = 2.5 | 打击范围:前方多少格。 |
 | `protected float bashHalfAngle()` | `BASH_HALF_ANGLE` = 45 | 打击范围:正前方左右各多少度。 |
 | `protected float bashKnockback()` | `BASH_KNOCKBACK` = 0.6 | 受伤本身的击退之外再推多少;击退属性和击退附魔另加。 |
@@ -797,12 +797,12 @@ public static final DeferredItem<TowerShieldItem> TOWER_SHIELD = ITEMS.registerI
 | 方法 | 说明 |
 | --- | --- |
 | `isRaisingHeavyShield(entity)` | 主手正举着一面双手盾(盾击的前提)。两端都能读。 |
-| `isBashReady(entity)` | 盾击冷却过了没。两端都能读。 |
+| `isBashReady(entity)` | 盾击冷却过了没(主手那面盾不在物品冷却里)。两端都能读。 |
 | `getState(entity)` | 盾击状态 `ShieldBash`,没出过盾击为 `null`。 |
 | `tryBash(player)` | 校验后出盾击。只在服务端调。 |
-| `markBash(entity, cooldownTicks)` | 记下这次盾击的时刻和冷却并同步。只在服务端调,`bash` 里已经调过。 |
+| `markBash(entity)` | 记下这次盾击的时刻并同步。只在服务端调,`bash` 里已经调过。 |
 
-- `ibx.lib.api.ShieldBash`:记录 `lastBashTick`(上一次盾击的世界时刻,没出过为 -1)和 `cooldownUntil`(冷却到点的世界时刻)。不存盘,同步给自己和周围玩家。读写走 `ShieldApi`。
+- `ibx.lib.api.ShieldBash`:记录 `lastBashTick`(上一次盾击的世界时刻,没出过为 -1);冷却不记在这里,是物品冷却。不存盘,同步给自己和周围玩家。读写走 `ShieldApi`。
 - `ibx.lib.api.event.ShieldBashEvent`:某个生物出了一次盾击,发在 `NeoForge.EVENT_BUS` 上,**只在客户端触发**,自己和周围玩家的都会收到。`getEntity()`、`getState()`。
 
 ### 格挡与盾击的动作

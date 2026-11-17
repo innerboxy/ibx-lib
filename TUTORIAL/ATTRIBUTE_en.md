@@ -182,7 +182,7 @@ Opened with the scroll button at the bottom-left of the inventory's player box, 
 
 Other mods' attributes show up in the panel automatically, and you can add a few things for them:
 
-- **Icon**: a 9×9 texture under the attribute's own namespace, `assets/<namespace>/textures/gui/sprites/hud/icon/<path of the attribute id>.png`: attribute `examplemod:frost_power` maps to `assets/examplemod/textures/gui/sprites/hud/icon/frost_power.png`; nothing to register. If it isn't there, the same path under `assets/ibx_lib/` is tried (vanilla attributes' icons live there); with neither, the generic placeholder (`unknown.png`) is drawn.
+- **Icon**: a 9×9 texture under the attribute's own namespace, `assets/<namespace>/textures/gui/sprites/hud/icon/<path of the attribute id>.png`: attribute `examplemod:frost_power` maps to `assets/examplemod/textures/gui/sprites/hud/icon/frost_power.png`; nothing to register. If it isn't there, the same path under `assets/ibx_lib/` is tried (vanilla attributes' icons live there); with neither, the generic placeholder (`unknown.png`) is drawn. The same icon is used in item tooltips: `TooltipLines.attribute` draws it before the attribute name (see [Item tooltips](TOOLTIP_en.md)).
 - **Default order, hidden by default**: register them with `AttributePanelLayout` (see below).
 - **Group name**: when grouping by mod, the group name is looked up at translation key `gui.ibx_lib.attribute_panel.mod.<namespace>` first, falling back to the mod's display name.
 

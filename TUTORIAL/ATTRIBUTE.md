@@ -182,7 +182,7 @@ public static final DeferredItem<Item> EMBER_TALISMAN = ITEMS.registerItem("embe
 
 别的模组的属性会自动出现在面板里,还可以补几样东西:
 
-- **图标**:9×9 的贴图,放在属性自己命名空间下的 `assets/<命名空间>/textures/gui/sprites/hud/icon/<属性 id 的路径>.png`:属性 `examplemod:frost_power` 对应 `assets/examplemod/textures/gui/sprites/hud/icon/frost_power.png`,不用登记。找不到时再找 `assets/ibx_lib/` 下同路径的(原版属性的图标都在那里),都没有画通用的占位图标(`unknown.png`)。
+- **图标**:9×9 的贴图,放在属性自己命名空间下的 `assets/<命名空间>/textures/gui/sprites/hud/icon/<属性 id 的路径>.png`:属性 `examplemod:frost_power` 对应 `assets/examplemod/textures/gui/sprites/hud/icon/frost_power.png`,不用登记。找不到时再找 `assets/ibx_lib/` 下同路径的(原版属性的图标都在那里),都没有画通用的占位图标(`unknown.png`)。同一张图标也用在物品说明里:`TooltipLines.attribute` 在属性名前面画它(见 [物品说明](TOOLTIP.md))。
 - **默认顺序、默认隐藏**:用 `AttributePanelLayout` 登记(见下面)。
 - **分组名**:按模组分组时,组名先找语言键 `gui.ibx_lib.attribute_panel.mod.<命名空间>`,没有就用模组的显示名。
 

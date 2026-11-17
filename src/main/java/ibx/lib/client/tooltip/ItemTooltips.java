@@ -26,7 +26,14 @@ import java.util.function.Consumer;
  * <p>说明里的长句按 {@link #MAX_WIDTH} 自动换行（每段保留原来的颜色），所以写说明时不用自己拆行；原版的行不动。</p>
  *
  * <p>一件物品的说明可以分两段：一直显示的，和按住 Shift 才显示的详情。
- * 有详情、没按住时，在一直显示的那段后面加一行 {@link TooltipLines#foldHint()}。</p>
+ * 有详情、没按住时，在说明最后加一行 {@link TooltipLines#foldHint()}。</p>
+ *
+ * <p>说明里带图标的片段（{@link TooltipLines#attribute}、{@link TooltipLines#effect}、{@link TooltipLines#spell}、
+ * {@link TooltipLines#item(ItemStack)}、{@link TooltipLines#block(net.minecraft.world.level.block.Block)}）也跟着折叠：
+ * 没按住 Shift 只显示图标（效果多留一个等级），并同样加折叠提示；按住显示图标 + 名字。只看显示出来的段里有没有图标。</p>
+ *
+ * <p>还可以有第三段，按住 Ctrl 才显示（公式、背景故事这类）：排在前两段后面，没按住时在说明最后加一行 {@link TooltipLines#ctrlHint()}。
+ * Shift 和 Ctrl 各管各的，同时按住两段都显示；两行提示都排在说明的最后，Shift 的在前。</p>
  *
  * <p>用到客户端的字体和按键状态，只能在客户端入口里调。</p>
  */
@@ -46,16 +53,22 @@ public final class ItemTooltips {
     public interface Registrar {
         /** 只有一直显示的说明。 */
         default void add(ItemLike item, Lines lines) {
-            add(item, lines, NO_LINES);
+            add(item, lines, NONE, NONE);
         }
 
         /** lines 一直显示，details 按住 Shift 才显示。 */
-        void add(ItemLike item, Lines lines, Lines details);
+        default void add(ItemLike item, Lines lines, Lines details) {
+            add(item, lines, details, NONE);
+        }
+
+        /** lines 一直显示，details 按住 Shift 才显示，extra 按住 Ctrl 才显示；不要哪段就传 {@link #NONE}。 */
+        void add(ItemLike item, Lines lines, Lines details, Lines extra);
     }
 
-    private static final Lines NO_LINES = (stack, tooltip) -> {};
+    /** 空的一段：{@link Registrar#add(ItemLike, Lines, Lines, Lines)} 里不要的那段传它。 */
+    public static final Lines NONE = (stack, tooltip) -> {};
 
-    private record Entry(Lines lines, Lines details) {}
+    private record Entry(Lines lines, Lines details, Lines extra) {}
 
     private static final List<Consumer<Registrar>> SOURCES = new ArrayList<>();
     /** 物品注册完才能取到物品，所以第一次显示说明框时再建表。 */
@@ -73,8 +86,8 @@ public final class ItemTooltips {
     private static synchronized Map<Item, Entry> table() {
         if (byItem == null) {
             Map<Item, Entry> map = new IdentityHashMap<>();
-            Registrar registrar = (item, lines, details) -> {
-                if (map.put(item.asItem(), new Entry(lines, details)) != null) {
+            Registrar registrar = (item, lines, details, extra) -> {
+                if (map.put(item.asItem(), new Entry(lines, details, extra)) != null) {
                     throw new IllegalStateException("Duplicate tooltip for " + item.asItem());
                 }
             };
@@ -92,22 +105,49 @@ public final class ItemTooltips {
         if (entry == null) {
             return;
         }
+        Minecraft mc = Minecraft.getInstance();
+        boolean expanded = mc.hasShiftDown();
+        boolean extraShown = mc.hasControlDown();
         List<Component> added = new ArrayList<>();
-        entry.lines().append(stack, line -> wrap(line, added));
         List<Component> details = new ArrayList<>();
-        entry.details().append(stack, line -> wrap(line, details));
-        if (!details.isEmpty()) {
-            if (Minecraft.getInstance().hasShiftDown()) {
-                added.addAll(details);
-            } else {
-                added.add(TooltipLines.foldHint());
-            }
+        List<Component> extra = new ArrayList<>();
+        // 折叠掉的图标只算显示出来的段：没显示的段里有图标，按 Shift 也看不出变化，不该出提示
+        boolean iconFolded = collect(entry.lines(), stack, !expanded, added);
+        collect(entry.details(), stack, !expanded, details);
+        boolean extraIconFolded = collect(entry.extra(), stack, !expanded, extra);
+        if (expanded) {
+            added.addAll(details);
+        }
+        if (extraShown) {
+            added.addAll(extra);
+            iconFolded |= extraIconFolded;
+        }
+        if (!expanded && (!details.isEmpty() || iconFolded)) {
+            added.add(TooltipLines.foldHint());
+        }
+        if (!extraShown && !extra.isEmpty()) {
+            added.add(TooltipLines.ctrlHint());
         }
         List<Component> tooltip = event.getToolTip();
         tooltip.addAll(Math.min(1, tooltip.size()), added);
     }
 
-    /** 按 {@link #MAX_WIDTH} 切开一行：原版的切法（优先在空格处断，汉字之间直接断），每段照原样保留颜色。 */
+    /** 拼一段说明（长句换行）放进 out；iconsOnly 时带图标的片段只写图标。返回这一段有没有带图标的片段。 */
+    private static boolean collect(Lines lines, ItemStack stack, boolean iconsOnly, List<Component> out) {
+        boolean iconUsed;
+        TooltipLines.beginIconFold(iconsOnly);
+        try {
+            lines.append(stack, line -> wrap(line, out));
+        } finally {
+            iconUsed = TooltipLines.endIconFold();
+        }
+        return iconUsed;
+    }
+
+    /**
+     * 按 {@link #MAX_WIDTH} 切开一行：原版的切法（优先在空格处断，汉字之间直接断），每段照原样保留颜色；
+     * 行里的小图标还原成图标片段（{@link InlineIcons#restore}），取纯文本时和没换行的行一样。
+     */
     private static void wrap(Component line, List<Component> out) {
         List<FormattedText> parts = Minecraft.getInstance().font.getSplitter().splitLines(line, MAX_WIDTH, Style.EMPTY);
         if (parts.size() <= 1) {
@@ -117,7 +157,8 @@ public final class ItemTooltips {
         for (FormattedText part : parts) {
             MutableComponent piece = Component.empty();
             part.visit((style, text) -> {
-                piece.append(Component.literal(text).setStyle(style));
+                Component icon = InlineIcons.restore(style, text);
+                piece.append(icon != null ? icon : Component.literal(text).setStyle(style));
                 return Optional.empty();
             }, Style.EMPTY);
             out.add(piece);
