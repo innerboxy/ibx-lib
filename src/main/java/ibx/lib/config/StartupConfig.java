@@ -17,14 +17,16 @@ public final class StartupConfig {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
     /**
-     * 是否接管原版弓与弩，让它们与 Ibx 弓弩走同一套远程系统（属性、伤害快照、暴击、自动射击、副手禁用）。
+     * 是否接管原版弓与弩，让它们与 Ibx 弓弩走同一套远程系统（属性、伤害快照、暴击、自动射击、副手禁用）；
+     * 同时给原版三叉戟主手挂上远程伤害（只是数值显示，掷出去的行为不变）。
      * 详见 {@link ibx.lib.item.vanilla.VanillaRangedWeapons}。
      */
     public static final ModConfigSpec.BooleanValue TAKE_OVER_VANILLA_RANGED_WEAPONS = BUILDER
             .comment("是否接管原版弓与弩，让它们按本模组的远程属性结算。",
                     "true  = 原版弓弩带上远程伤害 / 拉弦时间属性，伤害、蓄力、装填、暴击与模组弓弩一致，副手不可使用；",
-                    "        手持原版弓弩的生物（骷髅、掠夺者等）同样按属性结算。",
-                    "false = 原版弓弩保持原版行为。",
+                    "        手持原版弓弩的生物（骷髅、掠夺者等）同样按属性结算；",
+                    "        原版三叉戟主手显示 8 点远程伤害（同它掷出去的伤害）。",
+                    "false = 原版弓弩、三叉戟保持原版。",
                     "服务端与客户端需保持一致；修改后重启游戏生效。")
             .define("takeOverVanillaRangedWeapons", true);
 

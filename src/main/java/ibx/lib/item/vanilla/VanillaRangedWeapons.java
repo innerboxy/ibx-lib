@@ -4,20 +4,26 @@ import ibx.lib.config.StartupConfig;
 import ibx.lib.item.IbxBowItem;
 import ibx.lib.item.IbxCrossbowItem;
 import ibx.lib.item.general.IbxRangedWeaponStats;
+import ibx.lib.registry.AttributeRegistry;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.entity.EquipmentSlotGroup;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TridentItem;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 
 /**
- * 原版弓与弩的接管：让 {@link Items#BOW} / {@link Items#CROSSBOW} 与 Ibx 弓弩走同一套远程系统。
+ * 原版弓与弩的接管：让 {@link Items#BOW} / {@link Items#CROSSBOW} 与 Ibx 弓弩走同一套远程系统；
+ * 原版三叉戟 {@link Items#TRIDENT} 主手也挂上远程伤害，tooltip 和 {@link ibx.lib.item.IbxTridentItem} 一样显示。
  *
- * <p>只认这两个原版物品本身，<b>其他模组继承原版类的弓弩一律不碰</b>（它们有自己的伤害设计）。
+ * <p>只认这三个原版物品本身，<b>其他模组继承原版类的弓弩、三叉戟一律不碰</b>（它们有自己的伤害设计）。
  * 总开关见 {@link StartupConfig#TAKE_OVER_VANILLA_RANGED_WEAPONS}，关掉后本类的判断全部返回 false，
  * 所有接管点都退回原版行为。</p>
  *
- * <p>接管分三块：</p>
+ * <p>弓弩的接管分三块：</p>
  * <ul>
  *   <li>数值：{@link #onModifyDefaultComponents} 把远程伤害 / 拉弦时间修饰符烤进两个物品的默认组件，
  *       tooltip 绿字自动出来；已有存档里的物品只存组件差异，会自动吃到新默认值。</li>
@@ -26,6 +32,9 @@ import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
  *       问的是 {@link ibx.lib.api.RangedWeaponApi#isManagedBow} / {@code isManagedCrossbow}。</li>
  *   <li>附魔：力量改为加远程伤害、快速装填改为减拉弦时间，在 {@code data/minecraft/enchantment} 下覆盖原版定义。</li>
  * </ul>
+ *
+ * <p>三叉戟只改数值：原版的攻击伤害、攻速之外再挂一条远程伤害 {@value #TRIDENT_RANGED_DAMAGE}（基础 id，深绿合并行），
+ * 等于原版掷出去的伤害。掷出去的行为不接管，打中的伤害仍是原版写死的 8，不吃其他远程伤害加成。</p>
  */
 public final class VanillaRangedWeapons {
     private VanillaRangedWeapons() {}
@@ -42,6 +51,16 @@ public final class VanillaRangedWeapons {
      */
     public static final IbxRangedWeaponStats CROSSBOW = new IbxRangedWeaponStats(7.0F, 1.25F, 3.15F,
             IbxCrossbowItem.BASELINE_DRAW_TIME, IbxCrossbowItem.BASELINE_ARROW_VELOCITY);
+
+    /** 原版三叉戟主手的远程伤害：同原版掷出去的伤害（{@link TridentItem#BASE_DAMAGE}）。 */
+    public static final float TRIDENT_RANGED_DAMAGE = 8.0F;
+
+    /** 原版三叉戟的主手修饰符：原版的攻击伤害、攻速，再加远程伤害。 */
+    public static ItemAttributeModifiers tridentModifiers() {
+        return TridentItem.createAttributes().withModifierAdded(AttributeRegistry.RANGED_DAMAGE,
+                new AttributeModifier(AttributeRegistry.BASE_RANGED_DAMAGE_ID, TRIDENT_RANGED_DAMAGE, AttributeModifier.Operation.ADD_VALUE),
+                EquipmentSlotGroup.MAINHAND);
+    }
 
     /** 接管开关（启动配置，改动需重启）。 */
     public static boolean isEnabled() {
@@ -67,8 +86,8 @@ public final class VanillaRangedWeapons {
     }
 
     /**
-     * 把远程伤害 / 拉弦时间修饰符设为两个原版物品的默认组件（原版两者的默认修饰符都是空的，直接替换）。
-     * 按物品栈覆盖的组件（KubeJS、数据包、指令给的）仍然优先。
+     * 把远程伤害 / 拉弦时间修饰符设为原版弓弩的默认组件（原版两者的默认修饰符都是空的，直接替换）；
+     * 原版三叉戟换成 {@link #tridentModifiers()}。按物品栈覆盖的组件（KubeJS、数据包、指令给的）仍然优先。
      */
     public static void onModifyDefaultComponents(ModifyDefaultComponentsEvent event) {
         if (!isEnabled()) {
@@ -78,5 +97,8 @@ public final class VanillaRangedWeapons {
                 (components, context, item) -> components.set(DataComponents.ATTRIBUTE_MODIFIERS, BOW.modifiers()));
         event.modify(Items.CROSSBOW,
                 (components, context, item) -> components.set(DataComponents.ATTRIBUTE_MODIFIERS, CROSSBOW.modifiers()));
+        ItemAttributeModifiers trident = tridentModifiers();
+        event.modify(Items.TRIDENT,
+                (components, context, item) -> components.set(DataComponents.ATTRIBUTE_MODIFIERS, trident));
     }
 }

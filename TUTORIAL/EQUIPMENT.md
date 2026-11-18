@@ -612,7 +612,7 @@ public static final DeferredItem<IbxCrossbowItem> ARBALEST = ITEMS.registerItem(
 
 | 类 | 改了什么 | 开关 |
 | --- | --- | --- |
-| `VanillaRangedWeapons` | 原版弓、弩走本模组的远程系统 | `takeOverVanillaRangedWeapons`,默认 `true` |
+| `VanillaRangedWeapons` | 原版弓、弩走本模组的远程系统;原版三叉戟主手显示远程伤害 | `takeOverVanillaRangedWeapons`,默认 `true` |
 | `VanillaArmors` | 下界合金、金、铜盔甲的属性 | `adjustVanillaArmors`,默认 `true` |
 | `VanillaStackSizes` | 堆叠上限 16 的物品改成 64 | `raiseVanillaStackSizes`,默认 `true` |
 | `VanillaSpawnEggs` | 凋灵、末影龙刷怪蛋放进创造栏 | 无 |
@@ -630,6 +630,14 @@ public static final DeferredItem<IbxCrossbowItem> ARBALEST = ITEMS.registerItem(
 - **行为**同 Ibx 弓弩(见 [3](#3-远程武器)):线性蓄力、伤害快照、按暴击率掷暴击(原版是弓满蓄才暴击、玩家的弩箭必定暴击)、副手不能用、支持自动射击;拿着它们的生物也按属性结算,持弩生物按 3.15 的箭速射。
 - **拉弓动画**:本模组的 `assets/minecraft/items/bow.json` 把原版弓的定义换成了 `ibx_lib:pull`。关掉开关时这个属性对原版弓按 20 tick 算,和原版一样。
 - 判断用 `RangedWeaponApi.isManagedBow` / `isManagedCrossbow`;只想问开关用 `VanillaRangedWeapons.isEnabled()`。
+
+### 原版三叉戟
+
+和原版弓弩用同一个开关,只认 `minecraft:trident` 本身。原版的攻击伤害、攻速之外,主手再挂一条远程伤害 8(`VanillaRangedWeapons.TRIDENT_RANGED_DAMAGE`,修饰符 id `ibx_lib:base_ranged_damage`),tooltip 和 `IbxTridentItem` 一样是深绿合并行。完整的修饰符见 `VanillaRangedWeapons.tridentModifiers()`。
+
+- 8 等于原版掷出去的伤害(`TridentItem.BASE_DAMAGE`)。
+- 只改数值显示,掷出去的行为不接管:打中的伤害仍是原版写死的 8,不吃饰品、状态效果给的远程伤害加成,暴击也照原版。
+- 拿在主手时这 8 点会算进持有者的远程伤害属性,读这个属性的地方(比如按远程伤害算的法术)会吃到,同 `IbxTridentItem`。
 
 ### 原版盔甲
 
@@ -1300,7 +1308,7 @@ public class VampireFangItem extends IbxCurioItem {
 
 | 组件 | 谁设的 |
 | --- | --- |
-| `attribute_modifiers` | 所有基类(主手的数值);被接管的原版弓弩、调整过的原版盔甲是改默认组件。 |
+| `attribute_modifiers` | 所有基类(主手的数值);被接管的原版弓弩、原版三叉戟、调整过的原版盔甲是改默认组件。 |
 | `tool`、`weapon` | 近战的种类类(同原版剑、斧、矛;战锤换了 `weapon`;`IbxTridentItem` 照原版三叉戟自己设)。 |
 | `kinetic_weapon`、`piercing_weapon`、`attack_range`、`swing_animation`、`minimum_attack_charge`、`damage_type` | `IbxSpearItem`(同原版矛)。 |
 | `use_effects`、`unbreakable` | `IbxMagicWeaponItem`(施法时的移速;耐久给负数时无法破坏)。 |

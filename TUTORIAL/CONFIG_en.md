@@ -53,7 +53,7 @@ raiseVanillaStackSizes = true
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `takeOverVanillaRangedWeapons` | boolean | `true` | Whether to take over the vanilla bow and crossbow. When on, they get ranged damage / draw time attributes, and damage, drawing, loading and crits work like this mod's bows and crossbows; they can't be used from the off hand. Mobs holding vanilla bows and crossbows (skeletons, pillagers…) resolve by attributes too. When off, vanilla behavior is kept (see [Equipment base classes](EQUIPMENT_en.md)). |
+| `takeOverVanillaRangedWeapons` | boolean | `true` | Whether to take over the vanilla bow and crossbow. When on, they get ranged damage / draw time attributes, and damage, drawing, loading and crits work like this mod's bows and crossbows; they can't be used from the off hand. Mobs holding vanilla bows and crossbows (skeletons, pillagers…) resolve by attributes too. The vanilla trident shows 8 ranged damage in the main hand (its thrown damage; display only). When off, vanilla behavior is kept (see [Equipment base classes](EQUIPMENT_en.md)). |
 | `adjustVanillaArmors` | boolean | `true` | Whether to adjust vanilla armor sets: netherite gets extra spell resistance equal to its armor value; gold's armor is replaced by spell resistance equal to diamond's armor values (head 3, chest 8, legs 6, feet 3); copper's armor is replaced by the same amount of spell resistance (head 2, chest 4, legs 3, feet 1). |
 | `raiseVanillaStackSizes` | boolean | `true` | Whether to raise vanilla items that stack to 16 up to 64: signs, hanging signs, banners, snowballs, eggs, ender pearls, buckets, armor stands and honey bottles. Written books stay at 16 (see [Equipment base classes](EQUIPMENT_en.md)). |
 

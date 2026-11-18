@@ -612,7 +612,7 @@ Four classes in the `ibx.lib.item.vanilla` package change vanilla items. The fir
 
 | Class | What it changes | Switch |
 | --- | --- | --- |
-| `VanillaRangedWeapons` | The vanilla bow and crossbow use this mod's ranged system | `takeOverVanillaRangedWeapons`, default `true` |
+| `VanillaRangedWeapons` | The vanilla bow and crossbow use this mod's ranged system; the vanilla trident shows ranged damage in the main hand | `takeOverVanillaRangedWeapons`, default `true` |
 | `VanillaArmors` | Attributes of netherite, golden and copper armor | `adjustVanillaArmors`, default `true` |
 | `VanillaStackSizes` | Items that stack to 16 are raised to 64 | `raiseVanillaStackSizes`, default `true` |
 | `VanillaSpawnEggs` | Wither and Ender Dragon spawn eggs are added to the creative tab | none |
@@ -630,6 +630,14 @@ Only the items `minecraft:bow` and `minecraft:crossbow` themselves are affected;
 - **Behaviour** is the same as Ibx bows and crossbows (see [3](#3-ranged-weapons)): linear charge, damage snapshot, crits rolled by critical chance (vanilla: a bow only crits at full draw, a player's crossbow arrow always crits), no off-hand use, auto fire supported; mobs holding them are resolved by attributes too, and crossbow mobs shoot at speed 3.15.
 - **Pull animation**: this mod's `assets/minecraft/items/bow.json` switches the vanilla bow's definition to `ibx_lib:pull`. With the switch off, the property uses 20 ticks for the vanilla bow, same as vanilla.
 - To test a stack, use `RangedWeaponApi.isManagedBow` / `isManagedCrossbow`; to ask only about the switch, use `VanillaRangedWeapons.isEnabled()`.
+
+### Vanilla trident
+
+Uses the same switch as the vanilla bow and crossbow, and only affects `minecraft:trident` itself. Besides the vanilla attack damage and attack speed, the main hand also gets ranged damage 8 (`VanillaRangedWeapons.TRIDENT_RANGED_DAMAGE`, modifier id `ibx_lib:base_ranged_damage`), shown as a dark green merged line like `IbxTridentItem`. The full modifier list is `VanillaRangedWeapons.tridentModifiers()`.
+
+- 8 is the vanilla thrown damage (`TridentItem.BASE_DAMAGE`).
+- Only the numbers shown change; throwing is not taken over: a hit still deals the vanilla hard-coded 8, ignores ranged damage bonuses from curios and effects, and crits as in vanilla.
+- While held in the main hand these 8 points count toward the holder's ranged damage attribute, so anything that reads that attribute (such as spells scaling with ranged damage) sees them, same as `IbxTridentItem`.
 
 ### Vanilla armor
 
@@ -1300,7 +1308,7 @@ Vanilla components the base classes use:
 
 | Component | Set by |
 | --- | --- |
-| `attribute_modifiers` | Every base class (the main-hand numbers); for the taken-over vanilla bow and crossbow and the adjusted vanilla armor, the default components are changed. |
+| `attribute_modifiers` | Every base class (the main-hand numbers); for the taken-over vanilla bow and crossbow, the vanilla trident and the adjusted vanilla armor, the default components are changed. |
 | `tool`, `weapon` | The melee kind classes (as the vanilla sword, axe and spear; the hammer replaces `weapon`; `IbxTridentItem` sets them itself after the vanilla trident). |
 | `kinetic_weapon`, `piercing_weapon`, `attack_range`, `swing_animation`, `minimum_attack_charge`, `damage_type` | `IbxSpearItem` (as the vanilla spear). |
 | `use_effects`, `unbreakable` | `IbxMagicWeaponItem` (movement speed while casting; unbreakable when durability is negative). |
