@@ -10,7 +10,7 @@ import java.util.function.UnaryOperator;
 /**
  * Ibx 近战武器：所有近战武器的基类，只能继承。按武器种类分子类（{@link ibx.lib.item.IbxSwordItem} 剑、
  * {@link ibx.lib.item.IbxDaggerItem} 匕首、{@link ibx.lib.item.IbxCutlassItem} 砍刀、{@link ibx.lib.item.IbxClaymoreItem} 大剑、
- * {@link ibx.lib.item.IbxAxeItem} 斧、{@link ibx.lib.item.IbxSpearItem} 矛、{@link ibx.lib.item.IbxScytheItem} 镰刀、
+ * {@link ibx.lib.item.IbxAxeItem} 斧、{@link ibx.lib.item.IbxSpearItem} 矛、{@link ibx.lib.item.IbxTridentItem} 三叉戟、{@link ibx.lib.item.IbxScytheItem} 镰刀、
  * {@link ibx.lib.item.IbxHammerItem} 战锤、{@link ibx.lib.item.IbxFistItem} 拳套、{@link ibx.lib.item.IbxDoubleAxeItem} 双刃斧……），普通武器直接用种类类；有自己机制的（命中附加伤害、特殊操作）再继承种类类。
  *
  * <p>种类决定两件事，都由子类在构造时交给这里：</p>

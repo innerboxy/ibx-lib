@@ -15,6 +15,7 @@ import ibx.lib.item.IbxSpearItem;
 import ibx.lib.item.IbxStaffItem;
 import ibx.lib.item.IbxSwordItem;
 import ibx.lib.item.IbxTomeItem;
+import ibx.lib.item.IbxTridentItem;
 import ibx.lib.item.IbxHeavyShieldItem;
 import ibx.lib.item.general.IbxMagicWeaponItem;
 import ibx.lib.item.general.IbxMeleeWeaponItem;
@@ -43,6 +44,8 @@ import java.util.function.Consumer;
  * 战锤、拳套还各自进 {@code #ibx_lib:enchantable/hammer}、{@code fist}，同剑但没有横扫之刃（见 {@link TagRegistry#ENCHANTABLE_HAMMER}）；
  * 斧、双刃斧还各自进 {@code #ibx_lib:enchantable/axe}、{@code double_axe}，能附原版斧的全部附魔（见 {@link TagRegistry#ENCHANTABLE_AXE}）；
  * 矛还进 {@code #ibx_lib:enchantable/spear}，能附原版矛的全部附魔（见 {@link TagRegistry#ENCHANTABLE_SPEAR}）；
+ * 三叉戟还进 NeoForge 的 {@code #c:tools/trident}、{@code #c:tools/ranged_weapon}（NeoForge 把原版三叉戟同时放在近战、远程两个标签里）
+ * 和 {@code #ibx_lib:enchantable/trident}，能附原版三叉戟的全部附魔（见 {@link TagRegistry#ENCHANTABLE_TRIDENT}）；
  * 盾还进 {@code #ibx_lib:enchantable/shield}（见 {@link TagRegistry#ENCHANTABLE_SHIELD}）；
  * 法典、法杖还各自进 {@code #ibx_lib:enchantable/tome}、{@code staff}（见 {@link TagRegistry#ENCHANTABLE_TOME}）。</p>
  * 补标签的时机见 {@link ibx.lib.mixin.TagLoaderMixin}。
@@ -62,6 +65,7 @@ public final class AutoItemTags {
             new Rule(IbxAxeItem.class, List.of(TagRegistry.TOOLS_AXE, TagRegistry.ENCHANTABLE_AXE)),
             new Rule(IbxDoubleAxeItem.class, List.of(TagRegistry.TOOLS_DOUBLE_AXE, TagRegistry.ENCHANTABLE_DOUBLE_AXE)),
             new Rule(IbxSpearItem.class, List.of(TagRegistry.TOOLS_SPEAR, TagRegistry.ENCHANTABLE_SPEAR)),
+            new Rule(IbxTridentItem.class, List.of(Tags.Items.TOOLS_TRIDENT, Tags.Items.RANGED_WEAPON_TOOLS, TagRegistry.ENCHANTABLE_TRIDENT)),
             new Rule(IbxScytheItem.class, List.of(TagRegistry.TOOLS_SCYTHE, TagRegistry.ENCHANTABLE_SCYTHE)),
             new Rule(IbxHammerItem.class, List.of(TagRegistry.TOOLS_HAMMER, TagRegistry.ENCHANTABLE_HAMMER)),
             new Rule(IbxFistItem.class, List.of(TagRegistry.TOOLS_FIST, TagRegistry.ENCHANTABLE_FIST)),

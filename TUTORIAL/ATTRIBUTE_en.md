@@ -23,7 +23,7 @@ Reference an attribute with `AttributeRegistry.XXX` (a `DeferredHolder<Attribute
 
 | id | Field | Name | Default | Range | Description |
 | --- | --- | --- | --- | --- | --- |
-| `ibx_lib:ranged_damage` | `RANGED_DAMAGE` | Ranged Damage | 0 | 0–2048 | Damage dealt when a ranged weapon hits. Crossbow = this value, bow = this value × draw percentage. Provided by the weapon (see [Equipment base classes](EQUIPMENT_en.md)). |
+| `ibx_lib:ranged_damage` | `RANGED_DAMAGE` | Ranged Damage | 0 | 0–2048 | Damage dealt when a ranged weapon hits. Crossbow = this value, bow = this value × draw percentage, thrown trident = this value (Impaling is added on top). Provided by the weapon (see [Equipment base classes](EQUIPMENT_en.md)). |
 | `ibx_lib:draw_time` | `DRAW_TIME` | Draw Time | 0 | -1024–1024 | The weapon's base draw time in seconds; actual seconds = this value ÷ draw speed. Normally provided only by the weapon; to make the shooter draw faster or slower, modify draw speed instead. Higher is worse (increases show red). |
 | `ibx_lib:draw_speed` | `DRAW_SPEED` | Draw Speed | 1 | 0.01–1024 | How fast the shooter draws. It divides, so speed bonuses have diminishing returns and never reach zero. Use `add_multiplied_base` for bonuses. |
 | `ibx_lib:critical_chance` | `CRITICAL_CHANCE` | Critical Chance | 0.05 | 0–1024 | Shared by melee, ranged and spells. 0–1 is a probability; **1 or more always crits**. |
@@ -59,7 +59,7 @@ On incoming damage (`LivingIncomingDamageEvent`), in order:
 
 | Step | Condition | What happens |
 | --- | --- | --- |
-| 1. Ranged damage | The direct source is an arrow carrying this mod's ranged damage | The ranged damage recorded on the arrow when it was fired **replaces** the vanilla damage (the vanilla velocity-based amount is discarded). |
+| 1. Ranged damage | The direct source is an arrow carrying this mod's ranged damage (a thrown trident counts too) | The ranged damage recorded on the arrow when it was fired **replaces** the vanilla damage (the vanilla velocity-based amount is discarded). |
 | 2. Ranged crit | Same as above, and the arrow has the crit flag | Damage × (1 + the shooter's critical damage); crit particles and sound play on the target. The roll already happened when the arrow was fired. |
 | 3. Difficulty scaling | Same as 1, and the victim is a player | Step 1 also overwrote vanilla's difficulty scaling, so it is applied again here according to the damage type. |
 | 4. Spell resistance | The damage type is in `#ibx_lib:is_spell` | Reduced by the formula below; the reduction ratio is then multiplied by (1 − spell penetration). |

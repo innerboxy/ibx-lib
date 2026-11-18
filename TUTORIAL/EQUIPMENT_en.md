@@ -60,12 +60,14 @@ Melee weapons are split into one class per kind, all in the `ibx.lib.item` packa
 | `IbxAxeItem` | Axe | Axe | `bettercombat:axe`: one-handed, left and right slashes | `#c:tools/axe`, `#ibx_lib:enchantable/axe` |
 | `IbxDoubleAxeItem` | Double axe (a subclass of the axe) | Axe | `bettercombat:double_axe`: two-handed, slash, spin | `#c:tools/axe`, `#c:tools/double_axe`, `#ibx_lib:enchantable/axe`, `#ibx_lib:enchantable/double_axe` |
 | `IbxSpearItem` | Spear | Spear | `bettercombat:spear`: two-handed, stab, range +1 | `#c:tools/spear`, `#ibx_lib:enchantable/spear` |
+| `IbxTridentItem` | Trident | Trident | `bettercombat:trident`: one-handed, stab | `#c:tools/trident`, `#c:tools/ranged_weapon`, `#ibx_lib:enchantable/trident` |
 
-The three sets of vanilla rules:
+The four sets of vanilla rules:
 
 - **Sword** (`Properties#sword`): cuts cobwebs and bamboo fast; loses 1 durability per attack; cannot disable shields.
 - **Axe** (`Properties#axe`): mines axe blocks at the material's speed, and blocks above its tier drop nothing; loses 2 durability per attack and 1 per block mined; a hit on someone raising a shield disables it for 5 seconds. Right-clicking a block works like the vanilla axe: it tries stripping, scraping and waxing off in that order and loses 1 durability on success; it does nothing while the off hand holds something that can block and you are not sneaking, so the right-click raises the shield instead.
 - **Spear** (`Properties#spear`): left-click stabs and can hit several targets in a line, with a longer reach than a sword, and only once the attack bar is full; holding right-click charges, with damage from the relative speed of the wielder and the target, and when fast enough it also knocks back and dismounts riders. Attack damage is only the material's bonus with no damage base, and attack speed comes from how long one stab takes.
+- **Trident** (vanilla has no `Properties#trident`, so `IbxTridentItem` sets the components itself after the vanilla trident): loses 1 durability per attack; cannot disable shields; does not break blocks in creative mode. Besides attack damage and attack speed, the main hand also gets a ranged damage modifier; hold right-click and release to throw it, or dash with Riptide. See [Trident](#trident).
 
 The hammer changes one thing on top of the sword rules: a hit on someone raising a shield disables it for `IbxHammerItem.DISABLE_BLOCKING_SECONDS` (5) seconds, like the vanilla axe.
 
@@ -73,7 +75,7 @@ Every kind: the material gives durability, repair items and enchantability; atta
 
 > Items are not added to vanilla's `#minecraft:swords`, `#minecraft:axes` or `#minecraft:spears` automatically.
 >
-> All ten melee kinds also join this mod's enchantable tags automatically, so they can take the enchantments of a vanilla sword, axe or spear (hammers and fist weapons without Sweeping Edge). This mod's data adds each of these tags to the matching vanilla `#minecraft:enchantable/*` tags:
+> All eleven melee kinds also join this mod's enchantable tags automatically, so they can take the enchantments of a vanilla sword, axe, spear or trident (hammers and fist weapons without Sweeping Edge). This mod's data adds each of these tags to the matching vanilla `#minecraft:enchantable/*` tags:
 >
 > | Tag | Class added automatically | Vanilla tags it is added to | Enchantments |
 > | --- | --- | --- | --- |
@@ -87,12 +89,13 @@ Every kind: the material gives durability, repair items and enchantability; atta
 > | `#ibx_lib:enchantable/axe` | `IbxAxeItem`, double axes included (the data also lists `#minecraft:axes`) | `sharp_weapon`, `mining`, `mining_loot`, `durability` | Sharpness, Smite, Bane of Arthropods, Efficiency, Fortune, Silk Touch, Unbreaking, Mending, Curse of Vanishing |
 > | `#ibx_lib:enchantable/double_axe` | `IbxDoubleAxeItem` | `sharp_weapon`, `mining`, `mining_loot`, `durability` | Same as the axe |
 > | `#ibx_lib:enchantable/spear` | `IbxSpearItem` (the data also lists `#minecraft:spears`) | `lunge`, `melee_weapon`, `durability` | Lunge, Sharpness, Smite, Bane of Arthropods, Knockback, Looting, Fire Aspect, Unbreaking, Mending, Curse of Vanishing |
+> | `#ibx_lib:enchantable/trident` | `IbxTridentItem` (the data also lists the vanilla trident) | `trident`, `durability` | Loyalty, Riptide, Channeling, Impaling, Unbreaking, Mending, Curse of Vanishing |
 >
 > To give another item these enchantments, add it to the matching tag in your own data.
 
 ### Constructor parameters
 
-Every kind except the spear takes `(properties, material, attackDamage, attackSpeed)`:
+Every kind except the spear and the trident takes `(properties, material, attackDamage, attackSpeed)`:
 
 | Parameter | Type | Description |
 | --- | --- | --- |
@@ -117,6 +120,8 @@ The spear's parameters match vanilla's `Properties#spear`; all times are in seco
 | `knockbackTime` / `knockbackThreshold` | For this long after it takes effect, the charge knocks back while the wielder's speed is at least the threshold. |
 | `damageTime` / `damageThreshold` | For this long after it takes effect, the charge deals damage while the relative speed is at least the threshold; after that this charge is over. |
 
+The trident takes two more after those four, `IbxTridentItem(properties, material, attackDamage, attackSpeed, rangedDamage, thrownType)`; see [Trident](#trident).
+
 The kind classes have no hooks of their own (apart from the axe's right-click); to add mechanics, override `Item` methods.
 
 ```java
@@ -133,7 +138,7 @@ public static final DeferredItem<IbxSpearItem> IRON_PIKE = ITEMS.registerItem("i
 
 ### Hand models and left-click moves
 
-The in-hand display depends on the kind of weapon and is given in resources, not in the item class. This mod ships some generic hand models. All have `minecraft:item/handheld` as parent and change the first- and third-person display for both hands; the texture goes in `layer0`:
+The in-hand display depends on the kind of weapon and is given in resources, not in the item class. This mod ships some generic hand models. All but the two trident ones have `minecraft:item/handheld` as parent and change the first- and third-person display for both hands; the texture goes in `layer0`:
 
 | Model | For |
 | --- | --- |
@@ -143,6 +148,8 @@ The in-hand display depends on the kind of weapon and is given in resources, not
 | `ibx_lib:item/hammer_in_hand` | Hammers. Same angle as the vanilla handheld, scaled up to 1.275x (1.02x in first person). |
 | `ibx_lib:item/double_axe_in_hand` | Double axes. Tilted up in third person and scaled up to 1.25x (thickness unchanged), scaled down to 0.85x in first person; the dropped-item display is changed too (raised, 0.94x). |
 | `ibx_lib:item/scythe_in_hand` | Scythes and other long-hafted weapons. Held upright by the haft, scaled up to 2.125x in third person; the dropped-item display is changed too. Made for a long 32×32 texture; for the inventory icon see below. |
+| `ibx_lib:item/trident_in_hand` | Tridents, while just held. Its parent is `minecraft:item/generated`, made for a diagonal flat texture (tip in the top-right corner): held level with the tip pointing forward, scaled up to 1.7x in third person with half the thickness. Paired with the next one; see [Trident](#trident). |
+| `ibx_lib:item/trident_throwing` | Tridents, while raised to throw. Same parent and texture layout as above; in third person the trident is flipped over and held up. |
 
 `assets/examplemod/models/item/iron_dirk.json`:
 
@@ -190,6 +197,123 @@ public static final DeferredItem<IbxSwordItem> IRON_KATANA = ITEMS.registerItem(
 ```
 
 `BetterCombatCompat.builtin(name)` gives the id of a preset Better Combat ships; a preset file you write yourself, `data/examplemod/weapon_attributes/my_blade.json`, has the id `examplemod:my_blade`.
+
+### Trident
+
+`IbxTridentItem` can be used in melee and thrown with right-click, and handles like the vanilla trident. Vanilla has no `Properties#trident`, so it sets the rules itself: the material gives durability, repair items, enchantability and a damage bonus; it loses 1 durability per attack, cannot disable shields and does not break blocks in creative mode; attack damage and attack speed go on the main hand, plus a ranged damage modifier (id `ibx_lib:base_ranged_damage`), all shown as dark green merged lines in the tooltip.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `properties` | `Item.Properties` | The one passed into the registration factory. |
+| `material` | `ToolMaterial` | Durability, repair items, enchantability; its bonus is added to attack damage. |
+| `attackDamage` | `float` | Damage base. Displayed attack damage = this + material bonus + 1 for the bare hand. |
+| `attackSpeed` | `float` | Attack speed base. Displayed attack speed = this + the player's 4. |
+| `rangedDamage` | `float` | Ranged damage: the damage of a thrown hit. |
+| `thrownType` | `Supplier<? extends EntityType<? extends IbxThrownTrident>>` | The entity type that gets thrown. Required. |
+
+The vanilla trident's numbers are damage base 8, attack speed base -2.9 and ranged damage 8 (showing 9 attack damage and 1.1 attack speed). The damage base 8 is for a material with no bonus; subtract the material's bonus if it has one, for example 6 with iron.
+
+**Throwing with right-click**:
+
+- Hold right-click for at least `IbxTridentItem.THROW_THRESHOLD_TIME` (10) ticks, then release to throw, at an initial speed of `THROW_POWER` (2.5), as in vanilla. The raised pose follows the vanilla trident's use animation.
+- Main hand only: ranged damage is only on the main hand, and right-clicking in the off hand simply fails.
+- Each throw costs 1 durability; with only 1 durability left it cannot be thrown.
+- With Riptide it is not thrown but dashes instead: only in water or rain, and not while riding, as in vanilla.
+- In creative mode the trident in hand is not used up, and the thrown one can only be picked up by a creative-mode player.
+
+**Damage of a throw**:
+
+- The damage is the thrower's ranged damage at the moment of the throw (`RangedWeaponApi.getRangedDamage`), so gear that adds ranged damage also works on throws; the crit is rolled once on release from the thrower's crit chance.
+- On hit the trident's enchantments (Impaling) apply first, then the same hit resolution as this mod's arrows (crit multiplier, difficulty scaling; see [Attributes](ATTRIBUTE_en.md)). The damage type is vanilla's `minecraft:trident`.
+- It hits a single target and drops after the hit; it does not slow down in water; only its owner can pick it up, and what comes back is the very trident that was thrown (enchantments and durability included).
+
+**Enchantments**: it joins `#ibx_lib:enchantable/trident` automatically and can take every vanilla trident enchantment: Loyalty, Riptide, Channeling and Impaling, plus Unbreaking, Mending and Curse of Vanishing. The vanilla Channeling data only recognises the `minecraft:trident` entity type, so `IbxThrownTrident` adds Channeling in code under the vanilla conditions: during a thunderstorm, hitting a mob under open sky, or landing in a lightning rod under open sky, calls down a lightning bolt.
+
+**Left-click moves**: Better Combat's `bettercombat:trident` (one-handed stab).
+
+**Entity type**: every trident needs an entity type of its own, registered by your mod; that is what gets thrown. Plain `ibx.lib.entity.IbxThrownTrident` is enough; `IbxThrownTrident.type(factory)` gives an entity type builder with the vanilla trident's size, tracking range and update interval.
+
+```java
+public static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(Registries.ENTITY_TYPE, "examplemod");
+public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems("examplemod");
+
+// the thrown entity: the base class directly, or your own subclass
+public static final DeferredHolder<EntityType<?>, EntityType<IbxThrownTrident>> IRON_TRIDENT_ENTITY = ENTITIES.register("iron_trident",
+        key -> IbxThrownTrident.type(IbxThrownTrident::new).build(ResourceKey.create(Registries.ENTITY_TYPE, key)));
+
+// shows 9 attack damage (6 + iron's 2 + bare hand 1), 1.1 attack speed, 8 ranged damage, like the vanilla trident
+public static final DeferredItem<IbxTridentItem> IRON_TRIDENT = ITEMS.registerItem("iron_trident",
+        p -> new IbxTridentItem(p, ToolMaterial.IRON, 6.0F, -2.9F, 8.0F, IRON_TRIDENT_ENTITY));
+```
+
+On the client, register the renderer `ibx.lib.client.renderer.IbxThrownTridentRenderer` for the entity type in `EntityRenderersEvent.RegisterRenderers`:
+
+```java
+event.registerEntityRenderer(ExampleEntities.IRON_TRIDENT_ENTITY.get(), IbxThrownTridentRenderer::new);
+```
+
+The renderer draws the thrown trident's own item model with the tip along the flight direction, and the enchantment glint follows the item. The model is resolved with `ItemDisplayContext.NONE`, which goes to the `fallback` of the item model definition below and so gets the hand model. By default it is posed as a diagonal flat texture, at the third-person in-hand size (`IbxThrownTridentRenderer.DEFAULT_SCALE`, 1.7x with half the thickness); for another size use `new IbxThrownTridentRenderer<>(ctx, scale)`.
+
+**Resource files**: the hand models share one diagonal long texture (tip in the top-right corner, butt in the bottom-left), and the inventory has its own small icon:
+
+| Model | Parent |
+| --- | --- |
+| `examplemod:item/iron_trident` | `minecraft:item/generated` (the small inventory icon) |
+| `examplemod:item/iron_trident_in_hand` | `ibx_lib:item/trident_in_hand` |
+| `examplemod:item/iron_trident_throwing` | `ibx_lib:item/trident_throwing` |
+
+`assets/examplemod/models/item/iron_trident_in_hand.json` (`iron_trident_throwing.json` only changes the parent):
+
+```json
+{
+  "parent": "ibx_lib:item/trident_in_hand",
+  "textures": {
+    "layer0": "examplemod:item/iron_trident_in_hand"
+  }
+}
+```
+
+The item model definition picks the icon or the hand model by display context, and the hand model is then picked by whether the item is being used (`minecraft:using_item`): held level or raised to throw, like the vanilla trident. `assets/examplemod/items/iron_trident.json`:
+
+```json
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": ["gui", "ground", "fixed", "on_shelf"],
+        "model": {
+          "type": "minecraft:model",
+          "model": "examplemod:item/iron_trident"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:condition",
+      "property": "minecraft:using_item",
+      "on_true": {
+        "type": "minecraft:model",
+        "model": "examplemod:item/iron_trident_throwing"
+      },
+      "on_false": {
+        "type": "minecraft:model",
+        "model": "examplemod:item/iron_trident_in_hand"
+      }
+    }
+  }
+}
+```
+
+**Hooks for subclasses**:
+
+| Method | Description |
+| --- | --- |
+| `IbxTridentItem#onThrow(level, thrower, thrown, trident)` | Called before the throw (server side, `protected`). `trident` already has its position, owner, ranged damage and crit set but is not in the world yet; you can change its damage (`IbxThrownTrident#setRangedDamage`) or attach data to it. `thrown` is the one split off from the hand, with the durability already taken. |
+| `IbxTridentItem#onThrownHit(level, trident, target, source)` | Called after a thrown trident hits a living entity and deals damage (server side), once the enchantments' on-hit effects have run. |
+
+- To change the flight or the hit itself, extend `IbxThrownTrident`. The subclass keeps the `(EntityType, Level)` constructor (the item creates it from the entity type, then calls `initThrown`), and is registered with `IbxThrownTrident.type(MyThrownTrident::new)`.
+- If the hand model is not a diagonal flat texture (a 3D model, or a tip pointing another way), extend `IbxThrownTridentRenderer` and override `applyModelPose(poseStack)`: when it is called, +X is the flight direction and the origin is the entity's position; pose the model with its tip along +X.
 
 ### Making a new kind
 
@@ -1137,7 +1261,7 @@ Items registered with this mod's base classes and interfaces (subclasses include
 | Base class / interface | Tags added automatically |
 | --- | --- |
 | `IbxMeleeWeaponItem` | `#c:tools`, `#c:tools/melee_weapon` |
-| Melee kind classes | Those of `IbxMeleeWeaponItem`, plus their own kind tag (see [2](#2-melee-weapons)); `IbxDoubleAxeItem` also has the axe's |
+| Melee kind classes | Those of `IbxMeleeWeaponItem`, plus their own kind tag (see [2](#2-melee-weapons)); `IbxDoubleAxeItem` also has the axe's, and `IbxTridentItem` also joins `#c:tools/ranged_weapon` |
 | `IbxRangedWeaponItem` (interface) | `#c:tools`, `#c:tools/ranged_weapon` |
 | `IbxBowItem` | Those of `IbxRangedWeaponItem`, plus `#c:tools/bow` and `#ibx_lib:enchantable/bow` |
 | `IbxCrossbowItem` | Those of `IbxRangedWeaponItem`, plus `#c:tools/crossbow` and `#ibx_lib:enchantable/crossbow` |
@@ -1150,9 +1274,9 @@ Items registered with this mod's base classes and interfaces (subclasses include
 
 - They are real tag members: synced to the client and recognised by commands, JEI and other mods.
 - The items are inserted at the front of each tag, so a data pack can take one out with `"remove"`; `"replace": true` does not remove them.
-- The ten melee kind tags, plus `#c:tools/magic_weapon`, `#c:tools/tome`, `#c:tools/staff`, `#c:tools/one_handed_shield` and `#c:tools/heavy_shield`, are common tags created by this mod and filled automatically. `#c:tools/sword`, `#c:tools/axe` and `#c:tools/spear` have data files listing the vanilla `#minecraft:swords`, `#minecraft:axes` and `#minecraft:spears`, so vanilla swords, axes and spears are in them too; the rest have no data files. The fifteen `#ibx_lib:enchantable/*` tags have data files (the bow, crossbow, sword, axe, spear and shield ones list the matching vanilla items, the rest are empty), each referenced by the vanilla enchantable tags; see [2](#2-melee-weapons), [3](#3-ranged-weapons), [6](#6-shields) and [5](#5-magic-implements).
+- The ten melee kind tags, plus `#c:tools/magic_weapon`, `#c:tools/tome`, `#c:tools/staff`, `#c:tools/one_handed_shield` and `#c:tools/heavy_shield`, are common tags created by this mod and filled automatically. `#c:tools/sword`, `#c:tools/axe` and `#c:tools/spear` have data files listing the vanilla `#minecraft:swords`, `#minecraft:axes` and `#minecraft:spears`, so vanilla swords, axes and spears are in them too; the rest have no data files. The trident's kind tag is NeoForge's own `#c:tools/trident`, which already contains the vanilla trident; it also joins `#c:tools/ranged_weapon`, like the vanilla trident (NeoForge lists the vanilla trident in both the melee and the ranged tag). The sixteen `#ibx_lib:enchantable/*` tags have data files (the bow, crossbow, sword, axe, spear, trident and shield ones list the matching vanilla items, the rest are empty), each referenced by the vanilla enchantable tags; see [2](#2-melee-weapons), [3](#3-ranged-weapons), [6](#6-shields) and [5](#5-magic-implements).
 - Enchantable tags follow the kind only: an item that extends a base class such as `IbxMeleeWeaponItem` or `IbxMagicWeaponItem` directly and belongs to no kind does not join any `#ibx_lib:enchantable/*` tag. To make it enchantable, add it to the matching tag in your own data (or straight to the vanilla `#minecraft:enchantable/durability` and so on).
-- The tag keys are in `ibx.lib.registry.TagRegistry`: `CAN_CAST_SPELL`, `TOOLS_MAGIC_WEAPON`, `TOOLS_TOME`, `TOOLS_STAFF`, `TOOLS_ONE_HANDED_SHIELD`, `TOOLS_HEAVY_SHIELD`, and for melee `TOOLS_SWORD`, `TOOLS_DAGGER`, `TOOLS_CUTLASS`, `TOOLS_CLAYMORE`, `TOOLS_SCYTHE`, `TOOLS_FIST`, `TOOLS_HAMMER`, `TOOLS_AXE`, `TOOLS_DOUBLE_AXE`, `TOOLS_SPEAR`, `ENCHANTABLE_BOW`, `ENCHANTABLE_CROSSBOW`, `ENCHANTABLE_SHIELD`, `ENCHANTABLE_SWORD`, `ENCHANTABLE_DAGGER`, `ENCHANTABLE_CUTLASS`, `ENCHANTABLE_CLAYMORE`, `ENCHANTABLE_SCYTHE`, `ENCHANTABLE_HAMMER`, `ENCHANTABLE_FIST`, `ENCHANTABLE_TOME`, `ENCHANTABLE_STAFF`, `ENCHANTABLE_AXE`, `ENCHANTABLE_DOUBLE_AXE`, `ENCHANTABLE_SPEAR`.
+- The tag keys are in `ibx.lib.registry.TagRegistry`: `CAN_CAST_SPELL`, `TOOLS_MAGIC_WEAPON`, `TOOLS_TOME`, `TOOLS_STAFF`, `TOOLS_ONE_HANDED_SHIELD`, `TOOLS_HEAVY_SHIELD`, and for melee `TOOLS_SWORD`, `TOOLS_DAGGER`, `TOOLS_CUTLASS`, `TOOLS_CLAYMORE`, `TOOLS_SCYTHE`, `TOOLS_FIST`, `TOOLS_HAMMER`, `TOOLS_AXE`, `TOOLS_DOUBLE_AXE`, `TOOLS_SPEAR`, `ENCHANTABLE_BOW`, `ENCHANTABLE_CROSSBOW`, `ENCHANTABLE_SHIELD`, `ENCHANTABLE_SWORD`, `ENCHANTABLE_DAGGER`, `ENCHANTABLE_CUTLASS`, `ENCHANTABLE_CLAYMORE`, `ENCHANTABLE_SCYTHE`, `ENCHANTABLE_HAMMER`, `ENCHANTABLE_FIST`, `ENCHANTABLE_TOME`, `ENCHANTABLE_STAFF`, `ENCHANTABLE_AXE`, `ENCHANTABLE_DOUBLE_AXE`, `ENCHANTABLE_SPEAR`, `ENCHANTABLE_TRIDENT`; `#c:tools/trident` is NeoForge's `Tags.Items.TOOLS_TRIDENT`.
 
 **`#ibx_lib:can_cast_spell`** (items that can cast): right-clicking with one in hand casts the selected spell, and its use duration is fixed at 72000 ticks (like a bow, so it can be held). For an item that is not an Ibx implement to cast, the mod that owns it adds it in `data/ibx_lib/tags/item/can_cast_spell.json`. Don't put items that already have a use duration, such as food and potions, in this tag, or they can never be finished.
 
@@ -1177,7 +1301,7 @@ Vanilla components the base classes use:
 | Component | Set by |
 | --- | --- |
 | `attribute_modifiers` | Every base class (the main-hand numbers); for the taken-over vanilla bow and crossbow and the adjusted vanilla armor, the default components are changed. |
-| `tool`, `weapon` | The melee kind classes (as the vanilla sword, axe and spear; the hammer replaces `weapon`). |
+| `tool`, `weapon` | The melee kind classes (as the vanilla sword, axe and spear; the hammer replaces `weapon`; `IbxTridentItem` sets them itself after the vanilla trident). |
 | `kinetic_weapon`, `piercing_weapon`, `attack_range`, `swing_animation`, `minimum_attack_charge`, `damage_type` | `IbxSpearItem` (as the vanilla spear). |
 | `use_effects`, `unbreakable` | `IbxMagicWeaponItem` (movement speed while casting; unbreakable when durability is negative). |
 | `blocks_attacks`, `break_sound`, off-hand equipment slot | `IbxAbstractShieldItem`. |

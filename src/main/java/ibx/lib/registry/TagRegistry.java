@@ -79,6 +79,14 @@ public final class TagRegistry {
             Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/spear"));
 
     /**
+     * 能附原版三叉戟的附魔的物品：本模组的 data 把它加进了原版的 {@code #minecraft:enchantable/trident}、
+     * {@code enchantable/durability}，所以能附忠诚、激流、引雷、穿刺、耐久、经验修补、消失诅咒。
+     * data 里放了原版的三叉戟；所有 {@link ibx.lib.item.IbxTridentItem} 自动在里面（{@link AutoItemTags}），别的物品由所在模组的 data 往里加。
+     */
+    public static final TagKey<Item> ENCHANTABLE_TRIDENT = TagKey.create(Registries.ITEM,
+            Identifier.fromNamespaceAndPath(IbxLib.MODID, "enchantable/trident"));
+
+    /**
      * 能附原版剑的附魔的物品：本模组的 data 把它加进了原版的 {@code #minecraft:enchantable/sweeping}、
      * {@code enchantable/melee_weapon}、{@code enchantable/durability}，所以能附横扫之刃、锋利、亡灵杀手、节肢杀手、
      * 击退、抢夺、火焰附加、耐久、经验修补、消失诅咒，又不用进 {@code #minecraft:swords}。

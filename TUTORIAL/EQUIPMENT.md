@@ -60,12 +60,14 @@
 | `IbxAxeItem` | 斧 | 斧 | `bettercombat:axe`:单手,左右横斩 | `#c:tools/axe`、`#ibx_lib:enchantable/axe` |
 | `IbxDoubleAxeItem` | 双刃斧(斧的子类) | 斧 | `bettercombat:double_axe`:双手,横斩、转身斩 | `#c:tools/axe`、`#c:tools/double_axe`、`#ibx_lib:enchantable/axe`、`#ibx_lib:enchantable/double_axe` |
 | `IbxSpearItem` | 矛 | 矛 | `bettercombat:spear`:双手,直刺,距离 +1 | `#c:tools/spear`、`#ibx_lib:enchantable/spear` |
+| `IbxTridentItem` | 三叉戟 | 三叉戟 | `bettercombat:trident`:单手,直刺 | `#c:tools/trident`、`#c:tools/ranged_weapon`、`#ibx_lib:enchantable/trident` |
 
-三套原版规则:
+四套原版规则:
 
 - **剑**(`Properties#sword`):砍蜘蛛网、竹子快;每次攻击掉 1 点耐久;打不掉盾。
 - **斧**(`Properties#axe`):斧类方块按材料的速度挖,等级不够的方块不掉落;每次攻击掉 2 点耐久,挖一个方块掉 1 点;打中举盾的人把盾打掉 5 秒。右键方块同原版斧:依次试剥树皮、刮铜锈、刮蜡,成了掉 1 点耐久;副手拿着能格挡的东西又没蹲下时不触发,让右键去举盾。
 - **矛**(`Properties#spear`):左键直刺,一条线上能扎到多个目标,攻击距离比剑长,攻击条转满才能打;右键按住冲刺突刺,伤害看持矛者和目标的相对速度,够快还能击退、把骑着东西的目标撞下来。攻击伤害只有材料加成、没有伤害基数,攻速由「刺一下多久」算出来。
+- **三叉戟**(原版没有 `Properties#trident`,`IbxTridentItem` 照原版三叉戟自己设组件):每次攻击掉 1 点耐久;打不掉盾;创造模式拿着不挖方块。主手除了攻击伤害、攻速还挂一条远程伤害;右键按住再松手把戟掷出去,有激流时改成冲刺。见 [三叉戟](#三叉戟)。
 
 战锤在剑的规则上只改一处:打中举盾的人把盾打掉 `IbxHammerItem.DISABLE_BLOCKING_SECONDS`(5)秒,同原版斧。
 
@@ -73,7 +75,7 @@
 
 > 不会自动进原版的 `#minecraft:swords`、`#minecraft:axes`、`#minecraft:spears`。
 >
-> 近战的十个种类另外自动进本模组的附魔标签,能附原版剑、斧、矛的附魔(战锤、拳套没有横扫之刃)。本模组的 data 把这些标签各自加进了原版对应的 `#minecraft:enchantable/*`:
+> 近战的十一个种类另外自动进本模组的附魔标签,能附原版剑、斧、矛、三叉戟的附魔(战锤、拳套没有横扫之刃)。本模组的 data 把这些标签各自加进了原版对应的 `#minecraft:enchantable/*`:
 >
 > | 标签 | 自动进的类 | 加进的原版标签 | 能附的附魔 |
 > | --- | --- | --- | --- |
@@ -87,12 +89,13 @@
 > | `#ibx_lib:enchantable/axe` | `IbxAxeItem`,含双刃斧(data 里还有 `#minecraft:axes`) | `sharp_weapon`、`mining`、`mining_loot`、`durability` | 锋利、亡灵杀手、节肢杀手、效率、时运、精准采集、耐久、经验修补、消失诅咒 |
 > | `#ibx_lib:enchantable/double_axe` | `IbxDoubleAxeItem` | `sharp_weapon`、`mining`、`mining_loot`、`durability` | 同斧 |
 > | `#ibx_lib:enchantable/spear` | `IbxSpearItem`(data 里还有 `#minecraft:spears`) | `lunge`、`melee_weapon`、`durability` | 突进、锋利、亡灵杀手、节肢杀手、击退、抢夺、火焰附加、耐久、经验修补、消失诅咒 |
+> | `#ibx_lib:enchantable/trident` | `IbxTridentItem`(data 里还有原版的三叉戟) | `trident`、`durability` | 忠诚、激流、引雷、穿刺、耐久、经验修补、消失诅咒 |
 >
 > 别的物品想附这些,在自己的 data 里加进对应的标签就行。
 
 ### 构造参数
 
-除了矛,都是 `(properties, material, attackDamage, attackSpeed)`:
+除了矛和三叉戟,都是 `(properties, material, attackDamage, attackSpeed)`:
 
 | 参数 | 类型 | 说明 |
 | --- | --- | --- |
@@ -117,6 +120,8 @@
 | `knockbackTime` / `knockbackThreshold` | 生效后这么久以内,持矛者的速度不低于门槛时带击退。 |
 | `damageTime` / `damageThreshold` | 生效后这么久以内,相对速度不低于门槛时有伤害;过了这次冲刺就结束。 |
 
+三叉戟在这四个参数后面多两个,`IbxTridentItem(properties, material, attackDamage, attackSpeed, rangedDamage, thrownType)`,见 [三叉戟](#三叉戟)。
+
 种类类没有自己的钩子(斧的右键除外),要加机制就重写 `Item` 的方法。
 
 ```java
@@ -133,7 +138,7 @@ public static final DeferredItem<IbxSpearItem> IRON_PIKE = ITEMS.registerItem("i
 
 ### 手持模型与左键动作
 
-手持显示按武器种类在资源里给,不在物品类里。本模组带通用手持模型,都以 `minecraft:item/handheld` 为父模型,改了第一、第三人称左右手的显示,贴图填 `layer0`:
+手持显示按武器种类在资源里给,不在物品类里。本模组带通用手持模型,除了三叉戟的两个都以 `minecraft:item/handheld` 为父模型,改了第一、第三人称左右手的显示,贴图填 `layer0`:
 
 | 模型 | 用于 |
 | --- | --- |
@@ -143,6 +148,8 @@ public static final DeferredItem<IbxSpearItem> IRON_PIKE = ITEMS.registerItem("i
 | `ibx_lib:item/hammer_in_hand` | 锤类。角度同原版手持,放大到 1.275 倍(第一人称 1.02 倍)。 |
 | `ibx_lib:item/double_axe_in_hand` | 双刃斧类。第三人称斜着往上抬、放大到 1.25 倍(厚度不变),第一人称缩到 0.85 倍;掉在地上的显示也改了(抬高、0.94 倍)。 |
 | `ibx_lib:item/scythe_in_hand` | 镰刀等长柄武器。竖着握柄,第三人称放大到 2.125 倍;掉在地上的显示也改了。按 32×32 的长贴图配的,物品栏的图标见下面。 |
+| `ibx_lib:item/trident_in_hand` | 三叉戟类,平时拿在手里用。父模型是 `minecraft:item/generated`,给斜放的平面贴图用(戟尖在贴图右上角):手里平拿、戟尖朝前,第三人称放大到 1.7 倍、厚度减半。和下一个配对,见 [三叉戟](#三叉戟)。 |
+| `ibx_lib:item/trident_throwing` | 三叉戟类,举起来掷的时候用。父模型和贴图要求同上,第三人称把戟翻过来举着。 |
 
 `assets/examplemod/models/item/iron_dirk.json`:
 
@@ -190,6 +197,123 @@ public static final DeferredItem<IbxSwordItem> IRON_KATANA = ITEMS.registerItem(
 ```
 
 `BetterCombatCompat.builtin(名字)` 得到 Better Combat 自带的预设 id;自己写的预设文件 `data/examplemod/weapon_attributes/my_blade.json` 的 id 是 `examplemod:my_blade`。
+
+### 三叉戟
+
+`IbxTridentItem` 能近战,也能右键掷出去,操作同原版三叉戟。原版没有 `Properties#trident`,规则由它自己设:材料给耐久、修复材料、附魔能力和伤害加成;每次攻击掉 1 点耐久、打不掉盾、创造模式拿着不挖方块;主手挂攻击伤害、攻速,再挂一条远程伤害(修饰符 id `ibx_lib:base_ranged_damage`),tooltip 都是深绿合并行。
+
+| 参数 | 类型 | 说明 |
+| --- | --- | --- |
+| `properties` | `Item.Properties` | 注册工厂传进来的那个。 |
+| `material` | `ToolMaterial` | 耐久、修复材料、附魔能力;攻击伤害再加上它的加成。 |
+| `attackDamage` | `float` | 伤害基数。显示的攻击伤害 = 本值 + 材料加成 + 空手的 1。 |
+| `attackSpeed` | `float` | 攻速基数。显示的攻速 = 本值 + 玩家的 4。 |
+| `rangedDamage` | `float` | 远程伤害:掷出去打中的伤害。 |
+| `thrownType` | `Supplier<? extends EntityType<? extends IbxThrownTrident>>` | 掷出去的实体类型,必须给。 |
+
+原版三叉戟的数值是伤害基数 8、攻速基数 -2.9、远程伤害 8(显示 9 攻击伤害、1.1 攻速)。伤害基数 8 是材料没有加成时的,材料有加成就减掉它,比如用铁给 6。
+
+**右键掷出**:
+
+- 右键按住满 `IbxTridentItem.THROW_THRESHOLD_TIME`(10)tick 再松手才掷得出去,初速度 `THROW_POWER`(2.5),同原版。举戟的姿势跟着原版三叉戟的使用动画走。
+- 只认主手:远程伤害只挂在主手,副手右键直接失败。
+- 掷一次掉 1 点耐久;只剩 1 点耐久时掷不出去。
+- 有激流时不掷出去,改成冲刺:只能在水里或雨里用,骑着东西时不行,同原版。
+- 创造模式掷出去手里的不少,掷出去的那把只有创造模式的玩家能捡。
+
+**掷出去的伤害**:
+
+- 伤害是出手那一刻投掷者的远程伤害(`RangedWeaponApi.getRangedDamage`),所以加远程伤害的装备对投掷也生效;暴击在出手时按投掷者的暴击率掷一次。
+- 命中时先过戟上的附魔(穿刺),再走本模组弓箭的命中结算(暴击倍率、难度缩放,见 [属性](ATTRIBUTE.md))。伤害类型是原版的 `minecraft:trident`。
+- 只打中一个目标,打中后落下;水里不减速;只有主人能捡,捡回来的是掷出去的那一把(附魔、耐久都在)。
+
+**附魔**:自动进 `#ibx_lib:enchantable/trident`,能附原版三叉戟的全部附魔:忠诚、激流、引雷、穿刺,加上耐久、经验修补、消失诅咒。原版引雷的附魔数据只认 `minecraft:trident` 这个实体类型,所以引雷由 `IbxThrownTrident` 按原版的条件在代码里补上:雷暴时打中露天的生物,或者扎在露天的避雷针上,落一道闪电。
+
+**左键动作**:Better Combat 的 `bettercombat:trident`(单手直刺)。
+
+**实体类型**:每把戟要配一个自己注册的实体类型,掷出去的就是它。直接用 `ibx.lib.entity.IbxThrownTrident` 就行,`IbxThrownTrident.type(工厂)` 给出实体类型的构造器,大小、追踪距离、同步间隔同原版三叉戟。
+
+```java
+public static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(Registries.ENTITY_TYPE, "examplemod");
+public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems("examplemod");
+
+// 掷出去的实体:直接用基类,或者用自己的子类
+public static final DeferredHolder<EntityType<?>, EntityType<IbxThrownTrident>> IRON_TRIDENT_ENTITY = ENTITIES.register("iron_trident",
+        key -> IbxThrownTrident.type(IbxThrownTrident::new).build(ResourceKey.create(Registries.ENTITY_TYPE, key)));
+
+// 显示 9 攻击伤害(6 + 铁的 2 + 空手 1)、1.1 攻速、8 远程伤害,同原版三叉戟
+public static final DeferredItem<IbxTridentItem> IRON_TRIDENT = ITEMS.registerItem("iron_trident",
+        p -> new IbxTridentItem(p, ToolMaterial.IRON, 6.0F, -2.9F, 8.0F, IRON_TRIDENT_ENTITY));
+```
+
+客户端在 `EntityRenderersEvent.RegisterRenderers` 里给实体类型注册渲染器 `ibx.lib.client.renderer.IbxThrownTridentRenderer`:
+
+```java
+event.registerEntityRenderer(ExampleEntities.IRON_TRIDENT_ENTITY.get(), IbxThrownTridentRenderer::new);
+```
+
+渲染器画掷出去的那把戟自己的物品模型,戟尖顺着飞行方向,附魔光效跟着物品走。模型按 `ItemDisplayContext.NONE` 取,下面的物品模型定义里走 `fallback`,拿到的就是手持模型。默认按斜放的平面贴图摆,大小同第三人称手持(`IbxThrownTridentRenderer.DEFAULT_SCALE`,1.7 倍、厚度减半);要别的大小用 `new IbxThrownTridentRenderer<>(ctx, 倍数)`。
+
+**资源文件**:两个手持模型共用一张斜放的长贴图(戟尖在右上角、戟尾在左下角),物品栏另有一张小图标:
+
+| 模型 | 父模型 |
+| --- | --- |
+| `examplemod:item/iron_trident` | `minecraft:item/generated`(物品栏的小图标) |
+| `examplemod:item/iron_trident_in_hand` | `ibx_lib:item/trident_in_hand` |
+| `examplemod:item/iron_trident_throwing` | `ibx_lib:item/trident_throwing` |
+
+`assets/examplemod/models/item/iron_trident_in_hand.json`(`iron_trident_throwing.json` 只换父模型):
+
+```json
+{
+  "parent": "ibx_lib:item/trident_in_hand",
+  "textures": {
+    "layer0": "examplemod:item/iron_trident_in_hand"
+  }
+}
+```
+
+物品模型定义按显示场景分小图标和手持模型,手持模型再按是否正在使用(`minecraft:using_item`)分平拿和举起来掷,同原版三叉戟。`assets/examplemod/items/iron_trident.json`:
+
+```json
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": ["gui", "ground", "fixed", "on_shelf"],
+        "model": {
+          "type": "minecraft:model",
+          "model": "examplemod:item/iron_trident"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:condition",
+      "property": "minecraft:using_item",
+      "on_true": {
+        "type": "minecraft:model",
+        "model": "examplemod:item/iron_trident_throwing"
+      },
+      "on_false": {
+        "type": "minecraft:model",
+        "model": "examplemod:item/iron_trident_in_hand"
+      }
+    }
+  }
+}
+```
+
+**给子类留的钩子**:
+
+| 方法 | 说明 |
+| --- | --- |
+| `IbxTridentItem#onThrow(level, thrower, thrown, trident)` | 掷出去之前调(服务端,`protected`)。`trident` 已经写好位置、主人、远程伤害和暴击,还没进世界;可以改它的伤害(`IbxThrownTrident#setRangedDamage`)、给它挂数据。`thrown` 是从手里分出来的那一把,耐久已经扣过。 |
+| `IbxTridentItem#onThrownHit(level, trident, target, source)` | 掷出去的戟打中生物并造成伤害之后调(服务端),附魔的命中效果已经结算。 |
+
+- 要改飞行、命中本身就继承 `IbxThrownTrident`。子类要留 `(EntityType, Level)` 这个构造方法(物品靠实体类型造它,再调 `initThrown`),注册时用 `IbxThrownTrident.type(MyThrownTrident::new)`。
+- 手持模型不是斜放平面贴图的(3D 模型、戟尖朝别的方向),继承 `IbxThrownTridentRenderer` 重写 `applyModelPose(poseStack)`:调用时坐标系的 +X 是飞行方向、原点是实体的位置,把模型摆成戟尖朝 +X。
 
 ### 自己做新种类
 
@@ -1137,7 +1261,7 @@ public class VampireFangItem extends IbxCurioItem {
 | 基类 / 接口 | 自动进的标签 |
 | --- | --- |
 | `IbxMeleeWeaponItem` | `#c:tools`、`#c:tools/melee_weapon` |
-| 近战的种类类 | `IbxMeleeWeaponItem` 的,加各自的种类标签(见 [2](#2-近战武器));`IbxDoubleAxeItem` 同时有斧的 |
+| 近战的种类类 | `IbxMeleeWeaponItem` 的,加各自的种类标签(见 [2](#2-近战武器));`IbxDoubleAxeItem` 同时有斧的,`IbxTridentItem` 另外进 `#c:tools/ranged_weapon` |
 | `IbxRangedWeaponItem`(接口) | `#c:tools`、`#c:tools/ranged_weapon` |
 | `IbxBowItem` | `IbxRangedWeaponItem` 的,加 `#c:tools/bow`、`#ibx_lib:enchantable/bow` |
 | `IbxCrossbowItem` | `IbxRangedWeaponItem` 的,加 `#c:tools/crossbow`、`#ibx_lib:enchantable/crossbow` |
@@ -1150,9 +1274,9 @@ public class VampireFangItem extends IbxCurioItem {
 
 - 是真的标签成员:同步到客户端,指令、JEI、别的模组都认得。
 - 物品插在各标签的最前面,数据包可以用 `"remove"` 把某件物品去掉;`"replace": true` 去不掉。
-- 近战的十个种类标签,以及 `#c:tools/magic_weapon`、`#c:tools/tome`、`#c:tools/staff`、`#c:tools/one_handed_shield`、`#c:tools/heavy_shield` 是本模组自建的通用标签,靠自动填。其中 `#c:tools/sword`、`#c:tools/axe`、`#c:tools/spear` 有数据文件,分别放了原版的 `#minecraft:swords`、`#minecraft:axes`、`#minecraft:spears`,所以原版的剑、斧、矛也在里面;其余没有数据文件。`#ibx_lib:enchantable/*` 这十五个标签有数据文件(弓、弩、剑、斧、矛、盾的放了对应的原版物品,其余是空的),原版的附魔标签各自引用它们,见 [2](#2-近战武器)、[3](#3-远程武器)、[6](#6-盾牌)、[5](#5-法器)。
+- 近战的十个种类标签,以及 `#c:tools/magic_weapon`、`#c:tools/tome`、`#c:tools/staff`、`#c:tools/one_handed_shield`、`#c:tools/heavy_shield` 是本模组自建的通用标签,靠自动填。其中 `#c:tools/sword`、`#c:tools/axe`、`#c:tools/spear` 有数据文件,分别放了原版的 `#minecraft:swords`、`#minecraft:axes`、`#minecraft:spears`,所以原版的剑、斧、矛也在里面;其余没有数据文件。三叉戟的种类标签用 NeoForge 自带的 `#c:tools/trident`,原版三叉戟本来就在里面;它另外还进 `#c:tools/ranged_weapon`,同原版三叉戟(NeoForge 把原版三叉戟同时放在近战、远程两个标签里)。`#ibx_lib:enchantable/*` 这十六个标签有数据文件(弓、弩、剑、斧、矛、三叉戟、盾的放了对应的原版物品,其余是空的),原版的附魔标签各自引用它们,见 [2](#2-近战武器)、[3](#3-远程武器)、[6](#6-盾牌)、[5](#5-法器)。
 - 附魔标签只跟种类走:直接继承 `IbxMeleeWeaponItem`、`IbxMagicWeaponItem` 这类基类、不属于任何种类的物品不进 `#ibx_lib:enchantable/*`,要附魔就在自己的 data 里加进对应的标签(或者直接加进原版的 `#minecraft:enchantable/durability` 等)。
-- 标签的 key 在 `ibx.lib.registry.TagRegistry`:`CAN_CAST_SPELL`、`TOOLS_MAGIC_WEAPON`、`TOOLS_TOME`、`TOOLS_STAFF`、`TOOLS_ONE_HANDED_SHIELD`、`TOOLS_HEAVY_SHIELD`,近战的 `TOOLS_SWORD`、`TOOLS_DAGGER`、`TOOLS_CUTLASS`、`TOOLS_CLAYMORE`、`TOOLS_SCYTHE`、`TOOLS_FIST`、`TOOLS_HAMMER`、`TOOLS_AXE`、`TOOLS_DOUBLE_AXE`、`TOOLS_SPEAR`、`ENCHANTABLE_BOW`、`ENCHANTABLE_CROSSBOW`、`ENCHANTABLE_SHIELD`、`ENCHANTABLE_SWORD`、`ENCHANTABLE_DAGGER`、`ENCHANTABLE_CUTLASS`、`ENCHANTABLE_CLAYMORE`、`ENCHANTABLE_SCYTHE`、`ENCHANTABLE_HAMMER`、`ENCHANTABLE_FIST`、`ENCHANTABLE_TOME`、`ENCHANTABLE_STAFF`、`ENCHANTABLE_AXE`、`ENCHANTABLE_DOUBLE_AXE`、`ENCHANTABLE_SPEAR`。
+- 标签的 key 在 `ibx.lib.registry.TagRegistry`:`CAN_CAST_SPELL`、`TOOLS_MAGIC_WEAPON`、`TOOLS_TOME`、`TOOLS_STAFF`、`TOOLS_ONE_HANDED_SHIELD`、`TOOLS_HEAVY_SHIELD`,近战的 `TOOLS_SWORD`、`TOOLS_DAGGER`、`TOOLS_CUTLASS`、`TOOLS_CLAYMORE`、`TOOLS_SCYTHE`、`TOOLS_FIST`、`TOOLS_HAMMER`、`TOOLS_AXE`、`TOOLS_DOUBLE_AXE`、`TOOLS_SPEAR`、`ENCHANTABLE_BOW`、`ENCHANTABLE_CROSSBOW`、`ENCHANTABLE_SHIELD`、`ENCHANTABLE_SWORD`、`ENCHANTABLE_DAGGER`、`ENCHANTABLE_CUTLASS`、`ENCHANTABLE_CLAYMORE`、`ENCHANTABLE_SCYTHE`、`ENCHANTABLE_HAMMER`、`ENCHANTABLE_FIST`、`ENCHANTABLE_TOME`、`ENCHANTABLE_STAFF`、`ENCHANTABLE_AXE`、`ENCHANTABLE_DOUBLE_AXE`、`ENCHANTABLE_SPEAR`、`ENCHANTABLE_TRIDENT`;`#c:tools/trident` 是 NeoForge 的 `Tags.Items.TOOLS_TRIDENT`。
 
 **`#ibx_lib:can_cast_spell`**(能施法的物品):手持右键放当前选中的法术,使用时长统一为 72000 tick(同弓,能一直按着)。不是 Ibx 法器的物品要施法,由物品所在模组在 `data/ibx_lib/tags/item/can_cast_spell.json` 里加进去。食物、药水这类本来有使用时长的物品不要进这个标签,否则吃不完、喝不完。
 
@@ -1177,7 +1301,7 @@ public class VampireFangItem extends IbxCurioItem {
 | 组件 | 谁设的 |
 | --- | --- |
 | `attribute_modifiers` | 所有基类(主手的数值);被接管的原版弓弩、调整过的原版盔甲是改默认组件。 |
-| `tool`、`weapon` | 近战的种类类(同原版剑、斧、矛;战锤换了 `weapon`)。 |
+| `tool`、`weapon` | 近战的种类类(同原版剑、斧、矛;战锤换了 `weapon`;`IbxTridentItem` 照原版三叉戟自己设)。 |
 | `kinetic_weapon`、`piercing_weapon`、`attack_range`、`swing_animation`、`minimum_attack_charge`、`damage_type` | `IbxSpearItem`(同原版矛)。 |
 | `use_effects`、`unbreakable` | `IbxMagicWeaponItem`(施法时的移速;耐久给负数时无法破坏)。 |
 | `blocks_attacks`、`break_sound`、副手装备位 | `IbxAbstractShieldItem`。 |
