@@ -148,7 +148,7 @@ public final class ItemTooltips {
      * 按 {@link #MAX_WIDTH} 切开一行：原版的切法（优先在空格处断，汉字之间直接断），每段照原样保留颜色；
      * 行里的小图标还原成图标片段（{@link InlineIcons#restore}），取纯文本时和没换行的行一样。
      */
-    private static void wrap(Component line, List<Component> out) {
+    static void wrap(Component line, List<Component> out) {
         List<FormattedText> parts = Minecraft.getInstance().font.getSplitter().splitLines(line, MAX_WIDTH, Style.EMPTY);
         if (parts.size() <= 1) {
             out.add(line);

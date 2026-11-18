@@ -6,6 +6,7 @@ import ibx.lib.api.ShieldApi;
 import ibx.lib.compat.BetterCombatCompat;
 import ibx.lib.compat.CuriosCompat;
 import ibx.lib.compat.curios.CurioTriggerHandler;
+import ibx.lib.gearset.SetTriggerHandler;
 import ibx.lib.item.general.IbxAttributeModifiers;
 import ibx.lib.item.general.IbxAbstractShieldItem;
 import ibx.lib.target.Faction;
@@ -134,6 +135,7 @@ public class IbxHeavyShieldItem extends IbxAbstractShieldItem {
         if (CuriosCompat.isLoaded()) {
             CurioTriggerHandler.onShieldBash(player, stack, hits);
         }
+        SetTriggerHandler.onShieldBash(player, stack, hits);
         // 进冷却：同斧子打掉（物品冷却 + 停止使用），但不走 BlocksAttacks.disable，免得响破碎音
         player.getCooldowns().addCooldown(stack, this.bashCooldownTicks());
         player.stopUsingItem();

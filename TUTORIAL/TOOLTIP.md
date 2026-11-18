@@ -127,6 +127,7 @@ registrar.add(ModItems.RUBY_STAFF, (stack, tooltip) -> {
 | `cooldown(ticks)` | 「冷却8秒」,tick 换算成秒 | 次要色(旧木,`MUTED`),秒数原版蓝 | 整行 |
 | `foldHint()` | 「按住 [Shift] 查看详情」,`ItemTooltips` 自动加 | 禁用色(`DISABLED`),按键用按键色 | 整行 |
 | `ctrlHint()` | 「按住 [Ctrl] 查看更多」,`ItemTooltips` 自动加 | 禁用色,按键用按键色 | 整行 |
+| `altHint()` | 「按住 [Alt] 查看套装详情」,`GearSetTooltips` 自动加 | 禁用色,按键用按键色 | 整行 |
 | `blank()` | 空行,把说明分成几块 | — | 整行 |
 | `body(key, args...)` | 一行正文 | 正文色(奶油,`BODY`) | 整行 |
 | `muted(key, args...)` | 一行次要说明:计数、条件这类补充 | 次要色 | 整行 |
@@ -176,3 +177,9 @@ registrar.add(ModItems.RUBY_STAFF, (stack, tooltip) -> {
 - 语言键建议按 `tooltip.<modid>.<物品id>.passive` 命名,第二条被动用 `passive_2`,主动用 `active`。
 - 中文语言文字里 `%s` 和前后的字之间不加空格(「攻击有%s概率」);英文照常加空格。
 - 属性的数值写在属性名前面:「8最大生命值」「自身40%攻击伤害」,不写「最大生命值8」;没按住 Shift 只剩图标时读起来是「8❤」。名字带图标的片段写进句子时,前后的字照常连着写,折叠后图标正好顶替名字的位置。
+
+---
+
+## 6. 套装
+
+属于套装的物品,说明框的最后(原版属性行之后)自动多一段「套装名 [在位件数/总件数]」,按住 Alt 展开件位和各档效果,不用在 `ItemTooltips` 里登记。触发钩子这类写不出来的效果用 `GearSetTooltips.describe` 登记说明。见 [装备基类 · 套装的说明框](EQUIPMENT.md#套装的说明框)。

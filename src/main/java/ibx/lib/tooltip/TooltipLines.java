@@ -105,6 +105,11 @@ public final class TooltipLines {
         return Component.translatable(KEY + "ctrl_hint", keyName("Ctrl")).withColor(UiPalette.DISABLED);
     }
 
+    /** "按住 [Alt] 查看套装详情"（禁用色，按键用按键色）：套装那一段没按住 Alt 时显示的提示行。 */
+    public static Component altHint() {
+        return Component.translatable(KEY + "alt_hint", keyName("Alt")).withColor(UiPalette.DISABLED);
+    }
+
     /** 空行：把说明分成几块。 */
     public static Component blank() {
         return Component.empty();

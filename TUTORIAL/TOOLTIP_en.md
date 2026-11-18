@@ -127,6 +127,7 @@ The methods of `ibx.lib.tooltip.TooltipLines` come in two kinds: **whole lines**
 | `cooldown(ticks)` | "Cooldown 8 seconds", ticks converted to seconds | Muted (old wood, `MUTED`), the seconds in vanilla blue | Line |
 | `foldHint()` | "Hold [Shift] for details", added by `ItemTooltips` automatically | Disabled (`DISABLED`), the key in the key color | Line |
 | `ctrlHint()` | "Hold [Ctrl] for more", added by `ItemTooltips` automatically | Disabled, the key in the key color | Line |
+| `altHint()` | "Hold [Alt] for set details", added by `GearSetTooltips` automatically | Disabled, the key in the key color | Line |
 | `blank()` | An empty line to split the tooltip into blocks | — | Line |
 | `body(key, args...)` | A line of body text | Body (cream, `BODY`) | Line |
 | `muted(key, args...)` | A line of secondary notes: counts, conditions and the like | Muted | Line |
@@ -176,3 +177,9 @@ The methods of `ibx.lib.tooltip.TooltipLines` come in two kinds: **whole lines**
 - Lang keys are best named `tooltip.<modid>.<item id>.passive`, with `passive_2` for a second passive and `active` for an active ability.
 - In Chinese lang strings, put no space between `%s` and the surrounding text ("攻击有%s概率"); in English, use spaces as usual.
 - Put an attribute's value before its name: "8 Max Health", "40% of your Attack Damage", not "Max Health 8"; without Shift, when only the icon remains, it reads "8 ❤". Write sentences around icon fragments as usual; when folded, the icon simply takes the name's place.
+
+---
+
+## 6. Gear sets
+
+An item that belongs to a set gets an extra "Set name [in place/total]" block at the end of its tooltip (after the vanilla attribute lines); holding Alt expands the pieces and tiers. Nothing needs to be registered with `ItemTooltips`. Effects that cannot be derived, such as trigger hooks, are described with `GearSetTooltips.describe`. See [Equipment · Set tooltips](EQUIPMENT_en.md#set-tooltips).

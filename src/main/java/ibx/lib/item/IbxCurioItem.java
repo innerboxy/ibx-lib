@@ -1,11 +1,11 @@
 package ibx.lib.item;
 
 import ibx.lib.compat.curios.CuriosAccess;
+import ibx.lib.effect.GrantedEffects;
 import ibx.lib.item.general.CurioTriggers;
 import net.minecraft.core.Holder;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.item.Item;
@@ -80,7 +80,8 @@ public class IbxCurioItem extends Item implements ICurioItem, CurioTriggers {
     /**
      * 戴着一直有这个效果：无限时长，不闪、不冒粒子、显示图标；摘下来就去掉。
      * 同一效果的药水：等级更高的生效期间不动它，到期后再补上；等级不比它高的会被盖住。
-     * 摘下时只去掉饰品给的那个（无限时长、不显示粒子、等级相同），别处来的留着。
+     * 摘下时只去掉饰品给的那个（无限时长、不显示粒子、等级相同），别处来的留着；它当时被更强的药水、信标盖住的话，
+     * 压在下面的那份也会摘掉（见 {@link GrantedEffects}）。
      *
      * @param amplifier 效果等级减 1，0 是一级
      */
@@ -128,11 +129,7 @@ public class IbxCurioItem extends Item implements ICurioItem, CurioTriggers {
         LivingEntity entity = slotContext.entity();
         if (entity.level().isClientSide()) return;
         for (Effect effect : effects) {
-            MobEffectInstance current = entity.getEffect(effect.effect());
-            if (current == null || current.getAmplifier() < effect.amplifier()) {
-                entity.addEffect(new MobEffectInstance(effect.effect(), MobEffectInstance.INFINITE_DURATION,
-                        effect.amplifier(), false, false, true));
-            }
+            GrantedEffects.grant(entity, effect.effect(), effect.amplifier());
         }
     }
 
@@ -142,12 +139,7 @@ public class IbxCurioItem extends Item implements ICurioItem, CurioTriggers {
         LivingEntity entity = slotContext.entity();
         if (entity.level().isClientSide()) return;
         for (Effect effect : effects) {
-            MobEffectInstance current = entity.getEffect(effect.effect());
-            // 只去掉饰品给的那个；别的饰品还给着同一效果的话，它下一刻会再补上
-            if (current != null && current.isInfiniteDuration() && !current.isVisible()
-                    && current.getAmplifier() == effect.amplifier()) {
-                entity.removeEffect(effect.effect());
-            }
+            GrantedEffects.revoke(entity, effect.effect(), effect.amplifier());
         }
     }
 

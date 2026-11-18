@@ -128,6 +128,8 @@
   "tooltip.ibx_lib.cooldown": "冷却%s秒",
   "tooltip.ibx_lib.fold_hint": "按住%s查看详情",
   "tooltip.ibx_lib.ctrl_hint": "按住%s查看更多",
+  "tooltip.ibx_lib.alt_hint": "按住%s查看套装详情",
+  "tooltip.ibx_lib.gearset.name": "%s [%s/%s]",
   "dimension.minecraft.overworld": "主世界",
   "dimension.minecraft.the_nether": "下界",
   "dimension.minecraft.the_end": "末地",

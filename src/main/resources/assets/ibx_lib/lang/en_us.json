@@ -128,6 +128,8 @@
   "tooltip.ibx_lib.cooldown": "Cooldown %s seconds",
   "tooltip.ibx_lib.fold_hint": "Hold %s for details",
   "tooltip.ibx_lib.ctrl_hint": "Hold %s for more",
+  "tooltip.ibx_lib.alt_hint": "Hold %s for set details",
+  "tooltip.ibx_lib.gearset.name": "%s [%s/%s]",
   "dimension.minecraft.overworld": "Overworld",
   "dimension.minecraft.the_nether": "The Nether",
   "dimension.minecraft.the_end": "The End",

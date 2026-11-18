@@ -26,6 +26,7 @@ This mod provides a set of item base classes. Other mods use them directly or ex
 | A curio (wear only one, permanent effects, enderman mask, kept on death...) | `ibx.lib.item.IbxCurioItem` | [8](#8-curios) |
 | A curio that triggers on attacks, hits, kills or casts | extend `IbxCurioItem` and override `ibx.lib.item.general.CurioTriggers` methods | [8](#trigger-hooks) |
 | Elytra that also glide from a curio slot | add slots to the Curios slot `elytra` (0 by default) | [8](#elytra-slot) |
+| Set bonuses (armor, held items and curios counted as pieces) | `ibx.lib.gearset.GearSet`, `GearSets` | [11](#11-gear-sets) |
 
 - **Registration is the same for all**: `Item.Properties` must carry the item id before an item can be constructed, so register with `DeferredRegister.Items#registerItem` and use the `Properties` passed into the factory; rarity, fire resistance and so on are set on it too.
 - **Numbers go on the main hand**: the base classes bake their numbers into main-hand attribute modifiers with a "base id", so the tooltip shows them as the dark green merged line vanilla swords use (e.g. "8 Ranged Damage").
@@ -1044,7 +1045,7 @@ public class WhoopieCushionItem extends IbxCurioItem {
 | `piglinNeutral()` | Piglins don't attack the wearer, like wearing gold armor. |
 
 - **Finish the settings while constructing the item**: in the `registerItem` factory, or in the subclass constructor. Slots and attribute bonuses are still set up the Curios way (item tags, the `curios:attribute_modifiers` component).
-- **Permanent effects and potions**: while a stronger potion of the same effect is active it is left alone, and the curio's effect comes back when the potion runs out; a potion that is not stronger is covered up. Taking the curio off only removes the effect it gave (infinite, no particles, same level); the same effect from elsewhere stays.
+- **Permanent effects and potions**: while a stronger potion of the same effect is active it is left alone, and the curio's effect comes back when the potion runs out; a potion that is not stronger is covered up. Taking the curio off only removes the effect it gave (infinite, no particles, same level); the same effect from elsewhere stays. If it is covered by a stronger potion or beacon at that moment, the copy underneath is removed too, so it does not come back when the stronger one runs out. The shared helpers are in `ibx.lib.effect.GrantedEffects` (`grant` / `revoke`); set effects use them too.
 - **Call `super` when overriding**: override `canEquip`, `curioTick` or `onUnequip` without calling `super` and `unique()` / the permanent effects stop working. Overriding `isEnderMask`, `makesPiglinsNeutral` or `getDropRule` replaces the setting.
 - **Mods using it must require Curios**: `IbxCurioItem` implements a Curios interface, so loading it without Curios installed throws `NoClassDefFoundError`.
 
@@ -1181,3 +1182,154 @@ Vanilla components the base classes use:
 | `use_effects`, `unbreakable` | `IbxMagicWeaponItem` (movement speed while casting; unbreakable when durability is negative). |
 | `blocks_attacks`, `break_sound`, off-hand equipment slot | `IbxAbstractShieldItem`. |
 | `bettercombat:preset_id` (Better Combat's, only with it installed) | The melee kind classes, `IbxStaffItem`, `IbxHeavyShieldItem` (left-click moves). |
+
+---
+
+## 11. Gear sets
+
+Extra attributes and status effects for wearing several items together. Armor, held items (weapons, shields, magic weapons) and curios can all count as pieces; a set is made of any items and does not need armor. The code is in `ibx.lib.gearset`.
+
+```java
+public static final GearSet HUNTER = GearSets.register(GearSet.builder(Identifier.fromNamespaceAndPath("examplemod", "hunter"))
+        .piece(HUNTER_HELMET)
+        .piece(HUNTER_CHESTPLATE)
+        .anyOf(HUNTER_BOW, HUNTER_CROSSBOW)   // bow or crossbow, 1 piece in total
+        .piece(HUNTER_RING)
+        .bonus(2, b -> b.attribute(Attributes.MAX_HEALTH, 4, AttributeModifier.Operation.ADD_VALUE))
+        .bonus(4, b -> b
+                .attribute(AttributeRegistry.RANGED_DAMAGE, 2, AttributeModifier.Operation.ADD_VALUE)
+                .effect(MobEffects.NIGHT_VISION))
+        .build());
+```
+
+A set is a list of **pieces** plus a few bonus tiers. Each piece counts as 1 at most, and the size of the set is the number of pieces (the one above is a 4-piece set). A tier is active once the number of pieces in place reaches its count; lower tiers stay active.
+
+**`GearSet.builder(id)`**:
+
+| Method | Description |
+| --- | --- |
+| `piece(item)` | Adds a piece: counts as 1 while this item is in place. |
+| `anyOf(items...)` | Adds a piece: counts as 1 while any of the listed items is in place, and still 1 with several of them. |
+| `bonus(pieces, config)` | Adds a tier: active once `pieces` pieces are in place. One tier per count; add all pieces before calling it. |
+| `build()` | Builds the set; pass it to `GearSets.register`. |
+
+Inside `bonus`:
+
+| Method | Description |
+| --- | --- |
+| `attribute(attribute, amount, operation)` | Puts an attribute modifier on the wearer while the tier is active and takes it off when the tier drops. The modifier id is `<set namespace>:gearset/<set path>/<pieces>/<index within the tier>`. Flag attributes (such as "spells can crit") take +1 like anything else. |
+| `effect(effect)` / `effect(effect, amplifier)` | Keeps a status effect on the wearer while the tier is active: infinite duration, not ambient, no particles, icon shown; removed when the tier drops. `amplifier` is as in `MobEffectInstance`, 0 is level I. |
+| `triggers(triggers)` | Trigger hooks for this tier (hits, damage taken, kills, casts...), see [Set trigger hooks](#set-trigger-hooks). Can be called several times. |
+
+**Where an item counts as in place** (decided by the item itself, nothing to configure on the set):
+
+| Place | Rule |
+| --- | --- |
+| Armor slots (head, chest, legs, feet) | Everything in them counts. |
+| Curios slots | Everything in them counts; cosmetic slots do not. Without Curios this row does not exist. |
+| Main hand, off hand | Held gear only: items that can be worn in an armor slot, and curios carrying an item tag in the `curios` namespace, do not count while held. |
+
+Rules:
+
+- **A held piece is kept for 1 second after it leaves the hand**: a piece counted through a held item stays for `GearSetHandler.HAND_GRACE_TICKS` (20 ticks) before it drops; taking it back, or holding another item of the same piece, cancels that. Armor and curios drop at once.
+- **An item may belong to several sets**, each counted on its own. Within one set an item may appear in only one piece, otherwise an exception is thrown on first use.
+- **Several sets can be active at once.** Players and mobs both count.
+- **Attributes are transient modifiers**: not saved, re-applied from the worn gear after the entity enters the world. A tier that adds max health does not heal when it comes back (as vanilla armor).
+- **Permanent effects and potions**: a potion of the same effect at a higher level is left alone and the set's effect is restored when it runs out; one at the same or a lower level is overridden. When the tier drops, only the effect the set gave is removed (infinite, no particles, same level); effects from elsewhere stay. If it is covered by a stronger potion or beacon at that moment, the copy underneath is removed too, so it does not come back when the stronger one runs out.
+- **Items can be passed as `DeferredItem`**: the item is resolved on first use, so a set can be a static field next to the item registration.
+- **Register sets during mod loading**: when a set is a static field, make sure its class is loaded from your mod constructor (for example by calling a `register` method on it), otherwise the set does not exist.
+- **Set name**: `GearSet#name()`, translation key `gearset.<namespace>.<path>` (`gearset.examplemod.hunter` above).
+
+**`ibx.lib.gearset.GearSets`**:
+
+| Method | Description |
+| --- | --- |
+| `register(set)` | Registers a set and returns it. Throws on a duplicate id. |
+| `all()` / `get(id)` | All sets (in registration order) / by id. |
+| `piecesOf(item)` / `setsOf(item)` | The pieces that accept this item / the sets it belongs to; empty when it is in no set. |
+| `count(entity, set)` | How many pieces this set counts right now. On the server this is the active count (including the hand grace); on the client it is counted from the current gear. |
+| `isActive(entity, set, pieces)` | Whether a tier is active: `count` reaches `pieces`. |
+| `countWorn(entity, set)` | How many pieces are in place according to the current gear, without the hand grace. Works on both sides. |
+| `isWorn(entity, piece)` | Whether this piece is in place right now, without the hand grace. Works on both sides. |
+
+- Pieces are recounted when an item changes in an armor slot or a hand (`LivingEquipmentChangeEvent`) and when a curio changes, on the server only; the handler is `ibx.lib.gearset.GearSetHandler`. If you change what counts as in place some other way (item tags, for example), call `GearSetHandler.recount(entity)` yourself.
+- The state lives in the entity attachment `ibx_lib:gear_sets` (`AttachmentRegistry.GEAR_SETS`), not saved and not synced.
+
+### Set trigger hooks
+
+**`ibx.lib.gearset.SetTriggers`**: the trigger points of a tier. Implement the interface and override what you need, the rest do nothing; attach it with `bonus(pieces, b -> b.triggers(...))`.
+
+```java
+public class HunterFourPiece implements SetTriggers {
+    @Override
+    public void onDamageDealt(LivingEntity wearer, LivingEntity target, DamageSource source, float amount) {
+        // heal 10% of the damage after a projectile hit
+        if (source.is(DamageTypeTags.IS_PROJECTILE)) {
+            wearer.heal(amount * 0.1F);
+        }
+    }
+}
+
+// in the set
+.bonus(4, b -> b.triggers(new HunterFourPiece()))
+```
+
+| Method | When | What it can do |
+| --- | --- | --- |
+| `onActivate(wearer)` | The tier has just become active. After an entity is loaded or respawns, its sets become active again and this is called again | Notification only |
+| `onDeactivate(wearer)` | The tier has just dropped. Not called when the entity logs out or unloads; only good for cleaning up things that are not saved | Notification only |
+| `tick(wearer)` | Every tick while the tier is active (while the wearer is alive) | Notification only |
+| `onDealDamage(wearer, target, source, amount)` | The wearer hits something: this mod's base damage (ranged damage, ranged crit) is settled, armor and spell resistance are not applied yet | Return the new damage |
+| `onTakeDamage(wearer, source, amount)` | The wearer is hit, same point in time, after the attacker's hooks | Return the new damage |
+| `onDamageDealt(wearer, target, source, amount)` | After the hit, damage resolved and health removed; `amount` is the final damage, only called above 0 | Notification only |
+| `onDamageTaken(wearer, source, amount)` | After being hit, as above | Notification only |
+| `onKill(wearer, victim, source)` | The wearer kills a living entity; kills by summons are credited to the owner | Notification only |
+| `onSpellCastStart(wearer, event)` | Before a cast starts, all conditions passed (`SpellCastEvent.Pre`) | `setManaCost`, `setCooldownTicks`, `setCanceled(true)` |
+| `onSpellCast(wearer, event)` | After each time a cast takes effect, every pulse of a channel (`SpellCastEvent.Post`) | Notification only |
+| `onSummon(wearer, summon)` | After a summon is created | Notification only; effects can be added to the summon |
+| `onBlock(wearer, source, blocked)` | A hit is blocked with a raised shield, vanilla shields and this mod's shields alike; `blocked` is the amount blocked | Notification only |
+| `onShieldBash(wearer, shield, hits)` | After a shield bash; `hits` are the entities hit, possibly none | Notification only |
+
+- **Server side only**, and only while the tier it is attached to is active; the 1 second of hand grace counts as active.
+- **Order**: at the same trigger point, curio hooks (`CurioTriggers`) run first, then set hooks; sets run in registration order, tiers within a set from low to high. Damage changes stack one after another.
+- **One hook object is shared by all wearers**: keep per-wearer state on the wearer (an attachment, for example), not in fields of the hook.
+- **Cooldowns and proc chances are up to the hook** (for example `Player#getCooldowns`, `wearer.getRandom()`); the framework does not handle them.
+- How to tell damage kinds apart, cancelled events not triggering, and who calls the shield bash hook are the same as for [curio trigger hooks](#trigger-hooks).
+- `SetTriggers` does not reference Curios classes and works without Curios. Dispatch is in `ibx.lib.gearset.SetTriggerHandler` (activation, deactivation and tick are called by `GearSetHandler`).
+
+### Set tooltips
+
+An item that belongs to a set gets an extra block at the end of its tooltip (after the vanilla attribute lines), nothing to register:
+
+```
+Hunter Set [2/4]
+Hold [Alt] for set details
+```
+
+While Alt is held it expands:
+
+```
+Hunter Set [2/4]
+ Hunter Helmet
+ Hunter Chestplate
+ Hunter Bow / Hunter Crossbow
+ Hunter Ring
+[2] +4 Max Health
+[4] +2 Ranged Damage
+[4] Night Vision I
+```
+
+- **Set name line**: set name plus pieces in place / total pieces, in the accent color. An item in several sets gets one line per set, with a blank line between sets when expanded.
+- **Pieces**: item icon plus item name, positive color when in place, disabled color when not; the items of an any-of piece are joined with ` / `.
+- **Tiers**: every line starts with `[pieces]`. Active tiers keep their normal colors (the count in the positive color); inactive tiers are entirely in the disabled color.
+- **Attribute bonuses and permanent effects are written automatically** (attribute lines as vanilla writes them). For effects that cannot be derived, such as trigger hooks, register lines for the tier from your client entry point with `ibx.lib.client.tooltip.GearSetTooltips.describe(set, pieces, lines)`; they come after the automatic lines, are written like item tooltips (`TooltipLines`) and wrap automatically:
+
+  ```java
+  GearSetTooltips.describe(HUNTER, 4, tooltip ->
+          tooltip.accept(TooltipLines.body("tooltip.examplemod.hunter.4", TooltipLines.percent(0.1F))));
+  ```
+
+- **Pieces are counted from the viewing player's current gear**, without the hand grace.
+- **Lang keys**: set name `gearset.<namespace>.<path>`; the format of the set name line `tooltip.ibx_lib.gearset.name` (three arguments: set name, pieces in place, total pieces); the hint line `tooltip.ibx_lib.alt_hint` (`TooltipLines.altHint()`).
+- With advanced tooltips (F3+H) the block goes before the durability and item id lines.
+- Client side only. A tier with no registered lines, no attributes and no permanent effects is not shown.

@@ -26,6 +26,7 @@
 | 饰品(只能戴一个、常驻效果、不惹末影人、死了不掉……) | `ibx.lib.item.IbxCurioItem` | [8](#8-饰品) |
 | 攻击、挨打、击杀、施法时触发的饰品 | 继承 `IbxCurioItem`,重写 `ibx.lib.item.general.CurioTriggers` 的方法 | [8](#触发钩子) |
 | 鞘翅放在饰品栏里也能滑翔 | 给 Curios 槽位 `elytra` 加格数(默认 0 格) | [8](#鞘翅槽) |
+| 套装效果(盔甲、手持物、饰品凑件数) | `ibx.lib.gearset.GearSet`、`GearSets` | [11](#11-套装) |
 
 - **注册方式都一样**:`Item.Properties` 必须先带上物品 id 才能构造物品,所以用 `DeferredRegister.Items#registerItem` 注册,在工厂里使用传进来的 `Properties`;稀有度、防火等也设在它上面。
 - **数值挂在主手**:基类把数值烤成主手的属性修饰符,用「基础 id」,tooltip 显示成原版剑那样的深绿合并行(比如「8 远程伤害」)。
@@ -1044,7 +1045,7 @@ public class WhoopieCushionItem extends IbxCurioItem {
 | `piglinNeutral()` | 猪灵不主动攻击穿戴者,同穿金盔甲。 |
 
 - **设置要在构造物品时做完**:`registerItem` 的工厂里,或者子类的构造函数里。槽位、属性加成照旧按 Curios 的办法配(物品标签、`curios:attribute_modifiers` 组件)。
-- **常驻效果和药水**:同一效果的药水,等级更高的生效期间不动它,到期后再补上;等级不比它高的会被盖住。摘下时只去掉饰品给的那个(无限时长、不显示粒子、等级相同),别处来的留着。
+- **常驻效果和药水**:同一效果的药水,等级更高的生效期间不动它,到期后再补上;等级不比它高的会被盖住。摘下时只去掉饰品给的那个(无限时长、不显示粒子、等级相同),别处来的留着;它当时被更强的药水、信标盖住的话,压在下面的那份也会摘掉,上面的到期后不会再冒出来。给、摘的公共方法在 `ibx.lib.effect.GrantedEffects`(`grant` / `revoke`),套装的常驻效果也用它。
 - **重写时记得调 `super`**:重写 `canEquip`、`curioTick`、`onUnequip` 不调 `super` 的话,`unique()`、常驻效果就失效了。`isEnderMask`、`makesPiglinsNeutral`、`getDropRule` 重写了就以子类为准。
 - **用它的模组必须装 Curios**:`IbxCurioItem` 实现了 Curios 的接口,没装 Curios 时一加载就 `NoClassDefFoundError`。
 
@@ -1181,3 +1182,154 @@ public class VampireFangItem extends IbxCurioItem {
 | `use_effects`、`unbreakable` | `IbxMagicWeaponItem`(施法时的移速;耐久给负数时无法破坏)。 |
 | `blocks_attacks`、`break_sound`、副手装备位 | `IbxAbstractShieldItem`。 |
 | `bettercombat:preset_id`(Better Combat 的,装了它才有) | 近战的种类类、`IbxStaffItem`、`IbxHeavyShieldItem`(左键动作)。 |
+
+---
+
+## 11. 套装
+
+几件物品凑在一起穿戴时,给穿戴者额外的属性和状态效果。盔甲、手持物(武器、盾、法器)、饰品都能算件,一个套装由任意物品组成,不要求有盔甲。代码在 `ibx.lib.gearset`。
+
+```java
+public static final GearSet HUNTER = GearSets.register(GearSet.builder(Identifier.fromNamespaceAndPath("examplemod", "hunter"))
+        .piece(HUNTER_HELMET)
+        .piece(HUNTER_CHESTPLATE)
+        .anyOf(HUNTER_BOW, HUNTER_CROSSBOW)   // 弓或弩,合计只算 1 件
+        .piece(HUNTER_RING)
+        .bonus(2, b -> b.attribute(Attributes.MAX_HEALTH, 4, AttributeModifier.Operation.ADD_VALUE))
+        .bonus(4, b -> b
+                .attribute(AttributeRegistry.RANGED_DAMAGE, 2, AttributeModifier.Operation.ADD_VALUE)
+                .effect(MobEffects.NIGHT_VISION))
+        .build());
+```
+
+一个套装是一列**件位**加上几档效果。每个件位最多算 1 件,套装的总件数就是件位的个数(上面这个是 4 件套);在位的件位达到某一档的件数,这一档就生效,低档一起保留。
+
+**`GearSet.builder(id)`**:
+
+| 方法 | 说明 |
+| --- | --- |
+| `piece(item)` | 加一个件位:这件物品在位就算 1 件。 |
+| `anyOf(items...)` | 加一个件位:列出的几样里有任意一样在位就算 1 件,同时有几样也只算 1 件。 |
+| `bonus(pieces, config)` | 加一档效果:在位件数达到 `pieces` 就生效。每个件数只能配一档,先把件位都加完再调。 |
+| `build()` | 建好套装,再交给 `GearSets.register`。 |
+
+`bonus` 里能配的:
+
+| 方法 | 说明 |
+| --- | --- |
+| `attribute(attribute, amount, operation)` | 这一档生效期间给穿戴者挂一条属性修饰符,掉档摘掉。修饰符 id 是 `<套装命名空间>:gearset/<套装路径>/<件数>/<这一档里的第几条>`。开关属性(如「法术可暴击」)照样挂 +1。 |
+| `effect(effect)` / `effect(effect, amplifier)` | 这一档生效期间一直有这个状态效果:无限时长,不闪、不冒粒子、显示图标;掉档去掉。`amplifier` 同 `MobEffectInstance`,0 是一级。 |
+| `triggers(triggers)` | 这一档生效期间的触发钩子(命中、挨打、击杀、施法……),见[套装的触发钩子](#套装的触发钩子)。可以调多次。 |
+
+**物品在哪里才算在位**(按物品自己定,不用在套装里配):
+
+| 位置 | 规则 |
+| --- | --- |
+| 盔甲槽(头、胸、腿、脚) | 里面的都算。 |
+| Curios 饰品栏 | 里面的都算,化妆栏不算。没装 Curios 就没有这一条。 |
+| 主手、副手 | 只算手持物:能穿进盔甲槽的物品、带 `curios` 命名空间物品标签的饰品拿在手上不算。 |
+
+规则:
+
+- **手持的件离手后保留 1 秒**:靠手上的物品算上的件位,离手后再保留 `GearSetHandler.HAND_GRACE_TICKS`(20 tick)才掉;期间拿回来,或者换成同一件位的另一样,保留就取消。盔甲和饰品摘下立刻掉。
+- **一件物品可以属于几个套装**,各算各的;同一个套装里一件物品只能出现在一个件位上,否则第一次用到时报错。
+- **几个套装可以同时生效**。玩家和生物都算。
+- **属性是临时修饰符**:不存盘,实体进世界后按身上的装备重新挂。加最大生命值的档位掉了再回来不会回血(同原版盔甲)。
+- **常驻效果和药水**:同一效果的药水,等级更高的生效期间不动它,到期后再补上;等级不比它高的会被盖住。掉档时只去掉套装给的那个(无限时长、不显示粒子、等级相同),别处来的留着;它当时被更强的药水、信标盖住的话,压在下面的那份也会摘掉,上面的到期后不会再冒出来。
+- **物品可以直接传 `DeferredItem`**:第一次用到时才取物品,所以套装可以写成静态字段,和物品注册写在一起。
+- **套装要在模组加载期间注册**:写成静态字段时,要保证所在的类在模组构造函数里被加载到(比如调一下它的 `register` 方法),否则这个套装不存在。
+- **套装名**:`GearSet#name()`,语言键是 `gearset.<命名空间>.<路径>`(上面的例子是 `gearset.examplemod.hunter`)。
+
+**`ibx.lib.gearset.GearSets`**:
+
+| 方法 | 说明 |
+| --- | --- |
+| `register(set)` | 注册一个套装,原样返回。id 重复会抛异常。 |
+| `all()` / `get(id)` | 全部套装(按注册顺序)/ 按 id 取。 |
+| `piecesOf(item)` / `setsOf(item)` | 认这件物品的件位 / 这件物品属于哪些套装;不属于任何套装就是空表。 |
+| `count(entity, set)` | 这个套装现在算几件。服务端是生效中的件数(含离手保留);客户端按眼下的装备现数。 |
+| `isActive(entity, set, pieces)` | 某一档现在有没有生效:`count` 达到 `pieces`。 |
+| `countWorn(entity, set)` | 按眼下的装备数有几个件位在位,不算离手保留。两端都能用。 |
+| `isWorn(entity, piece)` | 这个件位眼下在不在位,不算离手保留。两端都能用。 |
+
+- 件数在盔甲槽、双手换了物品(`LivingEquipmentChangeEvent`)和饰品栏换了饰品时重数,只在服务端;分发在 `ibx.lib.gearset.GearSetHandler`。用别的办法改了「算不算在位」的结果(比如换了物品标签)时,自己调 `GearSetHandler.recount(entity)`。
+- 状态存在实体附加数据 `ibx_lib:gear_sets` 上(`AttachmentRegistry.GEAR_SETS`),不存盘、不同步。
+
+### 套装的触发钩子
+
+**`ibx.lib.gearset.SetTriggers`**:挂在某一档上的触发时机。实现这个接口,重写自己需要的方法,其余默认什么都不做;用 `bonus(件数, b -> b.triggers(...))` 挂上去。
+
+```java
+public class HunterFourPiece implements SetTriggers {
+    @Override
+    public void onDamageDealt(LivingEntity wearer, LivingEntity target, DamageSource source, float amount) {
+        // 弹射物打中后按伤害的 10% 回血
+        if (source.is(DamageTypeTags.IS_PROJECTILE)) {
+            wearer.heal(amount * 0.1F);
+        }
+    }
+}
+
+// 套装里
+.bonus(4, b -> b.triggers(new HunterFourPiece()))
+```
+
+| 方法 | 什么时候 | 能做什么 |
+| --- | --- | --- |
+| `onActivate(wearer)` | 这一档刚生效。实体读档、重生后进世界,身上的套装会重新生效一次,这里也会再调一次 | 只通知 |
+| `onDeactivate(wearer)` | 这一档刚掉。实体下线、卸载时不调,只适合收拾不存盘的东西 | 只通知 |
+| `tick(wearer)` | 这一档生效期间每刻(穿戴者活着时) | 只通知 |
+| `onDealDamage(wearer, target, source, amount)` | 穿戴者打中别人:本模组的基础伤害(远程伤害、远程暴击)已定,还没算护甲、法术抗性 | 返回新的伤害量 |
+| `onTakeDamage(wearer, source, amount)` | 穿戴者挨打,同一时间点,在攻击方的钩子之后 | 返回新的伤害量 |
+| `onDamageDealt(wearer, target, source, amount)` | 打中之后,伤害已结算、已扣血;`amount` 是最终伤害,大于 0 才调 | 只通知 |
+| `onDamageTaken(wearer, source, amount)` | 挨打之后,同上 | 只通知 |
+| `onKill(wearer, victim, source)` | 穿戴者杀死一个生物;召唤物杀的算主人的 | 只通知 |
+| `onSpellCastStart(wearer, event)` | 施法开始前,条件都已通过(`SpellCastEvent.Pre`) | `setManaCost`、`setCooldownTicks`、`setCanceled(true)` |
+| `onSpellCast(wearer, event)` | 每次施法生效之后,引导每次都调(`SpellCastEvent.Post`) | 只通知 |
+| `onSummon(wearer, summon)` | 召唤出一只召唤物之后 | 只通知,可以给召唤物加效果 |
+| `onBlock(wearer, source, blocked)` | 举盾挡下一次攻击,原版盾和本模组的盾都算;`blocked` 是挡下的量 | 只通知 |
+| `onShieldBash(wearer, shield, hits)` | 打出一次盾击之后;`hits` 是打中的生物,可能为空 | 只通知 |
+
+- **只在服务端调用**,只在所挂的那一档生效期间调用;手持件离手保留的那 1 秒也算生效。
+- **顺序**:同一个时机先调饰品的钩子(`CurioTriggers`),再调套装的;套装之间按注册顺序,同一个套装里档位从低到高。改伤害的一个接一个叠上去。
+- **一个钩子对象是所有穿戴者共用的**:每个穿戴者各自的状态要记在穿戴者身上(附加数据之类),不要记在钩子的字段里。
+- **冷却、触发几率由钩子自己处理**(比如 `Player#getCooldowns`、`wearer.getRandom()`),框架不管。
+- 伤害怎么区分、被取消的不触发、盾击由谁调,这几条同[饰品的触发钩子](#触发钩子)。
+- `SetTriggers` 不引用 Curios 的类,没装 Curios 也能用。分发在 `ibx.lib.gearset.SetTriggerHandler`(生效、失效、每刻由 `GearSetHandler` 调)。
+
+### 套装的说明框
+
+属于套装的物品,说明框的最后(原版属性行之后)自动多一段,不用登记:
+
+```
+猎人套装 [2/4]
+按住[Alt]查看套装详情
+```
+
+按住 Alt 时展开:
+
+```
+猎人套装 [2/4]
+ 猎人头盔
+ 猎人胸甲
+ 猎人弓 / 猎人弩
+ 猎人戒指
+[2] +4 最大生命值
+[4] +2 远程伤害
+[4] 夜视 I
+```
+
+- **套装名那一行**:套装名 + 在位件数 / 总件数,强调色。物品属于几个套装就列几行,展开时几个套装之间空一行。
+- **件位**:物品图标 + 物品名,在位的正面色,不在位的禁用色;任选一的件位把几样用 ` / ` 连起来。
+- **各档效果**:每行前面是 `[件数]`。生效的档位照常上色(件数用正面色),没生效的整行禁用色。
+- **属性加成、常驻效果自动写出来**(属性行同原版的写法)。触发钩子这类写不出来的效果,在客户端入口里用 `ibx.lib.client.tooltip.GearSetTooltips.describe(set, pieces, lines)` 给这一档登记说明,排在自动写的行后面;写法同物品说明(`TooltipLines`),长句自动换行:
+
+  ```java
+  GearSetTooltips.describe(HUNTER, 4, tooltip ->
+          tooltip.accept(TooltipLines.body("tooltip.examplemod.hunter.4", TooltipLines.percent(0.1F))));
+  ```
+
+- **件数按看说明的玩家眼下的装备现数**,不算离手保留。
+- **语言键**:套装名 `gearset.<命名空间>.<路径>`;套装名那一行的格式 `tooltip.ibx_lib.gearset.name`(三个参数:套装名、在位件数、总件数);提示行 `tooltip.ibx_lib.alt_hint`(`TooltipLines.altHint()`)。
+- 开了高级提示(F3+H)时,这一段排在耐久、物品 id 那几行前面。
+- 只能在客户端调;没给哪一档登记说明、这一档又没有属性和常驻效果时,这一档不显示。

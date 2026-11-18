@@ -5,6 +5,7 @@ import ibx.lib.IbxLib;
 import ibx.lib.api.ManaStorage;
 import ibx.lib.api.ShieldBash;
 import ibx.lib.api.SpellDamageSnapshot;
+import ibx.lib.gearset.GearSetState;
 import ibx.lib.spell.ActiveCast;
 import ibx.lib.spell.SelectedSpell;
 import ibx.lib.spell.SpellCooldowns;
@@ -168,6 +169,14 @@ public final class AttachmentRegistry {
                             .serialize(TargetModes.CODEC)
                             .copyOnDeath()
                             .build());
+
+    /**
+     * 穿戴者身上的套装状态（各套装生效中的件数、手持件的离手保留）。读件数请走 {@link ibx.lib.gearset.GearSets}。
+     * 只在服务端用；不存盘（进世界后按身上的装备重数）、不同步（客户端自己按装备数）。
+     */
+    public static final Supplier<AttachmentType<GearSetState>> GEAR_SETS =
+            ATTACHMENT_TYPES.register("gear_sets",
+                    () -> AttachmentType.builder(() -> new GearSetState()).build());
 
     public static void register(IEventBus modEventBus) {
         ATTACHMENT_TYPES.register(modEventBus);

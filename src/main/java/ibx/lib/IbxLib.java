@@ -14,6 +14,7 @@ import ibx.lib.event.DamageHandler;
 import ibx.lib.event.HealHandler;
 import ibx.lib.event.ManaHandler;
 import ibx.lib.event.MountHandler;
+import ibx.lib.gearset.GearSetHandler;
 import ibx.lib.item.vanilla.VanillaArmors;
 import ibx.lib.item.vanilla.VanillaRangedWeapons;
 import ibx.lib.item.vanilla.VanillaSpawnEggs;
@@ -75,6 +76,8 @@ public class IbxLib {
         if (CuriosCompat.isLoaded()) {
             CurioTriggerHandler.register();
         }
+        // 套装：件数统计、效果挂摘和触发钩子。排在饰品钩子后面注册：同一时机先调饰品的、再调套装的
+        GearSetHandler.register();
         ManaCommand.register();
         SpellCommand.register();
         SummonCommand.register();
