@@ -612,7 +612,7 @@ Four classes in the `ibx.lib.item.vanilla` package change vanilla items. The fir
 
 | Class | What it changes | Switch |
 | --- | --- | --- |
-| `VanillaRangedWeapons` | The vanilla bow and crossbow use this mod's ranged system; the vanilla trident shows ranged damage in the main hand | `takeOverVanillaRangedWeapons`, default `true` |
+| `VanillaRangedWeapons` | The vanilla bow, crossbow and trident use this mod's ranged system | `takeOverVanillaRangedWeapons`, default `true` |
 | `VanillaArmors` | Attributes of netherite, golden and copper armor | `adjustVanillaArmors`, default `true` |
 | `VanillaStackSizes` | Items that stack to 16 are raised to 64 | `raiseVanillaStackSizes`, default `true` |
 | `VanillaSpawnEggs` | Wither and Ender Dragon spawn eggs are added to the creative tab | none |
@@ -633,11 +633,13 @@ Only the items `minecraft:bow` and `minecraft:crossbow` themselves are affected;
 
 ### Vanilla trident
 
-Uses the same switch as the vanilla bow and crossbow, and only affects `minecraft:trident` itself. Besides the vanilla attack damage and attack speed, the main hand also gets ranged damage 8 (`VanillaRangedWeapons.TRIDENT_RANGED_DAMAGE`, modifier id `ibx_lib:base_ranged_damage`), shown as a dark green merged line like `IbxTridentItem`. The full modifier list is `VanillaRangedWeapons.tridentModifiers()`.
+Uses the same switch as the vanilla bow and crossbow, and only affects `minecraft:trident` itself; other mods' tridents that extend the vanilla class are left alone.
 
-- 8 is the vanilla thrown damage (`TridentItem.BASE_DAMAGE`).
-- Only the numbers shown change; throwing is not taken over: a hit still deals the vanilla hard-coded 8, ignores ranged damage bonuses from curios and effects, and crits as in vanilla.
-- While held in the main hand these 8 points count toward the holder's ranged damage attribute, so anything that reads that attribute (such as spells scaling with ranged damage) sees them, same as `IbxTridentItem`.
+- **Numbers**: besides the vanilla attack damage and attack speed, the main hand also gets ranged damage 8 (`VanillaRangedWeapons.TRIDENT_RANGED_DAMAGE`, modifier id `ibx_lib:base_ranged_damage`), shown as a dark green merged line like `IbxTridentItem`. 8 is the vanilla thrown damage. The full modifier list is `VanillaRangedWeapons.tridentModifiers()`.
+- **Behaviour** is the same as `IbxTridentItem` (see [Trident](#trident)): the thrower's ranged damage is recorded the moment it leaves the hand and a crit is rolled by critical chance; on hit the recorded damage replaces the vanilla hard-coded 8, goes through Impaling, then through this mod's arrow hit handling (crit multiplier, difficulty scaling). It can't be used from the off hand (a throw from the off hand can't read the main-hand ranged damage). What flies is still the vanilla `minecraft:trident` entity; Loyalty, Riptide and Channeling work as in vanilla.
+- **Drowned** throwing a vanilla trident record their ranged damage the same way (8 from the one in the main hand plus their effects); they don't roll crits, same as skeletons shooting arrows.
+- Tridents fired from dispensers or summoned by commands have no recorded damage and deal the vanilla 8.
+- To test a stack, use `VanillaRangedWeapons.isManagedTrident`. While held in the main hand these 8 points count toward the holder's ranged damage attribute, so anything that reads that attribute (such as spells scaling with ranged damage) sees them, same as `IbxTridentItem`.
 
 ### Vanilla armor
 

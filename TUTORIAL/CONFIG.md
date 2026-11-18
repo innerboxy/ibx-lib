@@ -43,7 +43,7 @@ modifyVanillaPoison = false
 配置类型为 **STARTUP**,文件位于 `config/ibx_lib-startup.toml`。这几项要在物品注册时就定下来(原版物品的默认属性、堆叠上限在那时烤进物品),所以放在启动配置里。
 
 ```toml
-#是否接管原版弓与弩，让它们按本模组的远程属性结算。
+#是否接管原版弓、弩与三叉戟，让它们按本模组的远程属性结算。
 takeOverVanillaRangedWeapons = true
 #是否调整原版盔甲套装的属性。
 adjustVanillaArmors = true
@@ -53,7 +53,7 @@ raiseVanillaStackSizes = true
 
 | 选项 | 类型 | 默认 | 说明 |
 | --- | --- | --- | --- |
-| `takeOverVanillaRangedWeapons` | boolean | `true` | 是否接管原版弓与弩。开启后原版弓弩带上远程伤害 / 拉弦时间属性,伤害、蓄力、装填、暴击与本模组的弓弩一致,副手不能用;手持原版弓弩的生物(骷髅、掠夺者等)同样按属性结算;原版三叉戟主手显示 8 点远程伤害(同它掷出去的伤害,只是显示)。关闭则保持原版(见 [装备基类](EQUIPMENT.md))。 |
+| `takeOverVanillaRangedWeapons` | boolean | `true` | 是否接管原版弓、弩与三叉戟。开启后原版弓弩带上远程伤害 / 拉弦时间属性,伤害、蓄力、装填、暴击与本模组的弓弩一致,副手不能用;手持原版弓弩的生物(骷髅、掠夺者等)同样按属性结算。原版三叉戟主手带上 8 点远程伤害,掷出去的伤害、暴击与本模组的三叉戟一致,副手不能用;溺尸掷戟同样按属性结算。关闭则保持原版(见 [装备基类](EQUIPMENT.md))。 |
 | `adjustVanillaArmors` | boolean | `true` | 是否调整原版盔甲套装的属性:下界合金套装额外加上等同于护甲值的法术抗性;金套装的护甲换成钻石套装护甲值的法术抗性(头 3、胸 8、腿 6、脚 3);铜套装的护甲换成等量的法术抗性(头 2、胸 4、腿 3、脚 1)。 |
 | `raiseVanillaStackSizes` | boolean | `true` | 是否把原版里堆叠上限为 16 的物品改成 64:告示牌、悬挂式告示牌、旗帜、雪球、鸡蛋、末影珍珠、铁桶、盔甲架、蜂蜜瓶。成书仍是 16(见 [装备基类](EQUIPMENT.md))。 |
 

@@ -612,7 +612,7 @@ public static final DeferredItem<IbxCrossbowItem> ARBALEST = ITEMS.registerItem(
 
 | 类 | 改了什么 | 开关 |
 | --- | --- | --- |
-| `VanillaRangedWeapons` | 原版弓、弩走本模组的远程系统;原版三叉戟主手显示远程伤害 | `takeOverVanillaRangedWeapons`,默认 `true` |
+| `VanillaRangedWeapons` | 原版弓、弩、三叉戟走本模组的远程系统 | `takeOverVanillaRangedWeapons`,默认 `true` |
 | `VanillaArmors` | 下界合金、金、铜盔甲的属性 | `adjustVanillaArmors`,默认 `true` |
 | `VanillaStackSizes` | 堆叠上限 16 的物品改成 64 | `raiseVanillaStackSizes`,默认 `true` |
 | `VanillaSpawnEggs` | 凋灵、末影龙刷怪蛋放进创造栏 | 无 |
@@ -633,11 +633,13 @@ public static final DeferredItem<IbxCrossbowItem> ARBALEST = ITEMS.registerItem(
 
 ### 原版三叉戟
 
-和原版弓弩用同一个开关,只认 `minecraft:trident` 本身。原版的攻击伤害、攻速之外,主手再挂一条远程伤害 8(`VanillaRangedWeapons.TRIDENT_RANGED_DAMAGE`,修饰符 id `ibx_lib:base_ranged_damage`),tooltip 和 `IbxTridentItem` 一样是深绿合并行。完整的修饰符见 `VanillaRangedWeapons.tridentModifiers()`。
+和原版弓弩用同一个开关,只认 `minecraft:trident` 本身,其他模组继承原版类的三叉戟不碰。
 
-- 8 等于原版掷出去的伤害(`TridentItem.BASE_DAMAGE`)。
-- 只改数值显示,掷出去的行为不接管:打中的伤害仍是原版写死的 8,不吃饰品、状态效果给的远程伤害加成,暴击也照原版。
-- 拿在主手时这 8 点会算进持有者的远程伤害属性,读这个属性的地方(比如按远程伤害算的法术)会吃到,同 `IbxTridentItem`。
+- **数值**:原版的攻击伤害、攻速之外,主手再挂一条远程伤害 8(`VanillaRangedWeapons.TRIDENT_RANGED_DAMAGE`,修饰符 id `ibx_lib:base_ranged_damage`),tooltip 和 `IbxTridentItem` 一样是深绿合并行。8 等于原版掷出去的伤害。完整的修饰符见 `VanillaRangedWeapons.tridentModifiers()`。
+- **行为**同 `IbxTridentItem`(见 [三叉戟](#三叉戟)):出手那一刻记下投掷者的远程伤害、按暴击率掷暴击;打中时拿记下的伤害代替原版写死的 8,先过穿刺,再走本模组弓箭的命中结算(暴击倍率、难度缩放)。副手不能用(副手掷出去读不到主手的远程伤害)。掷出去的还是原版的 `minecraft:trident` 实体,忠诚、激流、引雷照原版。
+- **溺尸**掷出的原版三叉戟同样记下它的远程伤害(主手那把的 8 加上它身上的效果),不掷暴击,同骷髅射箭。
+- 发射器射出的、指令召出的戟没有记下的伤害,打中照原版 8。
+- 判断用 `VanillaRangedWeapons.isManagedTrident`。拿在主手时这 8 点会算进持有者的远程伤害属性,读这个属性的地方(比如按远程伤害算的法术)会吃到,同 `IbxTridentItem`。
 
 ### 原版盔甲
 

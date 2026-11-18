@@ -8,6 +8,7 @@
     "BowItemMixin",
     "CrossbowItemMixin",
     "CrossbowMobMixin",
+    "DrownedMixin",
     "ItemStackMixin",
     "LivingEntityAccessor",
     "LivingEntityEffectMixin",
@@ -15,7 +16,9 @@
     "PoisonMobEffectMixin",
     "ProjectileUtilMixin",
     "RangedBowAttackGoalMixin",
-    "TagLoaderMixin"
+    "TagLoaderMixin",
+    "ThrownTridentMixin",
+    "TridentItemMixin"
   ],
   "client": [
     "AbstractRecipeBookScreenAccessor",

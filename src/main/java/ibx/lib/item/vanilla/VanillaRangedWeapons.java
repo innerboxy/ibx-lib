@@ -16,8 +16,8 @@ import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 
 /**
- * 原版弓与弩的接管：让 {@link Items#BOW} / {@link Items#CROSSBOW} 与 Ibx 弓弩走同一套远程系统；
- * 原版三叉戟 {@link Items#TRIDENT} 主手也挂上远程伤害，tooltip 和 {@link ibx.lib.item.IbxTridentItem} 一样显示。
+ * 原版弓、弩、三叉戟的接管：让 {@link Items#BOW} / {@link Items#CROSSBOW} 与 Ibx 弓弩、{@link Items#TRIDENT} 与
+ * {@link ibx.lib.item.IbxTridentItem} 走同一套远程系统。
  *
  * <p>只认这三个原版物品本身，<b>其他模组继承原版类的弓弩、三叉戟一律不碰</b>（它们有自己的伤害设计）。
  * 总开关见 {@link StartupConfig#TAKE_OVER_VANILLA_RANGED_WEAPONS}，关掉后本类的判断全部返回 false，
@@ -33,8 +33,15 @@ import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
  *   <li>附魔：力量改为加远程伤害、快速装填改为减拉弦时间，在 {@code data/minecraft/enchantment} 下覆盖原版定义。</li>
  * </ul>
  *
- * <p>三叉戟只改数值：原版的攻击伤害、攻速之外再挂一条远程伤害 {@value #TRIDENT_RANGED_DAMAGE}（基础 id，深绿合并行），
- * 等于原版掷出去的伤害。掷出去的行为不接管，打中的伤害仍是原版写死的 8，不吃其他远程伤害加成。</p>
+ * <p>三叉戟的接管：</p>
+ * <ul>
+ *   <li>数值：原版的攻击伤害、攻速之外再挂一条远程伤害 {@value #TRIDENT_RANGED_DAMAGE}（基础 id，深绿合并行），
+ *       等于原版掷出去的伤害。</li>
+ *   <li>行为同 {@link ibx.lib.item.IbxTridentItem}：{@code TridentItemMixin} 在出手那一刻记下投掷者的远程伤害、按暴击率掷暴击，
+ *       写在掷出去的戟上；副手不能用。{@code ThrownTridentMixin} 打中时拿记下的伤害代替原版写死的 8，过完穿刺再交给
+ *       本模组弓箭的命中结算（暴击倍率、难度缩放）。溺尸掷戟由 {@code DrownedMixin} 同样记下它的远程伤害（不掷暴击，同骷髅射箭）。</li>
+ *   <li>附魔照原版：穿刺加在记下的伤害上，忠诚、激流、引雷不涉及伤害，都不用改。</li>
+ * </ul>
  */
 public final class VanillaRangedWeapons {
     private VanillaRangedWeapons() {}
@@ -83,6 +90,15 @@ public final class VanillaRangedWeapons {
 
     public static boolean isManagedCrossbow(ItemStack stack) {
         return isManagedCrossbow(stack.getItem());
+    }
+
+    /** 是不是被接管的原版三叉戟。 */
+    public static boolean isManagedTrident(Item item) {
+        return item == Items.TRIDENT && isEnabled();
+    }
+
+    public static boolean isManagedTrident(ItemStack stack) {
+        return isManagedTrident(stack.getItem());
     }
 
     /**
