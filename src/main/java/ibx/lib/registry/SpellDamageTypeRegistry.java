@@ -7,7 +7,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.damagesource.DamageType;
 
 /**
- * lib 自己的伤害类型的 key，定义在 {@code data/ibx_lib/damage_type/}；特性靠标签：本模组的见 {@link TagRegistry}，
+ * lib 自己的法术伤害类型的 key（远程的见 {@link RangedDamageTypeRegistry}），定义在 {@code data/ibx_lib/damage_type/}；特性靠标签：本模组的见 {@link TagRegistry}，
  * 原版的（无视护甲、无击退等）在 {@code data/minecraft/tags/damage_type/}。用 lib 的模组在自己的命名空间里定义自己的伤害类型，
  * 是法术伤害的加进 {@link TagRegistry#IS_SPELL} 就进了法术伤害框架。
  */

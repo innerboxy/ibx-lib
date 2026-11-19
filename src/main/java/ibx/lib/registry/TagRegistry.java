@@ -25,6 +25,14 @@ public final class TagRegistry {
     public static final TagKey<DamageType> CAST_IGNORE = damageType("cast_ignore");
 
     /**
+     * 远程伤害：data 里放了原版的箭（{@code minecraft:arrow}）、三叉戟（{@code minecraft:trident}）和
+     * {@link RangedDamageTypeRegistry#GENERIC_RANGED}，别的模组的远程伤害类型由所在模组的 data 往里加。
+     * 原版 {@code bypasses_cooldown} 包含本标签，所以进了本标签的伤害不被受伤无敌时间挡（几支箭同时打中都算），
+     * 但打完照样给目标留无敌时间。
+     */
+    public static final TagKey<DamageType> IS_RANGED = damageType("is_ranged");
+
+    /**
      * 能施法的物品：手持右键释放当前选中的法术。所有 {@link ibx.lib.item.general.IbxMagicWeaponItem}（法典等各类法器）自动在里面
      * （{@link AutoItemTags}）；别的物品要施法，由物品所在模组的 data 往里加。
      */

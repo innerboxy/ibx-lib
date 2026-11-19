@@ -27,6 +27,8 @@ This mod provides a set of item base classes. Other mods use them directly or ex
 | A curio that triggers on attacks, hits, kills or casts | extend `IbxCurioItem` and override `ibx.lib.item.general.CurioTriggers` methods | [8](#trigger-hooks) |
 | Elytra that also glide from a curio slot | add slots to the Curios slot `elytra` (0 by default) | [8](#elytra-slot) |
 | Set bonuses (armor, held items and curios counted as pieces) | `ibx.lib.gearset.GearSet`, `GearSets` | [11](#11-gear-sets) |
+| The legendary and mythic rarity tiers | `ibx.lib.item.general.IbxRarities` | [10](#rarity) |
+| A damage type for ranged attacks that are not arrows (bullets, throwing knives...) | `ibx.lib.registry.RangedDamageTypeRegistry` | [3](#ranged-damage-types) |
 
 - **Registration is the same for all**: `Item.Properties` must carry the item id before an item can be constructed, so register with `DeferredRegister.Items#registerItem` and use the `Properties` passed into the factory; rarity, fire resistance and so on are set on it too.
 - **Numbers go on the main hand**: the base classes bake their numbers into main-hand attribute modifiers with a "base id", so the tooltip shows them as the dark green merged line vanilla swords use (e.g. "8 Ranged Damage").
@@ -344,6 +346,7 @@ Bows and crossbows extend the vanilla `BowItem` / `CrossbowItem`; what they shar
 - **Ranged damage and draw time on the main hand**: modifier ids `ibx_lib:base_ranged_damage` and `ibx_lib:base_draw_time`, shown as dark green merged lines.
 - **Main hand only**: the modifiers are main-hand only, and right-clicking with the off hand simply fails.
 - **Auto fire**: a stack with the `ibx_lib:auto_fire` component releases by itself at full draw (see [Auto fire](#auto-fire) below).
+- **Simultaneous arrows all count**: arrow and trident damage is not blocked by hurt invulnerability (see [Ranged damage types](#ranged-damage-types) below).
 - **Tags**: automatically in `#c:tools` and `#c:tools/ranged_weapon`; bows also in `#c:tools/bow` and `#ibx_lib:enchantable/bow` (so they can take Power, Punch, Flame and Infinity), crossbows also in `#c:tools/crossbow` and `#ibx_lib:enchantable/crossbow` (so they can take Multishot, Piercing and Quick Charge). Their data lists the vanilla bow and crossbow respectively, and this mod's data adds these two tags to the vanilla `#minecraft:enchantable/bow` and `#minecraft:enchantable/crossbow` respectively, and both to `enchantable/durability`; to give another item these enchantments, add it to the matching tag in your own data.
 
 For the attribute definitions and the resolution steps on hit, see [Attributes](ATTRIBUTE_en.md).
@@ -475,6 +478,28 @@ A stack with `ibx_lib:auto_fire=true` releases by itself the moment it is fully 
 - Players only; mobs' drawing and shooting are driven by their AI.
 - The component is in no item's default components; only stacks that explicitly turn it on have it, e.g. `/give @s minecraft:bow[ibx_lib:auto_fire=true]`, or in code `stack.set(DataComponentRegistry.AUTO_FIRE.get(), true)`.
 - Such items get an amber "Auto Fire" line right under the item name.
+
+### Ranged damage types
+
+In vanilla a mob that takes a hit gets 10 ticks (half a second) of hurt invulnerability: during it, an attack that does no more damage than the last one is dropped entirely (arrows bounce off), and a stronger one only deals the difference. This mod lifts that limit for ranged damage:
+
+- The damage type tag `#ibx_lib:is_ranged` (key `TagRegistry.IS_RANGED`) holds vanilla `minecraft:arrow`, `minecraft:trident` and this mod's `ibx_lib:generic_ranged`. This mod's data adds it to vanilla `#minecraft:bypasses_cooldown`, so this damage is **not blocked by hurt invulnerability**: every arrow of a multishot volley counts, several players or skeletons shooting one target all land, and each hit has its own knockback and hurt animation.
+- It only keeps itself from being blocked: after a ranged hit the target still gets invulnerability as in vanilla, with this hit recorded as the last damage, so a melee hit right after is blocked if it is no stronger, or only deals the difference (vanilla arrows already work like this).
+- Arrows and tridents keep their vanilla damage types, so this applies to every arrow and trident: shot by players, mobs or dispensers, and other mods' arrows as long as they use the vanilla `arrow` damage type. The ranged takeover switch does not matter.
+
+`ibx_lib:generic_ranged` (generic ranged damage, key `RangedDamageTypeRegistry.GENERIC_RANGED`) is for ranged attacks that are not arrows, such as bullets or throwing knives: `level.damageSources().source(RangedDamageTypeRegistry.GENERIC_RANGED, projectile, owner)`. It borrows the vanilla arrow death message ("was shot by"), has the same exhaustion and difficulty scaling as arrows, and like arrows is in `#minecraft:is_projectile` (reduced by Projectile Protection), `always_kills_armor_stands` and `panic_causes`.
+
+To give your own ranged damage type the same rule, add it to `data/ibx_lib/tags/damage_type/is_ranged.json` (`"replace": false`).
+
+To stop ranged damage from passing through hurt invulnerability, remove the tag from the vanilla one in a datapack (NeoForge tag files support `remove`), in the datapack's `data/minecraft/tags/damage_type/bypasses_cooldown.json`:
+
+```json
+{
+  "remove": [
+    "#ibx_lib:is_ranged"
+  ]
+}
+```
 
 ### Item models: the pull animation
 
@@ -1316,6 +1341,29 @@ Vanilla components the base classes use:
 | `use_effects`, `unbreakable` | `IbxMagicWeaponItem` (movement speed while casting; unbreakable when durability is negative). |
 | `blocks_attacks`, `break_sound`, off-hand equipment slot | `IbxAbstractShieldItem`. |
 | `bettercombat:preset_id` (Better Combat's, only with it installed) | The melee kind classes, `IbxStaffItem`, `IbxHeavyShieldItem` (left-click moves). |
+
+### Rarity
+
+Vanilla item rarity (the `minecraft:rarity` component, which sets the name color) has four tiers. This mod adds two more after them through NeoForge's enum extension; get them from `ibx.lib.item.general.IbxRarities`:
+
+| Tier | id | Name color | Value |
+| --- | --- | --- | --- |
+| Common | `common` | white `#FFFFFF` | `Rarity.COMMON` |
+| Uncommon | `uncommon` | yellow `#FFFF55` | `Rarity.UNCOMMON` |
+| Rare | `rare` | aqua `#55FFFF` | `Rarity.RARE` |
+| Epic | `epic` | light purple `#FF55FF` | `Rarity.EPIC` |
+| Legendary | `ibx_lib:legendary` | gold `#FFAA00` | `IbxRarities.legendary()` |
+| Mythic | `ibx_lib:mythic` | red `#FF5555` | `IbxRarities.mythic()` |
+
+Use them like the vanilla rarities, set on the `Properties` when registering:
+
+```java
+ITEMS.registerItem("dragon_heart", Item::new, p -> p.rarity(IbxRarities.legendary()));
+```
+
+- In commands and data, write the id: `/give @s minecraft:stick[rarity="ibx_lib:legendary"]`.
+- Vanilla enchanting raises common and uncommon to rare, and rare to epic; legendary and mythic stay as they are when enchanted.
+- The two tiers are added to the vanilla `Rarity` enum, so both server and client need this mod.
 
 ---
 

@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "ibx_lib:poison"
+    "ibx_lib:poison",
+    "#ibx_lib:is_ranged"
   ]
 }

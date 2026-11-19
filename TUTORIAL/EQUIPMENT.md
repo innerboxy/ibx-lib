@@ -27,6 +27,8 @@
 | 攻击、挨打、击杀、施法时触发的饰品 | 继承 `IbxCurioItem`,重写 `ibx.lib.item.general.CurioTriggers` 的方法 | [8](#触发钩子) |
 | 鞘翅放在饰品栏里也能滑翔 | 给 Curios 槽位 `elytra` 加格数(默认 0 格) | [8](#鞘翅槽) |
 | 套装效果(盔甲、手持物、饰品凑件数) | `ibx.lib.gearset.GearSet`、`GearSets` | [11](#11-套装) |
+| 传说、神话两档稀有度 | `ibx.lib.item.general.IbxRarities` | [10](#稀有度) |
+| 不是箭的远程攻击(子弹、飞刀……)的伤害类型 | `ibx.lib.registry.RangedDamageTypeRegistry` | [3](#远程伤害类型) |
 
 - **注册方式都一样**:`Item.Properties` 必须先带上物品 id 才能构造物品,所以用 `DeferredRegister.Items#registerItem` 注册,在工厂里使用传进来的 `Properties`;稀有度、防火等也设在它上面。
 - **数值挂在主手**:基类把数值烤成主手的属性修饰符,用「基础 id」,tooltip 显示成原版剑那样的深绿合并行(比如「8 远程伤害」)。
@@ -344,6 +346,7 @@ public class RapierItem extends IbxMeleeWeaponItem {
 - **主手挂远程伤害、拉弦时间**:修饰符 id 为 `ibx_lib:base_ranged_damage`、`ibx_lib:base_draw_time`,tooltip 是深绿合并行。
 - **只能主手使用**:修饰符只挂主手,副手右键直接失败。
 - **自动射击**:物品栈带 `ibx_lib:auto_fire` 组件时拉满自动放(见下面的 [自动射击](#自动射击))。
+- **几支箭同时打中都算**:箭和三叉戟的伤害不被受伤无敌时间挡(见下面的 [远程伤害类型](#远程伤害类型))。
 - **标签**:自动进 `#c:tools`、`#c:tools/ranged_weapon`,弓再进 `#c:tools/bow` 和 `#ibx_lib:enchantable/bow`(能附力量、冲击、火矢、无限),弩再进 `#c:tools/crossbow` 和 `#ibx_lib:enchantable/crossbow`(能附多重射击、穿透、快速装填)。两个标签的 data 里分别放了原版的弓、弩;本模组的 data 再把它们分别加进了原版的 `#minecraft:enchantable/bow`、`#minecraft:enchantable/crossbow`,也都加进了 `enchantable/durability`;别的物品想附这些,在自己的 data 里加进对应的标签就行。
 
 属性的定义和命中后的结算步骤见 [属性](ATTRIBUTE.md)。
@@ -475,6 +478,28 @@ public static final DeferredItem<IbxCrossbowItem> ARBALEST = ITEMS.registerItem(
 - 只对玩家生效,生物的拉弓和射击由 AI 自己掌握。
 - 组件不在物品的默认组件里,只有显式打开的物品栈才带,比如 `/give @s minecraft:bow[ibx_lib:auto_fire=true]`,或代码里 `stack.set(DataComponentRegistry.AUTO_FIRE.get(), true)`。
 - 开了的物品在名称正下方多一行琥珀色的「自动发射」。
+
+### 远程伤害类型
+
+原版生物挨一下后有 10 tick(半秒)的受伤无敌时间:这期间伤害不比上一下高的攻击整个作废(箭会被弹开),更高的只扣差值。本模组让远程伤害不受这条限制:
+
+- 伤害类型标签 `#ibx_lib:is_ranged`(键 `TagRegistry.IS_RANGED`)里放了原版的 `minecraft:arrow`、`minecraft:trident` 和本模组的 `ibx_lib:generic_ranged`。本模组的 data 把它加进了原版的 `#minecraft:bypasses_cooldown`,所以这些伤害**不被无敌时间挡**:多重射击的几支箭同时打中都算,几个人、几只骷髅一起射同一个目标也支支都中,每支都有击退和受伤动画。
+- 只管自己不被挡:远程打完照原版给目标留无敌时间,上次伤害记成这一下的数值,紧跟着的近战不比它高就被挡、比它高只扣差值(原版的箭本来就这样)。
+- 箭、三叉戟还是原版的伤害类型,所以对所有箭和戟都有效:玩家、生物、发射器射出的,别的模组的箭只要用的是原版 `arrow` 伤害类型也算。不看远程接管开关。
+
+`ibx_lib:generic_ranged`(通用远程伤害,键 `RangedDamageTypeRegistry.GENERIC_RANGED`)给不是箭的远程攻击用,比如子弹、飞刀:`level.damageSources().source(RangedDamageTypeRegistry.GENERIC_RANGED, projectile, owner)`。死亡信息借原版箭的(「被射杀」),消耗、难度缩放同原版的箭;照原版的箭进了 `#minecraft:is_projectile`(弹射物保护能减)、`always_kills_armor_stands`、`panic_causes`。
+
+自己的远程伤害类型想享受同样的规则,在 `data/ibx_lib/tags/damage_type/is_ranged.json` 里加上它(`"replace": false`)。
+
+不想让远程伤害穿过无敌时间,用数据包把标签从原版标签里去掉(NeoForge 的标签文件支持 `remove`),在数据包的 `data/minecraft/tags/damage_type/bypasses_cooldown.json` 里写:
+
+```json
+{
+  "remove": [
+    "#ibx_lib:is_ranged"
+  ]
+}
+```
 
 ### 物品模型:拉弓动画
 
@@ -1316,6 +1341,29 @@ public class VampireFangItem extends IbxCurioItem {
 | `use_effects`、`unbreakable` | `IbxMagicWeaponItem`(施法时的移速;耐久给负数时无法破坏)。 |
 | `blocks_attacks`、`break_sound`、副手装备位 | `IbxAbstractShieldItem`。 |
 | `bettercombat:preset_id`(Better Combat 的,装了它才有) | 近战的种类类、`IbxStaffItem`、`IbxHeavyShieldItem`(左键动作)。 |
+
+### 稀有度
+
+原版的物品稀有度(`minecraft:rarity` 组件,决定名字的颜色)有四档,本模组用 NeoForge 的枚举扩展在后面加了两档,`ibx.lib.item.general.IbxRarities` 取:
+
+| 档位 | id | 名字颜色 | 取值 |
+| --- | --- | --- | --- |
+| 普通 | `common` | 白 `#FFFFFF` | `Rarity.COMMON` |
+| 罕见 | `uncommon` | 黄 `#FFFF55` | `Rarity.UNCOMMON` |
+| 稀有 | `rare` | 青 `#55FFFF` | `Rarity.RARE` |
+| 史诗 | `epic` | 亮紫 `#FF55FF` | `Rarity.EPIC` |
+| 传说 | `ibx_lib:legendary` | 金 `#FFAA00` | `IbxRarities.legendary()` |
+| 神话 | `ibx_lib:mythic` | 红 `#FF5555` | `IbxRarities.mythic()` |
+
+用法和原版稀有度一样,注册时设在 `Properties` 上:
+
+```java
+ITEMS.registerItem("dragon_heart", Item::new, p -> p.rarity(IbxRarities.legendary()));
+```
+
+- 指令、数据里写 id:`/give @s minecraft:stick[rarity="ibx_lib:legendary"]`。
+- 原版附魔会把普通、罕见提成稀有,稀有提成史诗;传说、神话附魔后不变。
+- 这两档是加进原版 `Rarity` 枚举的,服务端和客户端都要装本模组。
 
 ---
 
