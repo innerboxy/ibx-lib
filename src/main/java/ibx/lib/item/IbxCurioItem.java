@@ -21,6 +21,7 @@ import java.util.List;
 /**
  * 饰品的基类：普通饰品直接 {@code new}，链式设置常用的几样；有自己机制的继承它，重写 {@link ICurioItem}
  * 或 {@link CurioTriggers} 的方法。Curios 会自动认出实现了 {@code ICurioItem} 的物品，不用另外挂。
+ * 拿在手上右键就能戴上，不要的用 {@link #noEquipFromUse()} 关掉。
  *
  * <pre>{@code
  * // 普通饰品
@@ -45,7 +46,7 @@ import java.util.List;
  *   <li>设置要在构造物品时做完（{@code registerItem} 的工厂里、或子类构造函数里）。</li>
  *   <li><b>重写这几个方法时要调 {@code super}</b>，不然对应的设置就失效：{@link #canEquip}（{@link #unique()}）、
  *       {@link #curioTick}、{@link #onUnequip}（{@link #effect}）。{@link #isEnderMask}、{@link #makesPiglinsNeutral}、
- *       {@link #getDropRule} 重写了就以子类为准。</li>
+ *       {@link #canEquipFromUse}、{@link #getDropRule} 重写了就以子类为准。</li>
  *   <li>槽位、属性加成照旧按 Curios 的办法配（物品标签、{@code curios:attribute_modifiers} 组件）。</li>
  *   <li><b>用它的模组必须装 Curios</b>：这个类实现了 Curios 的接口，没装 Curios 时一加载就 {@code NoClassDefFoundError}。</li>
  * </ul>
@@ -59,6 +60,7 @@ public class IbxCurioItem extends Item implements ICurioItem, CurioTriggers {
     private boolean enderMask;
     private boolean keepOnDeath;
     private boolean piglinNeutral;
+    private boolean equipFromUse = true;
 
     public IbxCurioItem(Properties properties) {
         super(properties);
@@ -108,6 +110,16 @@ public class IbxCurioItem extends Item implements ICurioItem, CurioTriggers {
         return this;
     }
 
+    /**
+     * 拿在手上右键不戴上，右键只走物品自己的 {@code use}。给右键有自己功能的饰品用。
+     * 不设的话右键就戴上：放进第一个能戴的空格子，格子都满了就和第一个能放的格子里的饰品对换，播放穿盔甲的声音；
+     * 戴上了就不再走 {@code use}，没有能戴的格子时照常走 {@code use}。
+     */
+    public IbxCurioItem noEquipFromUse() {
+        equipFromUse = false;
+        return this;
+    }
+
     public boolean isUnique() {
         return unique;
     }
@@ -151,6 +163,11 @@ public class IbxCurioItem extends Item implements ICurioItem, CurioTriggers {
     @Override
     public boolean makesPiglinsNeutral(SlotContext slotContext, ItemStack stack) {
         return piglinNeutral || ICurioItem.super.makesPiglinsNeutral(slotContext, stack);
+    }
+
+    @Override
+    public boolean canEquipFromUse(SlotContext slotContext, ItemStack stack) {
+        return equipFromUse;
     }
 
     @Override

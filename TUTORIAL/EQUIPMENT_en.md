@@ -1180,6 +1180,8 @@ Curios (mod id `curios`) is an optional dependency of this mod. A curio is a pla
 
 **`ibx.lib.item.IbxCurioItem`**: base class for curios. A plain curio is just `new`ed, with the common settings chained on; a curio with its own mechanics extends it and overrides methods from Curios' `ICurioItem` or the [trigger hooks](#trigger-hooks). Curios picks it up automatically; nothing else to attach.
 
+Right-clicking with it in hand equips it (Curios doesn't by default; each item has to turn it on): it goes into the first empty slot that accepts it, or, if those are all full, swaps with the curio in the first slot that accepts it, playing the armor equip sound. Once equipped, the item's own `use` doesn't run; with no slot that accepts it, `use` runs as usual. Turn it off with `noEquipFromUse()`.
+
 ```java
 // Plain curios
 public static final DeferredItem<IbxCurioItem> SIGNET_RING = ITEMS.registerItem("signet_ring",
@@ -1211,10 +1213,11 @@ public class WhoopieCushionItem extends IbxCurioItem {
 | `enderMask()` | Looking at endermen doesn't anger them, like wearing a carved pumpkin. |
 | `keepOnDeath()` | Not dropped on death; stays in the curio slot. |
 | `piglinNeutral()` | Piglins don't attack the wearer, like wearing gold armor. |
+| `noEquipFromUse()` | Right-clicking with it in hand doesn't equip it; right-click only runs the item's own `use`. For curios whose right-click does something of its own. |
 
 - **Finish the settings while constructing the item**: in the `registerItem` factory, or in the subclass constructor. Slots and attribute bonuses are still set up the Curios way (item tags, the `curios:attribute_modifiers` component).
 - **Permanent effects and potions**: while a stronger potion of the same effect is active it is left alone, and the curio's effect comes back when the potion runs out; a potion that is not stronger is covered up. Taking the curio off only removes the effect it gave (infinite, no particles, same level); the same effect from elsewhere stays. If it is covered by a stronger potion or beacon at that moment, the copy underneath is removed too, so it does not come back when the stronger one runs out. The shared helpers are in `ibx.lib.effect.GrantedEffects` (`grant` / `revoke`); set effects use them too.
-- **Call `super` when overriding**: override `canEquip`, `curioTick` or `onUnequip` without calling `super` and `unique()` / the permanent effects stop working. Overriding `isEnderMask`, `makesPiglinsNeutral` or `getDropRule` replaces the setting.
+- **Call `super` when overriding**: override `canEquip`, `curioTick` or `onUnequip` without calling `super` and `unique()` / the permanent effects stop working. Overriding `isEnderMask`, `makesPiglinsNeutral`, `canEquipFromUse` or `getDropRule` replaces the setting.
 - **Mods using it must require Curios**: `IbxCurioItem` implements a Curios interface, so loading it without Curios installed throws `NoClassDefFoundError`.
 
 **`ibx.lib.compat.CuriosCompat`**:

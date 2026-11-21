@@ -1180,6 +1180,8 @@ Player Animation Library 播第一人称动作(比如 Better Combat 的攻击)�
 
 **`ibx.lib.item.IbxCurioItem`**:饰品的基类。普通饰品直接 `new`,链式设置常用的几样;有自己机制的继承它,重写 Curios 的 `ICurioItem` 或[触发钩子](#触发钩子)的方法。Curios 会自动认出它,不用另外挂。
 
+拿在手上右键就能戴上(Curios 默认不行,要物品自己打开):放进第一个能戴的空格子,格子都满了就和第一个能放的格子里的饰品对换,播放穿盔甲的声音。戴上了就不再走物品自己的 `use`,没有能戴的格子时照常走 `use`。不要的用 `noEquipFromUse()` 关掉。
+
 ```java
 // 普通饰品
 public static final DeferredItem<IbxCurioItem> SIGNET_RING = ITEMS.registerItem("signet_ring",
@@ -1211,10 +1213,11 @@ public class WhoopieCushionItem extends IbxCurioItem {
 | `enderMask()` | 看末影人不会惹它,同戴南瓜头。 |
 | `keepOnDeath()` | 死了不掉,留在饰品栏。 |
 | `piglinNeutral()` | 猪灵不主动攻击穿戴者,同穿金盔甲。 |
+| `noEquipFromUse()` | 拿在手上右键不戴上,右键只走物品自己的 `use`。给右键有自己功能的饰品用。 |
 
 - **设置要在构造物品时做完**:`registerItem` 的工厂里,或者子类的构造函数里。槽位、属性加成照旧按 Curios 的办法配(物品标签、`curios:attribute_modifiers` 组件)。
 - **常驻效果和药水**:同一效果的药水,等级更高的生效期间不动它,到期后再补上;等级不比它高的会被盖住。摘下时只去掉饰品给的那个(无限时长、不显示粒子、等级相同),别处来的留着;它当时被更强的药水、信标盖住的话,压在下面的那份也会摘掉,上面的到期后不会再冒出来。给、摘的公共方法在 `ibx.lib.effect.GrantedEffects`(`grant` / `revoke`),套装的常驻效果也用它。
-- **重写时记得调 `super`**:重写 `canEquip`、`curioTick`、`onUnequip` 不调 `super` 的话,`unique()`、常驻效果就失效了。`isEnderMask`、`makesPiglinsNeutral`、`getDropRule` 重写了就以子类为准。
+- **重写时记得调 `super`**:重写 `canEquip`、`curioTick`、`onUnequip` 不调 `super` 的话,`unique()`、常驻效果就失效了。`isEnderMask`、`makesPiglinsNeutral`、`canEquipFromUse`、`getDropRule` 重写了就以子类为准。
 - **用它的模组必须装 Curios**:`IbxCurioItem` 实现了 Curios 的接口,没装 Curios 时一加载就 `NoClassDefFoundError`。
 
 **`ibx.lib.compat.CuriosCompat`**:

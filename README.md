@@ -90,7 +90,7 @@
 | Minecraft `26.1.2` | **必需** | — |
 | [GeckoLib](https://modrinth.com/mod/geckolib) `5.5.2+` | 可选 | 只有 3D 模型的法术弹射物 `GeoSpellProjectile`、3D 盔甲 `IbxGeoArmorItem` 和它们的渲染器用到;用到这些的模组自己要把它设成必需 |
 | [Player Animation Library](https://modrinth.com/mod/player-animation-library) `1.2.6+` | 可选(客户端) | 装了才有施法、格挡和盾击时的玩家动作,没装只是手臂不动;它播第一人称动作时,3D 盔甲照它对原版盔甲的规矩藏起来 |
-| [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | 可选 | 饰品基类(只戴一个、常驻效果等)、饰品的触发钩子、鞘翅槽、饰品栏里的施法物品、饰品栏界面上的属性面板按钮;物品说明里 Curios 的「栏位:」「佩戴饰品时:」标题改成原版灰色 |
+| [Curios API](https://modrinth.com/mod/curios) `15.0.0+` | 可选 | 饰品基类(右键戴上、只戴一个、常驻效果等)、饰品的触发钩子、鞘翅槽、饰品栏里的施法物品、饰品栏界面上的属性面板按钮;物品说明里 Curios 的「栏位:」「佩戴饰品时:」标题改成原版灰色 |
 | [Jade](https://modrinth.com/mod/jade) | 可选 | 提示框里在护甲后面显示法术抗性;生物身上不冒粒子、但显示图标的药水效果也显示出来(原版 Jade 只显示冒粒子的,要服务端也装 Jade);第一次进世界时关掉一次 Jade 的「显示Boss」,免得和 Boss 血条重复 |
 | [MmmMmmMmmMmm](https://modrinth.com/mod/mmmmmmmmmmmm)(试验假人) | 可选 | 远程、法术暴击显示成暴击数字,法术伤害的数字用专属的蓝色 |
 | [JEI](https://modrinth.com/mod/jei) | 可选(客户端) | 属性面板、饰品槽、创造栏子栏显示时让 JEI 的书签栏让开;双手盾(`#c:tools/heavy_shield`)在 JEI 里多一页盾击说明,施法物品和法术容器多一页施法说明(右键施法、法术轮盘) |
