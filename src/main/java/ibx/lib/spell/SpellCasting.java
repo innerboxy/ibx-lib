@@ -485,7 +485,7 @@ public final class SpellCasting {
     }
 
     /**
-     * 吟唱中受击打断：只对吟唱、可打断的法术；带 {@code #cast_ignore} 的持续掉血不算。
+     * 吟唱中受击打断：只对吟唱、可打断的法术；带 {@code #no_cast_interrupt} 的持续掉血不算。
      * Boss（{@code #c:bosses}）不会被打断：Boss 一直在挨打，能打断的话吟唱类招式几乎放不出来。
      */
     private static void onIncomingDamage(LivingIncomingDamageEvent event) {
@@ -494,7 +494,7 @@ public final class SpellCasting {
                 && ctx.spell().castType() == CastType.CAST
                 && ctx.spell().interruptible()
                 && event.getAmount() > 0.0F
-                && !event.getSource().is(TagRegistry.CAST_IGNORE)
+                && !event.getSource().is(TagRegistry.NO_CAST_INTERRUPT)
                 && !event.getEntity().is(Tags.EntityTypes.BOSSES)) {
             cancelCasting(event.getEntity(), CastEndReason.INTERRUPTED);
         }

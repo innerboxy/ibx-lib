@@ -29,6 +29,7 @@ This mod provides a set of item base classes. Other mods use them directly or ex
 | Set bonuses (armor, held items and curios counted as pieces) | `ibx.lib.gearset.GearSet`, `GearSets` | [11](#11-gear-sets) |
 | The legendary and mythic rarity tiers | `ibx.lib.item.general.IbxRarities` | [10](#rarity) |
 | A damage type for ranged attacks that are not arrows (bullets, throwing knives...) | `ibx.lib.registry.RangedDamageTypeRegistry` | [3](#ranged-damage-types) |
+| Telling whether a hit is melee | the damage type tag `TagRegistry.IS_MELEE` | [2](#melee-damage-types) |
 
 - **Registration is the same for all**: `Item.Properties` must carry the item id before an item can be constructed, so register with `DeferredRegister.Items#registerItem` and use the `Properties` passed into the factory; rarity, fire resistance and so on are set on it too.
 - **Numbers go on the main hand**: the base classes bake their numbers into main-hand attribute modifiers with a "base id", so the tooltip shows them as the dark green merged line vanilla swords use (e.g. "8 Ranged Damage").
@@ -332,6 +333,13 @@ public class RapierItem extends IbxMeleeWeaponItem {
 - `setup` uses vanilla's `sword` / `axe` / `spear` and can change more components after that (the hammer replaces the `weapon` component after `sword` with one that disables shields). Passive attributes given at registration are merged with what `setup` writes by the base class.
 - With a `null` `preset` no preset is set, and Better Combat picks the moves from the item id by itself (it recognises ids containing words such as `sword`, `axe` and `spear`).
 
+### Melee damage types
+
+The damage type tag `#ibx_lib:is_melee` (key `TagRegistry.IS_MELEE`) marks melee damage. Its data holds vanilla `minecraft:player_attack` (player attacks), `mob_attack` and `mob_attack_no_aggro` (mob attacks), `sting` (bee stings), `mace_smash` (mace smash attacks) and `spear` (spears). To check "is this melee", use `source.is(TagRegistry.IS_MELEE)`. Vanilla `#minecraft:panic_causes` includes it, so animals hit in melee panic and flee (including `mob_attack_no_aggro` from vanilla goat rams, which didn't cause panic before). The thorns trigger tag `#ibx_lib:triggers_thorns` includes it too, so all melee triggers thorns by default (see [Attributes](ATTRIBUTE_en.md)).
+
+- Vanilla mobs' area attacks also use `mob_attack` (the ravager's roar, the ender dragon's wings and so on), so they count as melee too.
+- To add your own melee damage type (including one a weapon switches to with the `minecraft:damage_type` component), add it to `data/ibx_lib/tags/damage_type/is_melee.json` (`"replace": false`).
+
 ---
 
 ## 3. Ranged weapons
@@ -486,6 +494,7 @@ In vanilla a mob that takes a hit gets 10 ticks (half a second) of hurt invulner
 - The damage type tag `#ibx_lib:is_ranged` (key `TagRegistry.IS_RANGED`) holds vanilla `minecraft:arrow`, `minecraft:trident` and this mod's `ibx_lib:generic_ranged`. This mod's data adds it to vanilla `#minecraft:bypasses_cooldown`, so this damage is **not blocked by hurt invulnerability**: every arrow of a multishot volley counts, several players or skeletons shooting one target all land, and each hit has its own knockback and hurt animation.
 - It only keeps itself from being blocked: after a ranged hit the target still gets invulnerability as in vanilla, with this hit recorded as the last damage, so a melee hit right after is blocked if it is no stronger, or only deals the difference (vanilla arrows already work like this).
 - Arrows and tridents keep their vanilla damage types, so this applies to every arrow and trident: shot by players, mobs or dispensers, and other mods' arrows as long as they use the vanilla `arrow` damage type. The ranged takeover switch does not matter.
+- Vanilla `#minecraft:panic_causes` also includes this tag, so animals hit by ranged damage panic and flee (vanilla arrows and tridents already did).
 
 `ibx_lib:generic_ranged` (generic ranged damage, key `RangedDamageTypeRegistry.GENERIC_RANGED`) is for ranged attacks that are not arrows, such as bullets or throwing knives: `level.damageSources().source(RangedDamageTypeRegistry.GENERIC_RANGED, projectile, owner)`. It borrows the vanilla arrow death message ("was shot by"), has the same exhaustion and difficulty scaling as arrows, and like arrows is in `#minecraft:is_projectile` (reduced by Projectile Protection), `always_kills_armor_stands` and `panic_causes`.
 

@@ -76,7 +76,7 @@
 伤害结算完之后(`LivingDamageEvent.Post`,不再改伤害量):
 
 - **法术的附带效果**:点燃、冰冻、吸血,参数来自法术伤害快照(见 [法术系统](SPELL.md))。
-- **反甲**:只认「攻击」——近战和弹射物(伤害落在射手身上);法术、爆炸和荆棘伤害本身不触发。被盾全挡、被无敌帧吃掉的那一下也不触发。
+- **反甲**:只认伤害类型标签 `#ibx_lib:triggers_thorns`(键 `TagRegistry.TRIGGERS_THORNS`)里的伤害。data 里只放了近战 `#ibx_lib:is_melee`(见 [装备基类](EQUIPMENT.md)),所以默认弹射物、法术、爆炸都不触发;想让某种非近战伤害也触发,在 `data/ibx_lib/tags/damage_type/triggers_thorns.json` 里加上它(`"replace": false`)。荆棘伤害本身放进来也不触发。被盾全挡、被无敌帧吃掉的那一下也不触发。
 
 其余两处:
 

@@ -10,7 +10,6 @@ import ibx.lib.registry.AttributeRegistry;
 import ibx.lib.registry.TagRegistry;
 import ibx.lib.util.AttributeUtil;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -18,7 +17,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.phys.EntityHitResult;
 import net.neoforged.bus.api.EventPriority;
@@ -206,8 +204,8 @@ public final class DamageHandler {
      * 反甲：被攻击后对攻击者造成 {@link AttributeRegistry#THORNS} 点 {@code minecraft:thorns} 伤害，
      * 伤害来源是被攻击的这个实体（击杀、仇恨都算它的）。
      *
-     * <p>只认"攻击"：近战（直接来源就是攻击者）和弹射物（伤害落在射手身上，同原版荆棘）；
-     * 法术（{@code #ibx_lib:is_spell}）和爆炸不算。荆棘伤害本身不再触发反甲，两边都有反甲时不会来回弹。</p>
+     * <p>只认 {@link TagRegistry#TRIGGERS_THORNS} 里的伤害（默认就是近战 {@link TagRegistry#IS_MELEE}；弹射物、法术、爆炸都不在里面）。
+     * 荆棘伤害本身就算被加进标签也不触发，两边都有反甲时不会来回弹。</p>
      *
      * <p>放在伤害结算完之后：被盾全挡、被无敌帧吃掉的那一下不进本事件，同原版"真的造成了伤害才触发"。</p>
      */
@@ -215,9 +213,8 @@ public final class DamageHandler {
         LivingEntity victim = event.getEntity();
         DamageSource source = event.getSource();
         if (!(victim.level() instanceof ServerLevel level)
-                || !(source.getEntity() instanceof LivingEntity attacker) || attacker == victim || !attacker.isAlive()
-                || source.is(DamageTypes.THORNS) || source.is(TagRegistry.IS_SPELL) || source.is(DamageTypeTags.IS_EXPLOSION)
-                || !(source.getDirectEntity() == attacker || source.getDirectEntity() instanceof Projectile)) {
+                || !source.is(TagRegistry.TRIGGERS_THORNS) || source.is(DamageTypes.THORNS)
+                || !(source.getEntity() instanceof LivingEntity attacker) || attacker == victim || !attacker.isAlive()) {
             return;
         }
         float thorns = (float) AttributeUtil.read(victim, AttributeRegistry.THORNS);

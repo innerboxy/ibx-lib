@@ -76,7 +76,7 @@ At most 80% (20 points); beyond 20 points the cap doesn't rise, but large hits g
 After damage is resolved (`LivingDamageEvent.Post`; the amount is no longer changed):
 
 - **Spell on-hit effects**: ignite, freeze and lifesteal, with parameters from the spell damage snapshot (see [Spell system](SPELL_en.md)).
-- **Thorns**: only "attacks" count — melee and projectiles (the damage goes to the shooter); spells, explosions and thorns damage itself don't trigger it. A hit fully blocked by a shield or eaten by invulnerability frames doesn't either.
+- **Thorns**: only damage in the damage type tag `#ibx_lib:triggers_thorns` (key `TagRegistry.TRIGGERS_THORNS`) counts. Its data holds only melee, `#ibx_lib:is_melee` (see [Equipment base classes](EQUIPMENT_en.md)), so by default projectiles, spells and explosions don't trigger it; to let some non-melee damage trigger it, add that type to `data/ibx_lib/tags/damage_type/triggers_thorns.json` (`"replace": false`). Thorns damage itself never triggers it, even if added. A hit fully blocked by a shield or eaten by invulnerability frames doesn't either.
 
 Two more places:
 

@@ -284,7 +284,7 @@ A channeled spell never "completes": releasing it ends with `CANCELLED`. To know
 **Damage interrupts** only cast-time (`CAST`) spells that are `interruptible`. It does not interrupt when:
 
 - the damage is 0, or another listener cancelled it;
-- the damage type is in `#ibx_lib:cast_ignore` (damage over time such as poison, wither, burning, freezing, starvation, drowning, falling);
+- the damage type is in `#ibx_lib:no_cast_interrupt` (damage over time such as poison, wither, burning, freezing, starvation, drowning, falling);
 - the caster's entity type is in `#c:bosses`.
 
 ### Cooldowns: `SpellCooldowns`
@@ -556,8 +556,8 @@ Damage type tags (keys in `TagRegistry`):
 
 | Tag | Description |
 | --- | --- |
-| `#ibx_lib:is_spell` | Spell damage. Every "is this spell damage" check looks at this tag only. Vanilla `bypasses_armor`, `no_knockback` and `avoids_guardian_thorns` all include it, so types in it automatically ignore armor, get no vanilla knockback and don't trigger guardian thorns. |
-| `#ibx_lib:cast_ignore` | Damage that doesn't interrupt casting. Ships with `#neoforge:is_poison` (vanilla poison and this mod's modified poison `ibx_lib:poison`), `minecraft:wither`, `on_fire`, `freeze`, `starve`, `drown`, `fall`. |
+| `#ibx_lib:is_spell` | Spell damage. Every "is this spell damage" check looks at this tag only. Vanilla `bypasses_armor`, `no_knockback`, `avoids_guardian_thorns` and `panic_causes` all include it, so types in it automatically ignore armor, get no vanilla knockback, don't trigger guardian thorns, and make animals they hit panic and flee. |
+| `#ibx_lib:no_cast_interrupt` | Damage that doesn't interrupt casting. Ships with `#neoforge:is_poison` (vanilla poison and this mod's modified poison `ibx_lib:poison`), `minecraft:wither`, `on_fire`, `freeze`, `starve`, `drown`, `fall`. |
 
 Adding your own spell damage type (frost, say):
 

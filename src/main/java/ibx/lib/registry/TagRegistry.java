@@ -16,21 +16,36 @@ public final class TagRegistry {
 
     /**
      * 法术伤害：所有"是不是法术伤害"的判断只看它（法术抗性、暴击等）。
-     * 原版 {@code bypasses_armor}、{@code no_knockback}、{@code avoids_guardian_thorns} 都包含本标签，
-     * 所以进了本标签的类型自动不吃护甲、不被原版击退、不触发守卫者荆棘。
+     * 原版 {@code bypasses_armor}、{@code no_knockback}、{@code avoids_guardian_thorns}、{@code panic_causes} 都包含本标签，
+     * 所以进了本标签的类型自动不吃护甲、不被原版击退、不触发守卫者荆棘，被打的动物会受惊逃跑。
      */
     public static final TagKey<DamageType> IS_SPELL = damageType("is_spell");
 
     /** 不打断吟唱的伤害：中毒、凋零、余火、冻伤、饥饿、溺水、摔落这类持续掉血。 */
-    public static final TagKey<DamageType> CAST_IGNORE = damageType("cast_ignore");
+    public static final TagKey<DamageType> NO_CAST_INTERRUPT = damageType("no_cast_interrupt");
 
     /**
      * 远程伤害：data 里放了原版的箭（{@code minecraft:arrow}）、三叉戟（{@code minecraft:trident}）和
      * {@link RangedDamageTypeRegistry#GENERIC_RANGED}，别的模组的远程伤害类型由所在模组的 data 往里加。
      * 原版 {@code bypasses_cooldown} 包含本标签，所以进了本标签的伤害不被受伤无敌时间挡（几支箭同时打中都算），
-     * 但打完照样给目标留无敌时间。
+     * 但打完照样给目标留无敌时间。原版 {@code panic_causes} 也包含本标签，被打的动物会受惊逃跑。
      */
     public static final TagKey<DamageType> IS_RANGED = damageType("is_ranged");
+
+    /**
+     * 近战伤害：data 里放了原版的玩家攻击（{@code minecraft:player_attack}）、生物攻击（{@code mob_attack}、
+     * {@code mob_attack_no_aggro}）、蜜蜂蛰（{@code sting}）、重锤下砸（{@code mace_smash}）和矛（{@code spear}），
+     * 别的模组的近战伤害类型由所在模组的 data 往里加。原版 {@code panic_causes}（被打的动物会受惊逃跑）和
+     * {@link #TRIGGERS_THORNS} 包含本标签。
+     * 原版生物的范围招（劫掠兽咆哮、末影龙扇翅等）用的也是 {@code mob_attack}，同样算近战。
+     */
+    public static final TagKey<DamageType> IS_MELEE = damageType("is_melee");
+
+    /**
+     * 触发反甲（{@link AttributeRegistry#THORNS}）的伤害：data 里只放了 {@link #IS_MELEE}，
+     * 想让某种非近战伤害也触发反甲，由所在模组的 data 往里加。荆棘伤害本身放进来也不触发。
+     */
+    public static final TagKey<DamageType> TRIGGERS_THORNS = damageType("triggers_thorns");
 
     /**
      * 能施法的物品：手持右键释放当前选中的法术。所有 {@link ibx.lib.item.general.IbxMagicWeaponItem}（法典等各类法器）自动在里面

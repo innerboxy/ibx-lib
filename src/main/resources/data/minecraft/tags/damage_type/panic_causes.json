@@ -1,6 +1,8 @@
 {
   "replace": false,
   "values": [
-    "ibx_lib:generic_ranged"
+    "#ibx_lib:is_ranged",
+    "#ibx_lib:is_spell",
+    "#ibx_lib:is_melee"
   ]
 }

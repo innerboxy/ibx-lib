@@ -29,6 +29,7 @@
 | 套装效果(盔甲、手持物、饰品凑件数) | `ibx.lib.gearset.GearSet`、`GearSets` | [11](#11-套装) |
 | 传说、神话两档稀有度 | `ibx.lib.item.general.IbxRarities` | [10](#稀有度) |
 | 不是箭的远程攻击(子弹、飞刀……)的伤害类型 | `ibx.lib.registry.RangedDamageTypeRegistry` | [3](#远程伤害类型) |
+| 判断一下伤害是不是近战 | 伤害类型标签 `TagRegistry.IS_MELEE` | [2](#近战伤害类型) |
 
 - **注册方式都一样**:`Item.Properties` 必须先带上物品 id 才能构造物品,所以用 `DeferredRegister.Items#registerItem` 注册,在工厂里使用传进来的 `Properties`;稀有度、防火等也设在它上面。
 - **数值挂在主手**:基类把数值烤成主手的属性修饰符,用「基础 id」,tooltip 显示成原版剑那样的深绿合并行(比如「8 远程伤害」)。
@@ -332,6 +333,13 @@ public class RapierItem extends IbxMeleeWeaponItem {
 - `setup` 用原版的 `sword` / `axe` / `spear`,后面还可以接着改组件(战锤就是在 `sword` 后面把 `weapon` 组件换成能打掉盾的)。注册时给的被动属性,基类会和 `setup` 写的合并。
 - `preset` 给 `null` 就不挂预设,用哪份动作由 Better Combat 按物品 id 自己认(它认得 id 里带 `sword`、`axe`、`spear` 这类词的物品)。
 
+### 近战伤害类型
+
+伤害类型标签 `#ibx_lib:is_melee`(键 `TagRegistry.IS_MELEE`)标记近战伤害,data 里放了原版的 `minecraft:player_attack`(玩家攻击)、`mob_attack`、`mob_attack_no_aggro`(生物攻击)、`sting`(蜜蜂蛰)、`mace_smash`(重锤下砸)和 `spear`(矛)。要判断「是不是近战」就用 `source.is(TagRegistry.IS_MELEE)`。原版的 `#minecraft:panic_causes` 包含它,被近战打的动物会受惊逃跑(原版山羊冲撞用的 `mob_attack_no_aggro` 本来不让动物受惊,现在也会)。触发反甲的标签 `#ibx_lib:triggers_thorns` 也包含它,所以近战默认都触发反甲(见 [属性](ATTRIBUTE.md))。
+
+- 原版生物的范围招用的也是 `mob_attack`(劫掠兽咆哮、末影龙扇翅等),同样算近战。
+- 自己的近战伤害类型(包括武器用 `minecraft:damage_type` 组件换上的),在 `data/ibx_lib/tags/damage_type/is_melee.json` 里加上它(`"replace": false`)。
+
 ---
 
 ## 3. 远程武器
@@ -486,6 +494,7 @@ public static final DeferredItem<IbxCrossbowItem> ARBALEST = ITEMS.registerItem(
 - 伤害类型标签 `#ibx_lib:is_ranged`(键 `TagRegistry.IS_RANGED`)里放了原版的 `minecraft:arrow`、`minecraft:trident` 和本模组的 `ibx_lib:generic_ranged`。本模组的 data 把它加进了原版的 `#minecraft:bypasses_cooldown`,所以这些伤害**不被无敌时间挡**:多重射击的几支箭同时打中都算,几个人、几只骷髅一起射同一个目标也支支都中,每支都有击退和受伤动画。
 - 只管自己不被挡:远程打完照原版给目标留无敌时间,上次伤害记成这一下的数值,紧跟着的近战不比它高就被挡、比它高只扣差值(原版的箭本来就这样)。
 - 箭、三叉戟还是原版的伤害类型,所以对所有箭和戟都有效:玩家、生物、发射器射出的,别的模组的箭只要用的是原版 `arrow` 伤害类型也算。不看远程接管开关。
+- 原版的 `#minecraft:panic_causes` 也包含本标签,被远程打的动物会受惊逃跑(原版的箭、戟本来就会)。
 
 `ibx_lib:generic_ranged`(通用远程伤害,键 `RangedDamageTypeRegistry.GENERIC_RANGED`)给不是箭的远程攻击用,比如子弹、飞刀:`level.damageSources().source(RangedDamageTypeRegistry.GENERIC_RANGED, projectile, owner)`。死亡信息借原版箭的(「被射杀」),消耗、难度缩放同原版的箭;照原版的箭进了 `#minecraft:is_projectile`(弹射物保护能减)、`always_kills_armor_stands`、`panic_causes`。
 
