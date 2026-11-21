@@ -56,6 +56,6 @@ Nothing else needs registering: when the selected creative tab has sub-tabs, the
 ## 3. Notes
 
 - Items other mods add to this tab with `BuildCreativeModeTabContentsEvent` belong to no group and only show in the whole tab; items removed with that event disappear from their group too.
-- An item can only go into one group: as in vanilla, a duplicate item anywhere in the tab throws an error.
+- The same item can go into several groups (like vanilla putting logs in both Building Blocks and Natural Blocks): it shows up in each of those groups, and only once in the whole tab, at the position of the first group it was added to.
 - Items added with `TabVisibility.SEARCH_TAB_ONLY` only go to the search tab and don't count toward a group.
 - Only works on ordinary item category tabs; the search, inventory and hotbar pages never show sub-tabs.

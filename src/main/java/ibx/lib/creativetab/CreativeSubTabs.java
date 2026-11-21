@@ -4,12 +4,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackLinkedSet;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -31,6 +33,8 @@ import java.util.function.Supplier;
  *         .build());
  * }</pre>
  * <ul>
+ *   <li>同一件物品可以放进好几组（比如原版把原木同时放在建筑方块和自然方块）：每一组里都有它，整个创造栏里只出现一次，
+ *       排在第一次放进的那一组的位置。</li>
  *   <li>别的模组用 {@code BuildCreativeModeTabContentsEvent} 往这个创造栏加的物品不属于任何一组，只在整个创造栏里看得到。</li>
  *   <li>一组里没有物品（被功能开关关掉之类）时不显示它的图标。</li>
  *   <li>子栏列默认是本模组的木色；想和原版界面一致用 {@code .style(CreativeSubTabs.Style.VANILLA)}（浅灰底、凹陷物品格）。</li>
@@ -92,8 +96,12 @@ public final class CreativeSubTabs implements CreativeModeTab.DisplayItemsGenera
 
     @Override
     public void accept(CreativeModeTab.ItemDisplayParameters parameters, CreativeModeTab.Output output) {
+        // 已经交给创造栏的物品（物品种类和组件都相同算同一个，同原版 / NeoForge 的判断）。同一件物品放进好几组时，
+        // 只有第一次交给创造栏，后面几次只记进那一组：创造栏里重复的物品开发环境会直接报错、整个栏建不出来。
+        Set<ItemStack> parent = ItemStackLinkedSet.createTypeAndComponentsSet();
+        Set<ItemStack> search = ItemStackLinkedSet.createTypeAndComponentsSet();
         for (SubTab subTab : this.subTabs) {
-            subTab.build(parameters, output);
+            subTab.build(parameters, output, parent, search);
         }
     }
 
@@ -127,12 +135,21 @@ public final class CreativeSubTabs implements CreativeModeTab.DisplayItemsGenera
             return this.items;
         }
 
-        /** 物品照常交给创造栏，同时记下这一组有哪些。 */
-        private void build(CreativeModeTab.ItemDisplayParameters parameters, CreativeModeTab.Output output) {
+        /**
+         * 物品交给创造栏，同时记下这一组有哪些。前面的组已经交过的物品（{@code parent} / {@code search} 里有的）不再交，只记进这一组。
+         */
+        private void build(CreativeModeTab.ItemDisplayParameters parameters, CreativeModeTab.Output output, Set<ItemStack> parent, Set<ItemStack> search) {
             List<ItemStack> collected = new ArrayList<>();
             this.generator.accept(parameters, (stack, visibility) -> {
-                output.accept(stack, visibility);
-                if (visibility != CreativeModeTab.TabVisibility.SEARCH_TAB_ONLY && stack.getItem().isEnabled(parameters.enabledFeatures())) {
+                boolean toParent = visibility != CreativeModeTab.TabVisibility.SEARCH_TAB_ONLY;
+                boolean toSearch = visibility != CreativeModeTab.TabVisibility.PARENT_TAB_ONLY;
+                boolean newParent = toParent && parent.add(stack);
+                boolean newSearch = toSearch && search.add(stack);
+                if (newParent || newSearch) {
+                    output.accept(stack, newParent && newSearch ? CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS
+                            : newParent ? CreativeModeTab.TabVisibility.PARENT_TAB_ONLY : CreativeModeTab.TabVisibility.SEARCH_TAB_ONLY);
+                }
+                if (toParent && stack.getItem().isEnabled(parameters.enabledFeatures())) {
                     collected.add(stack);
                 }
             });

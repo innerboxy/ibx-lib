@@ -56,6 +56,6 @@ public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MAIN = TABS
 ## 3. 注意
 
 - 别的模组用 `BuildCreativeModeTabContentsEvent` 往这个创造栏加的物品不属于任何一组,只在整个创造栏里看得到;用这个事件删掉的物品,组里也跟着不显示。
-- 一件物品只能放进一组:同原版,整个创造栏里出现重复的物品会报错。
+- 同一件物品可以放进好几组(比如原版把原木同时放在建筑方块和自然方块):点哪一组都能看到它,整个创造栏里只出现一次,排在第一次放进的那一组的位置。
 - `TabVisibility.SEARCH_TAB_ONLY` 的物品只进搜索栏,不算进组里。
 - 只对普通的物品分类创造栏有效;搜索、背包、快捷栏这几页不显示子栏。
